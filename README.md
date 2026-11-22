@@ -25,11 +25,23 @@ See [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) for the reasoning behind these prin
 
 ## Planned architecture
 
-- **Python + LangGraph**: a single agent graph with input guard → planner → tool loop → verifier → responder, plus a policy check → human approval → executor path for actions.
+- **Python + LangGraph**: chat runs as an agent: input guard → planner (explicit plan first) → ReAct tool loop → verifier → responder, plus a policy check → human approval → executor path for actions.
+- **`fleet scan`**: a deterministic workflow that runs every detector for one tenant and prints a briefing with pending proposals. Fixed steps run as code; open-ended questions go to the agent.
 - **Data**: raw NDJSON telemetry is the immutable source of truth; a loader builds a normalized SQLite database.
 - **Tools**: typed read tools (device queries, history, compliance, software, insights) and proposal-only action tools.
 - **Config**: `policy.yaml` (what the agent may do), `thresholds.yaml` (definitions), `blocklist.yaml` (prohibited software).
 - **Evaluation**: unit tests plus an agent eval suite with ground truth computed independently from the raw data.
+
+## Security model
+
+- **Tenant isolation in code:** each session is fixed to one tenant at startup; every query is filtered by it, and other tenants' devices return "not found".
+- **Proposals, not actions:** the agent only proposes; every proposal needs evidence from the current session, a precondition checked in code, and human approval.
+- **Untrusted telemetry:** device strings are sanitized on load, treated as data, and escaped before display.
+- **Minimal data to the LLM:** one tenant at a time, only the fields a question needs; IPs, MACs and hardware IDs are never loaded.
+- **Tamper-evident audit log:** hash-chained entries, checked with `fleet audit verify`.
+- **No authentication in v1:** whoever runs the CLI chooses the tenant. This and other deliberate limits are listed in the out-of-scope section.
+
+See [docs/SECURITY.md](docs/SECURITY.md) for the threat model, data flow and out-of-scope list.
 
 ## Getting started
 
