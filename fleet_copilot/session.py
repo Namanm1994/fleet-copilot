@@ -62,11 +62,12 @@ class SessionEvidence:
         return [r for r in self.records.values() if r.turn == self.turn]
 
     def add_receipt(self, tool: str, args: dict[str, Any], result_count: int, as_of: str,
-                    evidence_ids: list[str]) -> str:
+                    evidence_ids: list[str], definitions_used: list[str] | None = None) -> str:
         self._receipt_seq += 1
         rid = f"Q-{self.turn}-{self._receipt_seq}"
         self.receipts[rid] = {"receipt_id": rid, "tool": tool, "args": args, "result_count": result_count,
-                              "as_of": as_of, "evidence_ids": evidence_ids, "turn": self.turn}
+                              "as_of": as_of, "evidence_ids": evidence_ids, "turn": self.turn,
+                              "definitions_used": list(definitions_used or [])}
         return rid
 
     def new_turn(self) -> int:

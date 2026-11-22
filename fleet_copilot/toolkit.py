@@ -56,6 +56,7 @@ class Toolkit:
         self.policy_engine = PolicyEngine(self)
         self.executor = Executor(self)
         self.turn_counters: dict[str, int] = {"auto": 0}
+        self.tool_corpus: list[str] = []
 
     # ---- bookkeeping ---------------------------------------------------------------------------
     def new_turn(self) -> int:
@@ -81,7 +82,11 @@ class Toolkit:
 
     # ---- dispatch ------------------------------------------------------------------------------
     def call(self, name: str, args: dict[str, Any] | None, origin: str = "requested") -> ToolResult:
-        args = args or {}
+        result = self._call(name, args or {}, origin)
+        self.tool_corpus.append(result.model_dump_json(exclude_none=True))
+        return result
+
+    def _call(self, name: str, args: dict[str, Any], origin: str) -> ToolResult:
         try:
             if name not in self.tool_names():
                 raise ToolError("FORBIDDEN_ACTION", f"Tool '{name}' is not available.",

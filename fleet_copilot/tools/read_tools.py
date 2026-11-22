@@ -48,7 +48,8 @@ class ReadTools:
 
     def _finish(self, tool: str, args: dict, result: ToolResult, count: int) -> ToolResult:
         result.as_of = self.repo.as_of
-        result.receipt_id = self.tk.evidence.add_receipt(tool, args, count, self.repo.as_of, result.evidence_ids)
+        result.receipt_id = self.tk.evidence.add_receipt(tool, args, count, self.repo.as_of, result.evidence_ids,
+                                                         result.definitions_used)
         return result
 
     def _require_device(self, device_id: str) -> dict:
