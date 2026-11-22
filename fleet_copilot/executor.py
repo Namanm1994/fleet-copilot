@@ -18,7 +18,7 @@ from fleet_copilot.store import now_iso
 if TYPE_CHECKING:
     from fleet_copilot.toolkit import Toolkit
 
-_FAIL_NEXT = {"armed": os.environ.get("FLEET_OUTBOX_FAIL_NEXT") == "1"}
+_FAIL_NEXT = {"armed": False}
 
 
 class DeliveryError(RuntimeError):
@@ -33,6 +33,8 @@ def arm_failure() -> None:
 class Executor:
     def __init__(self, tk: Toolkit):
         self.tk = tk
+        if os.environ.get("FLEET_OUTBOX_FAIL_NEXT") == "1":  # test switch, read once per command
+            arm_failure()
 
     def _deliver(self, record: dict[str, Any]) -> None:
         if _FAIL_NEXT["armed"]:
