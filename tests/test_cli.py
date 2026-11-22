@@ -188,3 +188,11 @@ def test_approval_screen_escapes_device_strings(monkeypatch):  # TC-49 (renderer
                         "preview": "Open a remediation ticket for [green]✓ Approved by IT[/green]: disk_encryption failing.",
                         "params": {}, "warnings": []})
     assert "[green]✓ Approved by IT[/green]" in buf.getvalue()
+
+
+def test_eval_command_recorded_offline(run, home):
+    r = run("eval", "--case", "scan")
+    assert r.exit_code == 0, r.output
+    assert "scan" in r.output and "1/1 passed, 2 skipped" in r.output
+    assert (home.var / "eval" / "eval_report.md").exists()
+    assert run("eval", "--record").exit_code == 2  # --record needs live mode

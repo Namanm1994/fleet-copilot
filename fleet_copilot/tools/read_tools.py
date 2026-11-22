@@ -427,7 +427,8 @@ class ReadTools:
         rows = self.tk.store.list(args.status, args.device_id)
         data = [{"proposal_id": p["proposal_id"], "action": p["action"], "device_id": p["device_id"],
                  "employee_id": p["employee_id"], "status": p["status"], "origin": p["origin"],
-                 "created_at": p["created_at"], "reason": p["reason"]} for p in rows]
+                 "reason": p["reason"], "reject_reason": p["reject_reason"]} for p in rows]
+        # no timestamps: wall-clock values would make recorded eval runs unrepeatable
         for p in rows:
             self.tk.evidence.add(p["proposal_id"], {"action": p["action"], "status": p["status"]}, p["device_id"])
         return self._finish("list_proposals", args.model_dump(exclude_none=True),

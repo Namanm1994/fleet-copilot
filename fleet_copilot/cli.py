@@ -455,5 +455,34 @@ def trace_show(ctx: Ctx, session_id: str, tenant: str) -> None:
         say(f"{e['ts'][11:23]} t{e['turn']} {e['node']:<12} {e['event']:<16}{extra} {payload[:300]}")
 
 
+# ---- evals -------------------------------------------------------------------------------------
+@main.command("eval")
+@click.option("--mode", type=click.Choice(["recorded", "live"]), default="recorded", show_default=True,
+              help="recorded: replay saved model responses (offline). live: call the configured provider.")
+@click.option("--record", is_flag=True, help="With --mode live: save responses as cassettes for recorded runs.")
+@click.option("--runs", default=1, show_default=True, help="Runs per case (stability check).")
+@click.option("--case", "only", multiple=True, help="Case ID or category to run (repeatable).")
+@pass_ctx
+def eval_cmd(ctx: Ctx, mode: str, record: bool, runs: int, only: tuple[str, ...]) -> None:
+    """Run the eval suite (evals/cases/*.yaml) and write eval_report.md + eval_results.json under var/eval/."""
+    from evals.runner import run_eval, write_report
+
+    if record and mode != "live":
+        fail("--record needs --mode live.")
+    out = run_eval(ctx.paths, mode=mode, record=record, runs=runs, only=list(only) or None)
+    md, js = write_report(out, ctx.paths.var / "eval")
+    s = out["summary"]
+    for cat, b in sorted(s["categories"].items()):
+        bar = s["bars"].get(cat)
+        verdict = "" if not bar else {True: " (bar met)", False: " (BAR MISSED)", None: " (not run)"}[bar["met"]]
+        say(f"{cat:<10} {b['passed']}/{b['run']} passed, {b['skipped']} skipped{verdict}",
+            "red" if bar and bar["met"] is False else None)
+    if not s["has_real_data"]:
+        say("Real data not found in data/raw/: real-data cases were skipped.", "yellow")
+    say(f"Report: {md}")
+    if not s["all_bars_met"]:
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     main()

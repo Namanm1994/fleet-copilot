@@ -1,0 +1,136 @@
+# Factual Q&A. Expected values come from the independent oracle over the raw NDJSON. Pass bar: 90%.
+
+- id: F01
+  category: factual
+  title: Device count for a company
+  tenant: acme
+  data: real
+  turns:
+    - ask: "How many devices does Acme have?"
+      expect:
+        number_in_text: {oracle: devices, len: true}
+        verifier_ok: true
+
+- id: F02
+  category: factual
+  title: List a company's devices
+  tenant: initech
+  data: real
+  turns:
+    - ask: "List all Initech devices"
+      expect:
+        devices_exact: {oracle: devices}
+        verifier_ok: true
+
+- id: F03
+  category: factual
+  title: Devices failing a named check
+  tenant: acme
+  data: real
+  turns:
+    - ask: "Which Acme devices are failing the screen_lock check?"
+      expect:
+        devices_exact: {oracle: failing_check, args: {check_id: screen_lock}}
+        verifier_ok: true
+
+- id: F04
+  category: factual
+  title: Devices with a named app installed
+  tenant: initech
+  data: real
+  turns:
+    - ask: "Which Initech devices have uTorrent installed?"
+      expect:
+        devices_exact: {oracle: has_software, args: {name: utorrent}}
+        verifier_ok: true
+
+- id: F05
+  category: factual
+  title: OS version of one device by hostname
+  tenant: acme
+  data: real
+  turns:
+    - ask: "What OS version is acme-macbook-2 running?"
+      expect:
+        text_contains: [{oracle: os_version, args: {device_id: 1LYSSFD074BB}}]
+        verifier_ok: true
+
+- id: F06
+  category: factual
+  title: Stale devices
+  tenant: initech
+  data: real
+  turns:
+    - ask: "Which Initech devices haven't reported in over 10 days?"
+      expect:
+        devices_exact: {oracle: stale}
+        verifier_ok: true
+
+- id: F07
+  category: factual
+  title: Devices with an out-of-date OS (check)
+  tenant: initech
+  data: real
+  turns:
+    - ask: "Which devices fail the os_up_to_date check?"
+      expect:
+        devices_exact: {oracle: failing_check, args: {check_id: os_up_to_date}}
+        verifier_ok: true
+
+- id: F08
+  category: factual
+  title: Low disk, fixture
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Which devices are low on disk space?"
+      expect:
+        devices_exact: {oracle: low_disk}
+        definitions_include: [low_disk]
+        verifier_ok: true
+
+- id: F09
+  category: factual
+  title: Devices of one employee
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Which devices belong to emp-fx-1002?"
+      expect:
+        devices_exact: {oracle: employee_devices, args: {employee_id: emp-fx-1002}}
+        verifier_ok: true
+
+- id: F10
+  category: factual
+  title: Count by platform
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "How many Windows devices are there?"
+      expect:
+        number_in_text: {oracle: platform, args: {platform: win32}, len: true}
+        verifier_ok: true
+
+- id: F11
+  category: factual
+  title: Devices failing a high-severity check (list completeness)
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Which devices are failing a high-severity compliance check?"
+      expect:
+        devices_exact: {oracle: failing_severity, args: {severity: high}}
+        verifier_ok: true
+        proposals: {max: 5}
+
+- id: F12
+  category: factual
+  title: No matches is a real answer (and doesn't leak the other fixture tenant)
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Do we have any Lenovo laptops?"
+      expect:
+        answer_type: no_matches
+        verifier_ok: true
+        no_data_of_tenant: fixture-998

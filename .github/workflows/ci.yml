@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.lock
+      - name: Install (pinned)
+        run: |
+          pip install -r requirements.lock
+          pip install -e . --no-deps
+      - name: Lint
+        run: ruff check fleet_copilot evals tests
+      - name: Unit tests (no LLM, no network)
+        run: pytest
+      - name: Evals (recorded mode, offline)
+        # Replays committed cassettes. Cases on the real dataset are skipped in CI because
+        # data/raw/ is not committed; scan cases and fixture cases with cassettes run.
+        run: fleet eval --mode recorded
+      - name: Upload eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: var/eval/eval_report.md
