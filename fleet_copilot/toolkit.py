@@ -25,6 +25,22 @@ from fleet_copilot.tools.schemas import ACTION_ARGS, DESCRIPTIONS, READ_ARGS
 ORIGINS = ("requested", "unprompted", "scan")
 
 
+def inline_refs(schema: dict[str, Any]) -> dict[str, Any]:
+    """Resolve $ref/$defs so every provider gets a flat JSON schema."""
+    defs = schema.get("$defs", {})
+
+    def walk(node: Any) -> Any:
+        if isinstance(node, dict):
+            if "$ref" in node:
+                return walk(defs[node["$ref"].split("/")[-1]])
+            return {k: walk(v) for k, v in node.items() if k not in ("$defs", "title")}
+        if isinstance(node, list):
+            return [walk(v) for v in node]
+        return node
+
+    return walk(schema)
+
+
 class Toolkit:
     def __init__(self, ctx: SessionContext, config: AppConfig, paths: Paths, repo: Repository | None = None):
         self.ctx = ctx
@@ -59,7 +75,7 @@ class Toolkit:
         specs = []
         for name in self.tool_names():
             model = READ_ARGS.get(name) or ACTION_ARGS[name]
-            schema = model.model_json_schema()
+            schema = inline_refs(model.model_json_schema())
             specs.append({"name": name, "description": DESCRIPTIONS[name], "parameters": schema})
         return specs
 
