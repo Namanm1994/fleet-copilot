@@ -9,9 +9,10 @@ from __future__ import annotations
 import json
 import sqlite3
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from fleet_copilot.data.sanitize import clean_text, normalize_name
 from fleet_copilot.data.schema import SCHEMA
@@ -216,12 +217,12 @@ def load(raw_paths: list[Path], db_path: Path, registered_tenants: Iterable[str]
         info = device_info[device_id]
         days = sorted({s["ts"].date() for s in snaps})
         missing = []
-        for a, b in zip(days, days[1:]):
+        for a, b in zip(days, days[1:], strict=False):
             for k in range(1, (b - a).days):
                 missing.append(date.fromordinal(a.toordinal() + k).isoformat())
         if missing:
             gaps[device_id] = missing
-        dec = sum(1 for a, b in zip(snaps, snaps[1:]) if a["cycles"] is not None and b["cycles"] is not None and b["cycles"] < a["cycles"])
+        dec = sum(1 for a, b in zip(snaps, snaps[1:], strict=False) if a["cycles"] is not None and b["cycles"] is not None and b["cycles"] < a["cycles"])
         if dec:
             cycle_decreases[device_id] = dec
         conn.execute(
