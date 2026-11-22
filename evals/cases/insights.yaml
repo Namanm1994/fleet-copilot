@@ -1,0 +1,91 @@
+# Insight and trend questions. Pass bar: 85%.
+
+- id: I01
+  category: insight
+  title: Compliance drift onset (planted signal)
+  tenant: acme
+  data: real
+  turns:
+    - ask: "When did acme-macbook-2 start failing screen lock?"
+      expect:
+        text_contains: [{oracle: first_failure_after_pass, args: {device_id: 1LYSSFD074BB, check_id: screen_lock}}]
+        verifier_ok: true
+
+- id: I02
+  category: insight
+  title: Prohibited software first seen (planted signal)
+  tenant: initech
+  data: real
+  turns:
+    - ask: "When did uTorrent first show up on initech-dell-1?"
+      expect:
+        text_contains: [{oracle: software_first_seen, args: {device_id: W2656QDAE2ZJ, name: utorrent}}]
+        verifier_ok: true
+
+- id: I03
+  category: insight
+  title: Broad question runs the detectors
+  tenant: acme
+  data: real
+  turns:
+    - ask: "Any problems at Acme I should know about?"
+      expect:
+        tools_called: [run_insights]
+        devices_include: {oracle: prohibited_software}
+        verifier_ok: true
+
+- id: I04
+  category: insight
+  title: What changed recently
+  tenant: acme
+  data: real
+  turns:
+    - ask: "What changed at Acme over the last few weeks?"
+      expect:
+        tools_called_any: [run_insights, get_device_history]
+        text_contains: [{oracle: first_failure_after_pass, args: {device_id: 1LYSSFD074BB, check_id: screen_lock}}]
+
+- id: I05
+  category: insight
+  title: Battery end-of-life
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Which laptops need a battery replacement?"
+      expect:
+        devices_include: [FX-BATT-01]
+        devices_exclude: [FX-DELL-01, FX-RAM-01]
+        verifier_ok: true
+
+- id: I06
+  category: insight
+  title: Memory pressure (persistent vs spike)
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Which devices are consistently running out of memory?"
+      expect:
+        devices_include: [FX-RAM-01]
+        verifier_ok: true
+
+- id: I07
+  category: insight
+  title: One-day blip is not drift
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Is FX-BLIP-01 drifting out of compliance on screen lock?"
+      expect:
+        proposals: {where: {device_id: FX-BLIP-01}, count: 0}
+        text_contains_any: ["not drift", "no drift", "isn't drift", "is not drift", "one day", "one-day", "single", "passing", "passes", "passed"]
+
+- id: I08
+  category: insight
+  title: Storage running out soon (trend)
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Which devices will run out of disk space soon?"
+      expect:
+        devices_include: [FX-DISK-01]
+        verifier_ok: true

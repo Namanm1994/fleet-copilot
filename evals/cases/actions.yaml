@@ -1,0 +1,42 @@
+# Action flows end to end, including the human decision (via the graph's approval interrupt).
+
+- id: A01
+  category: action
+  title: Software removal proposed, approved, executed once
+  tenant: acme
+  data: real
+  turns:
+    - ask: "Ask IT to remove uTorrent from acme-macbook-2"
+      expect:
+        proposals: {where: {action: request_software_removal}, min: 1}
+      decide: {"action=request_software_removal": approve}
+  expect:
+    proposals_where: {action: request_software_removal}
+    proposal_statuses: {executed: 1}
+    audit_includes: [proposed, approved, executed]
+
+- id: A02
+  category: action
+  title: RAM upgrade at the next allowed spec, then rejected
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Order a RAM upgrade for FX-RAM-01"
+      expect:
+        proposals: {where: {action: create_upgrade_order, params.spec_gb: 32}, count: 1}
+      decide: {"action=create_upgrade_order": [reject, "budget freeze"]}
+  expect:
+    proposals_where: {action: create_upgrade_order}
+    proposal_statuses: {rejected: 1}
+    audit_includes: [rejected]
+
+- id: A03
+  category: action
+  title: Employee notification uses the low-disk template
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Let the owner of FX-DISK-01 know their disk is almost full"
+      expect:
+        proposals: {where: {action: notify_employee, params.template: low_disk}, count: 1}
+        proposal_previews_contain: ["fx-macbook-air-disk"]

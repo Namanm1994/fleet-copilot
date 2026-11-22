@@ -1,0 +1,47 @@
+# `fleet scan` golden cases: no LLM, fully reproducible.
+
+- id: S01
+  category: scan
+  title: Acme scan finds the planted signals
+  tenant: acme
+  data: real
+  kind: scan
+  expect:
+    insights_include:
+      - {device_id: {oracle: prohibited_software}, detector: prohibited_software}
+      - {device_id: {oracle: failing_check, args: {check_id: screen_lock}}, detector: compliance_drift}
+    clean_detectors_include: [battery_eol]
+    no_data_of_tenant: initech-003
+    proposals: {max: 5}
+
+- id: S02
+  category: scan
+  title: Initech scan finds uTorrent
+  tenant: initech
+  data: real
+  kind: scan
+  expect:
+    insights_include:
+      - {device_id: {oracle: prohibited_software}, detector: prohibited_software}
+    no_data_of_tenant: acme-001
+    proposals: {max: 5}
+
+- id: S03
+  category: scan
+  title: Fixture scan covers every detector and stays in its tenant
+  tenant: fixture-999
+  data: fx
+  kind: scan
+  expect:
+    insights_include:
+      - {device_id: FX-BATT-01, detector: battery_eol}
+      - {device_id: FX-RAM-01, detector: ram_constrained}
+      - {device_id: FX-DISK-01, detector: low_storage}
+      - {device_id: FX-DRIFT-01, detector: compliance_drift}
+      - {device_id: FX-FLAP-01, detector: compliance_drift}
+      - {device_id: FX-UTOR-01, detector: prohibited_software}
+    insights_exclude:
+      - {device_id: FX-BLIP-01, detector: compliance_drift}
+      - {device_id: FX-SHORT-01, detector: low_storage}
+    no_data_of_tenant: fixture-998
+    proposals: {max: 5}

@@ -29,7 +29,7 @@ dev = ["pytest>=8.0", "ruff>=0.5"]
 fleet = "fleet_copilot.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["fleet_copilot*"]
+include = ["fleet_copilot*", "evals*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
