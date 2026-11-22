@@ -120,7 +120,8 @@ def build_records() -> list[dict]:
         checks=lambda i: {"screen_lock": "pass" if i < 8 else "fail", "os_up_to_date": "fail"})
     add("FX-UTOR-01", DELL, "11 23H2", "fx-dell-utorrent", ram_gb=16,
         software=lambda i: BASE_SOFTWARE + ([{"name": "µTorrent", "version": "3.6", "publisher": "Rainberry Inc"}] if i >= 10 else []))
-    add("FX-STALE-01", MAC, "15.1", "fx-macbook-stale", days=_days(12, AS_OF - timedelta(days=12)))
+    add("FX-STALE-01", MAC, "15.1", "fx-macbook-stale", days=_days(12, AS_OF - timedelta(days=12)),
+        checks={"screen_lock": "fail"})
     add("FX-SHORT-01", MAC, "15.1", "fx-macbook-short", days=_days(3))
     for n in range(1, 9):
         add(f"FX-MULTI-0{n}", MAC, "15.1", f"fx-macbook-multi-{n}", checks={"disk_encryption": "fail"})

@@ -7,9 +7,10 @@ severity, and the actions its evidence would justify (`eligible_actions`).
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any
 
 from fleet_copilot.config import AppConfig
 from fleet_copilot.data.repository import Repository
@@ -71,7 +72,7 @@ def _linear_slope_per_day(points: list[tuple[datetime, float]]) -> float | None:
     den = sum((x - mx) ** 2 for x in xs)
     if den == 0:
         return None
-    return sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / den
+    return sum((x - mx) * (y - my) for x, y in zip(xs, ys, strict=False)) / den
 
 
 def _median(values: list[float]) -> float:
@@ -306,7 +307,7 @@ class Detectors:
         for (dev, check), seq in sorted(series.items()):
             seq.sort(key=lambda r: r["collected_at"])
             statuses = [r["status"] for r in seq]
-            changes = sum(1 for a, b in zip(statuses, statuses[1:]) if a != b)
+            changes = sum(1 for a, b in zip(statuses, statuses[1:], strict=False) if a != b)
             trailing = 0
             for s in reversed(statuses):
                 if s != "fail":
