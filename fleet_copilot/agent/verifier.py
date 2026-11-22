@@ -26,6 +26,8 @@ DEVICE_RE = re.compile(r"\b(?=[A-Z0-9-]*\d)[A-Z0-9][A-Z0-9-]{7,}\b")
 EMP_RE = re.compile(r"\bemp-[a-z0-9-]+\b")
 NUM_RE = re.compile(r"(?<![\w.])-?\d{1,3}(?:,\d{3})+(?:\.\d+)?(?![\w.])|(?<![\w.])-?\d+(?:\.\d+)?(?![\w])")
 ALWAYS_OK_NUMBERS = {0.0, 1.0}
+COUNT_KEY_RE = re.compile(r"^(count|total|n|num_\w+|\w+_count)$")
+COUNT_TEXT_RE = re.compile(r"\b(\d+)\s+(?:of\s+(?:the\s+|your\s+)?\d+\s+)?(?:\w+\s+)?(?:devices?|laptops?|machines?|computers?|endpoints?)\b", re.I)
 
 
 @dataclass
@@ -119,6 +121,17 @@ class Verifier:
                 if r:
                     cited_defs.update(r.get("definitions_used", []))
                     extra.add(float(r["result_count"]))
+            # counts are checked against what the cited evidence can count, not the global number pool
+            count_ok = {float(len(devices_cited)), float(len(claim.evidence_ids))} | {
+                float(ev.receipts[e]["result_count"]) for e in claim.evidence_ids if e in ev.receipts}
+            for k, v in claim.values.items():
+                if COUNT_KEY_RE.match(k) and isinstance(v, (int, float)) and not isinstance(v, bool) and float(v) not in count_ok:
+                    errors.append(f"{where}: {k}={v} doesn't match the cited evidence (receipt counts {sorted(count_ok)}) (rule 3).")
+                    failed.add(i)
+            for m in COUNT_TEXT_RE.finditer(claim.text):
+                if float(m.group(1)) not in count_ok and float(m.group(1)) not in ALWAYS_OK_NUMBERS:
+                    errors.append(f"{where}: '{m.group(0)}' doesn't match the cited evidence counts {sorted(count_ok)} (rule 3).")
+                    failed.add(i)
             values_text = " ".join(f"{k} {v}" for k, v in claim.values.items())
             ids_ok(claim.text + " " + values_text, where, i)
             nums_ok(claim.text, where, i, extra)
