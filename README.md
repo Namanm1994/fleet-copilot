@@ -1,51 +1,347 @@
 # Fleet Copilot
 
-An agentic AI copilot that lets IT administrators query fleet telemetry in natural language, surface insights and trends, and propose evidence-backed operational actions that a human approves before anything runs.
+An agentic copilot for IT administrators. It answers questions about device telemetry in natural language, finds trends across the telemetry window, and proposes evidence-backed actions. Nothing runs until a human approves it.
 
-> **Status:** early development. The design is settled; implementation is in progress.
+- **Grounded Q&A.** Answers come from telemetry only. Every claim cites the evidence it came from, and a deterministic verifier checks the answer before you see it.
+- **Insights and trends.** Detects battery end-of-life, memory pressure, low and shrinking storage, compliance drift and prohibited software.
+- **Action proposals.** Remediation tickets, replacement flags, upgrade orders, software removal requests, templated employee notifications and finding acknowledgements. Each one needs evidence, a precondition checked in code, and explicit approval.
+- **Guardrails.** Tenant isolation in the data layer, a policy-driven tool allowlist, evidence-gated actions, budgets, and a hash-chained audit log.
 
-## What it does
+Python 3.10+, LangGraph, SQLite. Works with Anthropic, OpenAI or OpenRouter models.
 
-- **Grounded Q&A:** answers fleet health and compliance questions from telemetry only, citing evidence for every claim.
-- **Insights and trends:** detects battery end-of-life, sustained RAM pressure, low storage, compliance drift and prohibited software across 30 days of snapshots.
-- **Action proposals:** proposes remediation tickets, upgrade orders, replacement flags, software removal and employee notifications. Every proposal needs supporting evidence and explicit human approval.
-- **Guardrails:** tenant isolation enforced in code, policy-driven tool allowlist, evidence-gated actions, deduplication, and an append-only audit log.
+## Contents
 
-## Design principles
+1. [Install](#install)
+2. [Run](#run)
+3. [Evals](#evals)
+4. [Architecture](#architecture)
+5. [Tool catalog](#tool-catalog)
+6. [Grounding strategy](#grounding-strategy)
+7. [Guardrails](#guardrails)
+8. [Design decisions and trade-offs](#design-decisions-and-trade-offs)
+9. [Future work](#future-work)
 
-1. **Telemetry is the only source of truth.** Every claim cites the snapshots it came from, and weak signals are labeled as weak.
-2. **Copilot, not autopilot.** The agent proposes, a human approves, and the audit log records who decided.
-3. **No evidence, no action.** Every proposal must be backed by evidence retrieved in the current session.
-4. **The tenant boundary comes before capability.** A session can never see another company's data.
-5. **Notice what changed, not just what is.** Detectors look across the full telemetry window and report only real patterns.
-6. **A person is behind every device.** Notifications use neutral templates, and network and hardware identifiers stay away from the LLM.
-7. **A guarantee is only as good as its test.** Every guardrail has an evaluation case that must pass.
+## Install
 
-See [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) for the reasoning behind these principles and the trade-offs they involve.
+```bash
+python -m venv .venv && source .venv/bin/activate
+make setup                     # pip install -e ".[all,dev]"
+cp .env.example .env           # set FLEET_LLM_PROVIDER and the matching API key
+```
 
-## Planned architecture
+For pinned versions (as CI uses): `pip install -r requirements.lock && pip install -e . --no-deps`.
 
-- **Python + LangGraph**: chat runs as an agent: input guard → planner (explicit plan first) → ReAct tool loop → verifier → responder, plus a policy check → human approval → executor path for actions.
-- **`fleet scan`**: a deterministic workflow that runs every detector for one tenant and prints a briefing with pending proposals. Fixed steps run as code; open-ended questions go to the agent.
-- **Data**: raw NDJSON telemetry is the immutable source of truth; a loader builds a normalized SQLite database.
-- **Tools**: typed read tools (device queries, history, compliance, software, insights) and proposal-only action tools.
-- **Config**: `policy.yaml` (what the agent may do), `thresholds.yaml` (definitions), `blocklist.yaml` (prohibited software).
-- **Evaluation**: unit tests plus an agent eval suite with ground truth computed independently from the raw data.
+**Data.** Put the telemetry NDJSON at `data/raw/telemetry.ndjson`. It is gitignored and never committed. Then:
 
-## Security model
+```bash
+make load       # builds var/telemetry.db and var/data_quality.json from data/raw/*.ndjson
+make profile    # value distributions used to set the thresholds in config/thresholds.yaml
+```
 
-- **Tenant isolation in code:** each session is fixed to one tenant at startup; every query is filtered by it, and other tenants' devices return "not found".
-- **Proposals, not actions:** the agent only proposes; every proposal needs evidence from the current session, a precondition checked in code, and human approval.
-- **Untrusted telemetry:** device strings are sanitized on load, treated as data, and escaped before display.
-- **Minimal data to the LLM:** one tenant at a time, only the fields a question needs; IPs, MACs and hardware IDs are never loaded.
-- **Tamper-evident audit log:** hash-chained entries, checked with `fleet audit verify`.
-- **No authentication in v1:** whoever runs the CLI chooses the tenant. This and other deliberate limits are listed in the out-of-scope section.
+`fleet load` lists any company present in the data but missing from `config/policy.yaml`. Those companies stay inaccessible until they are registered.
 
-See [docs/SECURITY.md](docs/SECURITY.md) for the threat model, data flow and out-of-scope list.
+**Model.** `config/llm.yaml` pins the model for each provider. `FLEET_LLM_PROVIDER` and `FLEET_LLM_MODEL` override it. For OpenAI and OpenRouter, set `FLEET_LLM_MODEL` because no default is pinned. Without a key, the commands that need an LLM stop with a configuration error before doing anything.
 
-## Getting started
+## Run
 
-Setup, usage and evaluation instructions will be added as the implementation lands.
+Every command that touches company data needs `--tenant`. There is no default, and an unknown tenant fails before the database is opened.
+
+```bash
+fleet chat --tenant acme                    # interactive session (make chat TENANT=acme)
+fleet ask  --tenant acme "Which devices are failing screen lock?"   # one question; --json for structured output
+fleet scan --tenant acme                    # one-shot briefing (make scan TENANT=acme); --summary adds an LLM paragraph
+fleet proposals list    --tenant acme [--status proposed]
+fleet proposals approve PRP-3 --tenant acme # interactive terminal only
+fleet proposals reject  PRP-3 --tenant acme --reason "known issue"
+fleet proposals retry   PRP-3 --tenant acme # after a failed delivery; idempotent
+fleet audit verify                          # check the audit hash chain
+fleet trace show <session_id> --tenant acme # plan, tool calls, verifier results, tokens and cost per turn
+```
+
+**In chat:** type `exit`, type `quit` or press Ctrl+D to leave. Ctrl+C cancels the current turn, and pressing it twice exits. Proposals appear under the answer with `[y] approve  [n] reject  [l] later`. Similar proposals (same action and check) are decided together. Each turn ends with a usage line showing LLM calls, tool calls, tokens, latency and cost. Cost is shown only when the model has a price in `config/pricing.yaml`.
+
+**Approvals come only from an interactive terminal.** Piped or scripted input can ask questions but cannot approve anything. Approved actions are written to `var/outbox.jsonl`, which stands in for the ticketing, procurement and email systems.
+
+### Sample: `fleet scan` on the sample data
+
+This is real output on the provided sample (three devices):
+
+```text
+$ fleet scan --tenant acme
+Fleet scan · Acme · as of 2026-06-12
+
+HIGH (1)
+  • 1LYSSFD074BB (acme-macbook-2): Prohibited software "uTorrent" installed (first seen 2026-05-31)
+      INS-prohibited_software-1LYSSFD074BB-fff2b1 · evidence: 1LYSSFD074BB@2026-05-31$utorrent, 1LYSSFD074BB@2026-06-04$utorrent
+
+MEDIUM (1)
+  • 1LYSSFD074BB (acme-macbook-2): screen_lock passed until 2026-05-21 and has failed since 2026-05-22 (14 snapshots)
+      INS-compliance_drift-1LYSSFD074BB-32b61b · evidence: 1LYSSFD074BB@2026-05-21#screen_lock, 1LYSSFD074BB@2026-05-22#screen_lock, 1LYSSFD074BB@2026-06-04#screen_lock
+
+✓ Battery end-of-life: no issues found
+✓ Memory pressure: no issues found
+✓ Low storage: no issues found
+
+Definitions:
+  compliance_drift: A check that passed earlier has failed on 2 or more consecutive snapshots up to now
+  prohibited_software: Installed software matches the prohibited-software blocklist
+
+Proposed actions (awaiting your approval; nothing has been executed):
+  PRP-1: Ask IT to remove "uTorrent" from acme-macbook-2.
+```
+
+A chat turn prints the same kind of output: a header with the tenant and as-of date, the answer, one line per claim with its evidence IDs, the definitions used, caveats, and any proposals. `fleet trace show` replays everything behind it.
+
+## Evals
+
+```bash
+make test        # unit tests: no LLM, no network (scripted model, fake clock)
+make eval        # fleet eval --mode recorded: replays saved model responses, offline
+make eval-live   # fleet eval --mode live --record: calls the provider and saves cassettes
+fleet eval --runs 3            # stability: a case counts as passed only if every run passes
+fleet eval --case guardrail    # one category, or --case G-TC17 for one case
+```
+
+The output is `var/eval/eval_report.md` plus `var/eval/eval_results.json`.
+
+**Cases.** There are 50 YAML cases in `evals/cases/`:
+
+| Category | Cases | Pass bar | What they cover |
+|---|---|---|---|
+| guardrail | 24 | 100% | Every guardrail that involves the LLM (test-plan cases TC-01 … TC-49): cross-tenant requests, refusals, injection, ambiguity, missing data, thresholds, action preconditions, dedup, rejection memory, bulk limits, spec allowlist, templates, markup |
+| factual | 12 | 90% | Counts, lists, named checks, software, OS versions, stale devices, employees, no-match answers |
+| insight | 8 | 85% | Drift onset, first-seen dates, broad "any problems?", battery, memory, blip vs drift, storage trend |
+| action | 3 | — | Propose → approve/reject → outbox, end to end |
+| scan | 3 | — | Golden `fleet scan` runs (no LLM, fully reproducible) |
+
+**Scoring is code, not an LLM judge.** Expected values come from `evals/oracle.py`, an independent implementation over the raw NDJSON that shares no code with the agent's loader, repository or detectors. Assertions cover:
+
+- exact device sets (precision and recall), numbers, dates and stated thresholds
+- which tools ran or must not run, and the answer type
+- proposals, verifier results and audit events
+
+Every case also checks that the outbox contains exactly the approved-and-executed proposals, and that every proposal and every decision has an audit entry with its evidence.
+
+**Data.** Cases run on the real data in `data/raw/` and on a committed synthetic fixture (`evals/fixtures/fixture.ndjson`, seeded generator). The fixture exists for signals the sample lacks: injection strings, terminal markup, five Dells, a failing battery, RAM pressure, storage decline, blips vs drift, stale and short histories. Its tenants exist only in `config/policy.eval.yaml`, so `fleet chat` and `fleet scan` cannot select them. When `data/raw/` is missing (as in CI), real-data cases are skipped and reported as skipped.
+
+**Recorded mode.** Cassettes in `evals/cassettes/` store only model responses, redacted and keyed by a request digest. A changed prompt, tool output or dataset makes the affected cases report "cassette out of date" rather than a false pass or fail. CI (`.github/workflows/ci.yml`) runs ruff, pytest and the recorded evals on pinned dependencies.
+
+> **Current state.** The 117 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 47 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph data[Data]
+        raw[(raw NDJSON<br/>source of truth)] --> loader[loader<br/>sanitize · normalize] --> db[(telemetry.db<br/>read-only)]
+        db --> repo[Repository<br/>tenant-scoped, fails closed]
+    end
+    subgraph agent["Agent graph (LangGraph)"]
+        guard[input_guard] --> planner[planner<br/>structured plan]
+        planner --> loop[agent ⇄ tools<br/>ReAct, ≤ 8 calls]
+        loop --> verify[finalize<br/>schema + verifier]
+        verify -- revise ≤ 2 --> loop
+        verify --> auto[auto_propose<br/>in code]
+        auto --> respond[respond] --> approval{{approval<br/>interrupt}}
+    end
+    repo --> tools[9 read tools · 6 action tools<br/>policy checks]
+    loop <--> tools
+    approval -- human y/n/l in CLI --> exec[executor<br/>re-check precondition] --> outbox[(outbox.jsonl)]
+    tools --> app[(app.db<br/>proposals)]
+    exec --> audit[(audit.jsonl<br/>hash chain)]
+    tools --> audit
+    scan[fleet scan<br/>fixed workflow] --> tools
+```
+
+**Chat (agent).** One graph run per turn:
+
+1. `input_guard` rejects inputs over 2,000 characters.
+2. `planner` makes one LLM call that returns a structured plan: intent, scope check, entities, whether to ask a clarifying question, and the tool steps. Out-of-scope requests and clarifications end here, without reading any data.
+3. `agent` and `tools` run a ReAct loop with only the tools that `policy.yaml` enables. Tool output reaches the model wrapped in `<tool_data>` tags, so it is treated as data.
+4. The model ends by calling `submit_answer` with a structured answer. `finalize` validates that answer and runs the verifier. On failure the model gets the specific errors and up to two revisions. After that, unverifiable claims are removed and the answer says so.
+5. `auto_propose` creates unprompted proposals in code from this turn's evidence.
+6. `respond` renders the turn.
+7. If proposals are pending in an interactive session, the graph pauses on a LangGraph `interrupt`. The CLI collects your decisions and resumes. The checkpointer is SQLite, so a pending approval survives a crash.
+
+**Scan (workflow).** Fixed steps in code, with no planner and no ReAct loop:
+
+1. Run all five detectors.
+2. Apply the same policy checks and caps to eligible actions.
+3. Optionally add a one-paragraph LLM summary. The summary is verified against the findings and dropped if it doesn't match.
+4. Print the briefing and ask for approval.
+
+The rule behind the split: fixed steps run as code, and unpredictable questions go to the agent.
+
+**LLM calls.** Every call goes through the same wrapper:
+
+- a 30 s timeout per call and a 90 s deadline per turn; no retry starts if it would end past the deadline
+- up to 3 retries with exponential backoff and jitter, only on 429, 5xx or timeout, honoring `Retry-After`
+- a per-turn budget of 60k input and 3k output tokens
+- up to 2 repair retries when structured output is invalid
+
+Providers are wrapped in one small `ChatModel` interface. The same graph runs on the live model, a cassette replay, or a scripted model in tests.
+
+**Layout.**
+
+```
+fleet_copilot/
+  data/       loader, schema, sanitize, versions, repository (tenant-scoped), profile
+  insights/   detectors
+  tools/      envelope, schemas (strict Pydantic args), read tools
+  agent/      graph, session, models (Plan, FinalAnswer), verifier, proposals, render
+  llm/        provider adapters, retry/budget, cassettes, scripted model, structured-output repair
+  policy.py   the nine proposal checks       executor.py  approval → outbox
+  audit.py    hash-chained log               store.py     proposals and acknowledgements
+  scan.py     scan workflow                  cli.py       commands
+  tracing.py  per-session JSONL traces
+config/       policy.yaml, policy.eval.yaml, thresholds.yaml, blocklist.yaml, llm.yaml, pricing.yaml
+prompts/      planner.md, agent.md, scan_summary.md (hashed into a prompt version in every trace)
+evals/        oracle.py, runner.py, cases/, fixtures/, cassettes/
+docs/         PHILOSOPHY.md, SECURITY.md
+```
+
+## Tool catalog
+
+Every tool has strict typed arguments (unknown fields are rejected) and returns the same envelope:
+
+- `ok` and `data`
+- `total_count` and `truncated` (lists are capped at 25 devices)
+- `evidence_ids` and a query receipt `Q-<turn>-<n>`
+- `as_of`
+- `definitions_used`, the thresholds applied
+- `caveats`
+- `error`, with a code, a message and a hint
+
+The tenant is never an argument: it comes from the session.
+
+**Read tools**
+
+| Tool | Purpose |
+|---|---|
+| `resolve_entities` | Map words ("the Dell", a hostname, serial or employee ID) to IDs; returns candidates when ambiguous |
+| `find_devices` | Main query tool: filter on the latest snapshot by platform, manufacturer, model, OS older than, low disk, free %/GB, RAM %, failing check or severity, software, battery, staleness; group or sort |
+| `get_device` | Latest-snapshot summary of one device, including compliance and open proposals |
+| `get_device_history` | Time series over the window: disk, RAM, battery, OS version, or `compliance:<check_id>` |
+| `get_compliance_overview` | Pass/fail counts per check, with failing devices |
+| `get_software` | Devices with a given software, or the software on one device |
+| `run_insights` | Run detectors: `battery_eol`, `ram_constrained`, `low_storage`, `compliance_drift`, `prohibited_software` |
+| `get_definitions` | Thresholds in use, so answers can state them |
+| `list_proposals` | This tenant's proposals and their status |
+
+**Action tools (proposal only)**
+
+| Tool | Precondition, checked in code on the latest data |
+|---|---|
+| `open_remediation_ticket` | The check is failing on the device's latest snapshot; optional note ≤ 300 chars, sanitized, no foreign IDs |
+| `flag_device_for_replacement` | Battery condition is not "Normal" |
+| `create_upgrade_order` | Persistent RAM or storage finding; size from the allowlist (RAM 16/32/64, storage 512/1024/2048 GB) and larger than current |
+| `notify_employee` | A current finding that matches a fixed template; no free text reaches the employee |
+| `request_software_removal` | Prohibited software present on the latest snapshot |
+| `acknowledge_finding` | Insight ID returned this session; suppression for at most 90 days |
+
+`lock_device` and `wipe_device` are listed as forbidden in `policy.yaml` and are never bound to the model.
+
+**Policy checks on every proposal, in order:**
+
+1. The tool is enabled.
+2. The arguments match the schema.
+3. The target belongs to the tenant; otherwise the result is "not found".
+4. The evidence was returned this session, for the same device, and is the right kind.
+5. The precondition is true and the data is fresh.
+6. It is not a duplicate of an open proposal; a duplicate returns the existing ID.
+7. It was not rejected earlier this session.
+8. Unprompted proposals stay within the cap of 5 per turn.
+9. The batch covers at most 10 devices.
+
+**Lifecycle.**
+
+- A proposal starts as `proposed`. It then becomes `approved`, `rejected` or `pending` (decide later).
+- An approved proposal ends as `executed`, `failed` or `stale_precondition`. The executor checks the precondition again just before writing to the outbox.
+- A `failed` proposal can be retried. Execution is idempotent by proposal ID, so nothing runs twice.
+
+## Grounding strategy
+
+1. **Evidence IDs for everything a claim can rest on:**
+
+   | Kind | Format |
+   |---|---|
+   | Snapshot | `1LYSSFD074BB@2026-05-22` |
+   | Check result | `…#screen_lock` |
+   | Software entry | `…$utorrent` |
+   | Insight | `INS-<detector>-<device>-<hash>` |
+   | Query receipt | `Q-<turn>-<n>`, used for counts and "no matches" |
+   | Proposal | `PRP-<n>` |
+
+   Only IDs that a tool returned in this session count as evidence.
+2. **Structured final answers.** The model submits:
+   - a summary
+   - claims, each with its evidence IDs and the values it states
+   - the definitions used
+   - caveats
+   - an answer type: `answer`, `no_matches`, `insufficient_data`, `clarification` or `refusal`
+
+   Free text is never the final answer.
+3. **Deterministic verifier.** Before rendering, the verifier checks that:
+   - every cited ID came from a tool this session
+   - every device and employee ID in the summary, claims and values appears in a tool result
+   - every number matches a tool value or a threshold, and every count matches what its cited evidence can count
+   - every threshold the cited results used is stated
+   - every factual claim has evidence, and "no matches" cites a query that returned zero rows
+   - an answer that lists some devices from a result lists all of them or states the total
+4. **Definitions are data.** "Low disk", "stale" and "persistent RAM" are defined in `thresholds.yaml`. The tools report which definitions they applied, and the answer prints them.
+5. **Saying "I don't know" is part of grounding.** "No matches" (the query ran and found nothing) is distinct from "insufficient data" (too few snapshots, or a period outside the window). Trend detectors need at least 7 snapshots. Weak signals carry caveats, for example that RAM is one reading per day and that battery capacity is relative to the window.
+6. **Telemetry is the only source.** IPs, MACs and hardware UUIDs are never loaded. Battery charge level is not used as a health signal.
+
+## Guardrails
+
+**The challenge's five required guardrails:**
+
+| Requirement | How it is enforced | Tested by |
+|---|---|---|
+| Tenant isolation | Session fixed to one tenant at startup. Every repository query must contain the tenant filter and every row is re-checked, failing closed. Proposals, traces, audit and outbox are tenant-scoped. | `test_data`, `test_tools`, G-TC01/02/04, S01–S03 |
+| Block cross-company access | The tenant is never a tool argument. Another tenant's device, employee or proposal returns "not found" without confirming it exists. Requests to switch tenant are refused. | G-TC01, G-TC02, G-TC04, F12, `test_cli` |
+| Explicit human approval | Action tools only create proposals. Execution happens only through the approval interrupt or `fleet proposals approve`, and only from an interactive terminal. The precondition is checked again before execution. | `test_cli` (piped approval refused), every eval case (outbox = executed proposals) |
+| Audit logs | Append-only, hash-chained `var/audit.jsonl`. It records sessions, proposals, approvals, rejections, executions, failures, refusals and cancellations, with evidence IDs. `fleet audit verify` finds edits, deletions and reordering. | `test_tools`, `test_cli`, every eval case |
+| Refuse without evidence | Policy check 4 (evidence from this session, same device, right kind) and check 5 (precondition on current data). The verifier rejects uncited claims. | G-TC27/28/29, `test_tools`, `test_verifier` |
+
+**The full set.** The design defines 35 guardrails. The test plan maps each one to a unit test (code-only guardrails) or an eval case (guardrails that involve the LLM).
+
+| Area | Guardrails |
+|---|---|
+| Input | 2,000-character cap; out-of-scope and override attempts refused with a list of capabilities; ambiguous entities trigger a clarifying question |
+| Untrusted telemetry | Strings capped at 100 characters with control and format characters removed on load; tool output wrapped as data; terminal markup printed literally |
+| Actions | Dedup, rejection memory, auto-proposal cap, batch cap of 10, upgrade-size allowlist, notification templates only, staleness rules, a 90-day limit on acknowledgements, idempotent retries |
+| Runtime | Token, tool-call and time budgets; bounded retries; structured-output repair; Ctrl+C cancellation that never executes anything |
+
+See [docs/SECURITY.md](docs/SECURITY.md) for the threat model and what is out of scope.
+
+## Design decisions and trade-offs
+
+| Decision | Why | Trade-off |
+|---|---|---|
+| **Plan first, then ReAct** (explicit planner node) | The plan is logged and inspectable; scope and clarification are decided before any data is read; broad questions reliably schedule all detectors | One extra LLM call per turn |
+| **LLM for judgment, code for truth** | Detectors, verifier, policy checks and proposals are deterministic Python, so they can be unit-tested and give the same result every run | Detectors are rule-based; they miss patterns nobody wrote a rule for |
+| **Structured answers + deterministic verifier** | Fabricated IDs, numbers and counts are caught before display, not after | Answers are less free-form; the number check is strict and can force a revision on a correct but rephrased number |
+| **Unprompted proposals created in code** | The model can't invent actions; eligibility comes from evidence plus `policy.yaml` rules (tickets only for high severity, never notifications or acknowledgements, never for stale devices) | Risk of approval fatigue, handled by a cap of 5 per turn, dedup and rejection memory |
+| **`fleet scan` as a workflow, not an agent run** | Fixed steps don't need an LLM: reproducible, free, and a golden eval case | Less flexible than asking the agent |
+| **SQLite derived from immutable NDJSON** | Re-loadable, read-only at query time, parameterized SQL, zero infrastructure | Single-machine; tenant isolation is in the application, not the database |
+| **Policy in YAML, frozen and enforced in code; fails closed** | Admins can see and change what the agent may do without code changes; a bad file stops startup | No runtime reconfiguration |
+| **Templates only for employee notifications** | No LLM-written text reaches an employee (a person is behind every device) | Less flexible messages. *This deviates from a free-text "message" field: templates cover every finding type, and new ones are added in `policy.yaml`.* |
+| **Injection stance: structural controls** (data wrapping, sanitizing, code-enforced scope and approval) | An injected string can at most mislead wording; it can't cross tenants or execute anything | Doesn't stop a crafted string from influencing a sentence; tested with fixture strings |
+| **Provider-agnostic `ChatModel` interface** | Same graph on Anthropic, OpenAI or OpenRouter, cassettes or scripted tests | Tool-calling quality varies by model; evals should be recorded per model |
+| **No authentication in v1** | Out of scope for a CLI take-home; the tenant boundary still holds within a session | Whoever runs the CLI chooses the tenant |
+| **Thresholds set from the data profile** (low disk < 15%, stale ≥ 10 days, RAM ≥ 95%, trends need ≥ 7 snapshots) | Defaults are visible, stated in answers and adjustable | RAM is one reading per day, so it shows usage, not proven pressure; answers say so |
+
+The reasoning behind the principles is in [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md).
+
+## Future work
+
+- Authentication (SSO/OIDC), roles, and administrators across several tenants
+- Placeholders for identifiers and telemetry text before they reach the LLM provider
+- Scheduled scans with alert deduplication
+- Database-level tenant isolation (for example, Postgres row-level security) and an external anchor for the audit hash
+- Real integrations behind the outbox (ticketing, procurement, email)
+- A fleet-wide `find_devices` at past dates (today it filters latest snapshots; history is per device)
 
 ## License
 

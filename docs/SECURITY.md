@@ -35,7 +35,7 @@ Telemetry strings (software names, hostnames, model names) come from devices and
 
 ### Actions
 
-The agent only creates proposals. Every proposal must cite evidence retrieved in the current session, must satisfy a precondition checked in code, and executes only after explicit human approval. The precondition is checked again just before execution. Destructive actions (locking or wiping a device) are not available to the agent at all.
+The agent only creates proposals. Every proposal must cite evidence retrieved in the current session, must satisfy a precondition checked in code, and executes only after explicit human approval. Approvals are read only from an interactive terminal, so piped or scripted input cannot approve anything. The precondition is checked again just before execution. Destructive actions (locking or wiping a device) are not available to the agent at all.
 
 ### Terminal output
 
@@ -58,7 +58,7 @@ Only data from the active tenant is sent, and only the fields a question needs. 
 
 ## Stored files
 
-The SQLite database, traces, audit log and outbox are local files, excluded from git and created readable by the owner only. Every proposal, outbox and audit record carries its tenant, and listing commands show only the selected tenant's records.
+The SQLite database, traces, audit log and outbox are local files, excluded from git. They are created readable by the owner only where the operating system supports it (POSIX file modes; on Windows they inherit the folder's permissions). Every proposal, outbox and audit record carries its tenant, and listing commands show only the selected tenant's records.
 
 ### Tamper-evident audit log
 
