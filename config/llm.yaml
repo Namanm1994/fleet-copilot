@@ -1,0 +1,18 @@
+# LLM settings. Environment variables FLEET_LLM_PROVIDER and FLEET_LLM_MODEL override these.
+provider: anthropic
+models:
+  anthropic: claude-sonnet-5-5
+  openai: ""          # set the pinned model ID you want to use
+  openrouter: ""      # e.g. "<vendor>/<model>" as listed by OpenRouter
+base_urls:
+  openrouter: https://openrouter.ai/api/v1
+api_key_env:
+  anthropic: ANTHROPIC_API_KEY
+  openai: OPENAI_API_KEY
+  openrouter: OPENROUTER_API_KEY
+temperature: 0
+max_output_tokens: 1500
+call_timeout_s: 30
+network_retries: 3
+backoff_base_s: 1.0
+repair_retries: 2

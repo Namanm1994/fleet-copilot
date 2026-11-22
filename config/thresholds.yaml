@@ -1,0 +1,45 @@
+# Definitions the agent applies and states in its answers.
+# Calibrated on the 41-line sample; recheck with `fleet profile` on the full dataset.
+
+low_disk:
+  description: "System volume has less than {free_pct_lt}% free (latest snapshot)"
+  free_pct_lt: 15
+low_disk_persistent:
+  description: "Low disk in at least {share:.0%} of snapshots (minimum {min_points} snapshots)"
+  share: 0.7
+  min_points: 7
+ram_flagged:
+  description: "RAM used at or above {used_pct_gte}% on {consecutive} or more consecutive snapshots"
+  used_pct_gte: 95
+  consecutive: 2
+ram_persistent:
+  description: "RAM used at or above {used_pct_gte}% in at least {share:.0%} of snapshots (minimum {min_points})"
+  used_pct_gte: 95
+  share: 0.5
+  min_points: 7
+battery_eol:
+  description: "Battery condition reported by the device is not \"Normal\" (latest snapshot)"
+battery_degrading:
+  description: "Full-charge capacity fell by {decline_pct}% or more across the window (minimum {min_points} snapshots)"
+  decline_pct: 5
+  min_points: 7
+compliance_drift:
+  description: "A check that passed earlier has failed on {consecutive_fails} or more consecutive snapshots up to now"
+  consecutive_fails: 2
+compliance_flapping:
+  description: "A check changed status {changes} or more times in the window"
+  changes: 3
+prohibited_software:
+  description: "Installed software matches the prohibited-software blocklist"
+stale_device:
+  description: "No snapshot for {days} or more days before as-of"
+  days: 10
+min_points_for_trend:
+  description: "Fewer than {points} snapshots means insufficient data for a trend"
+  points: 7
+max_devices_per_answer:
+  description: "Answers list at most {count} devices; the rest are summarized"
+  count: 25
+acknowledge_max_days:
+  description: "Acknowledged findings stay suppressed for at most {days} days"
+  days: 90

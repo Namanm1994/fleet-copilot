@@ -24,13 +24,17 @@ htmlcov/
 .env.*
 !.env.example
 
-# Derived data (rebuilt by the loader)
+# Provided dataset (not redistributed; place it at data/raw/telemetry.ndjson)
+data/raw/
+
+# Derived data (rebuilt by `fleet load`)
 *.db
 *.sqlite
 *.sqlite3
 data/derived/
 
 # Runtime outputs
+var/
 traces/
 logs/
 outbox/

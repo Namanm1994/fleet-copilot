@@ -1,0 +1,5 @@
+# USD per 1M tokens, keyed by model ID. Fill in from your provider's current price list.
+# Models without an entry are reported with cost "unknown"; token counts are always reported.
+models: {}
+# example:
+#   some-model-id: {input: 0.0, output: 0.0}

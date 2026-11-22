@@ -1,0 +1,10 @@
+# Used only by the eval runner and tests. Adds the synthetic fixture tenants.
+# `fleet chat` and `fleet scan` never load this file.
+extends: policy.yaml
+tenants:
+  fixture-999:
+    name: Fixture Corp
+    aliases: [fixture, fixturecorp]
+  fixture-998:
+    name: Other Fixture Corp
+    aliases: [otherfixture]
