@@ -1,0 +1,66 @@
+# What the agent is allowed to do. Loaded once, frozen, and enforced in code.
+# A missing or malformed file stops the CLI (fail closed).
+
+tenants:
+  acme-001:
+    name: Acme
+    aliases: [acme]
+  initech-003:
+    name: Initech
+    aliases: [initech]
+  # Add the remaining tenant(s) from the full dataset here. `fleet load` reports
+  # any company_id present in the data but missing from this registry.
+
+read_tools:
+  - resolve_entities
+  - find_devices
+  - get_device
+  - get_device_history
+  - get_compliance_overview
+  - get_software
+  - run_insights
+  - get_definitions
+  - list_proposals
+
+action_tools:
+  open_remediation_ticket: {enabled: true}
+  flag_device_for_replacement: {enabled: true}
+  create_upgrade_order: {enabled: true}
+  notify_employee: {enabled: true}
+  request_software_removal: {enabled: true}
+  acknowledge_finding: {enabled: true}
+
+forbidden_actions: [lock_device, wipe_device]
+
+approval_required: true          # cannot be disabled by the agent
+max_devices_per_batch: 10
+max_tool_calls_per_turn: 8
+max_verifier_revisions: 2
+input_max_chars: 2000
+
+auto_propose: true
+max_auto_proposals_per_turn: 5
+# Actions the system may propose without being asked, and when.
+auto_propose_rules:
+  open_remediation_ticket: {min_severity: high}
+  flag_device_for_replacement: {}
+  create_upgrade_order: {}
+  request_software_removal: {}
+
+budgets:
+  max_input_tokens_per_turn: 60000
+  max_output_tokens_per_turn: 3000
+  turn_deadline_s: 90
+
+upgrade_specs:
+  ram_gb: [16, 32, 64]
+  storage_gb: [512, 1024, 2048]
+
+notify_templates:
+  low_disk: "Your {device_kind} {hostname} has less than {threshold}% free disk space (as of {as_of}). IT will contact you to help free up space."
+  os_update_required: "Your {device_kind} {hostname} needs an operating system update (as of {as_of}). IT will contact you to schedule it."
+  prohibited_software: "Software that is not permitted on company devices was found on your {device_kind} {hostname} (as of {as_of}). IT will contact you to remove it."
+  screen_lock_required: "Screen lock is not enabled on your {device_kind} {hostname} (as of {as_of}). Please enable it; IT can help."
+  compliance_issue: "Your {device_kind} {hostname} is failing a security check ({check_id}) (as of {as_of}). IT will contact you."
+  battery_replacement: "The battery in your {device_kind} {hostname} needs service (as of {as_of}). IT will contact you about a replacement."
+  upgrade_scheduled: "An upgrade has been requested for your {device_kind} {hostname} (as of {as_of}). IT will contact you to schedule it."

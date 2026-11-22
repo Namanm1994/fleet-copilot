@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fleet-copilot"
+version = "0.1.0"
+description = "Agentic AI copilot for IT fleet telemetry: grounded Q&A, insights and approval-gated actions."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+dependencies = [
+    "langgraph>=1.0",
+    "langgraph-checkpoint-sqlite>=2.0",
+    "langchain-core>=1.0",
+    "pydantic>=2.6",
+    "pyyaml>=6.0",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+anthropic = ["langchain-anthropic>=1.0"]
+openai = ["langchain-openai>=1.0"]
+all = ["langchain-anthropic>=1.0", "langchain-openai>=1.0"]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+
+[project.scripts]
+fleet = "fleet_copilot.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["fleet_copilot*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]

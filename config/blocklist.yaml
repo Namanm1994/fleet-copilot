@@ -1,0 +1,10 @@
+# Prohibited software. Matched case-insensitively against installed software names,
+# ignoring spaces, punctuation and the "µ" prefix. Remote-access tools are not listed
+# on purpose: many companies approve them.
+prohibited_software:
+  - utorrent
+  - bittorrent
+  - qbittorrent
+  - vuze
+  - frostwire
+  - transmission
