@@ -13,11 +13,15 @@ An agentic AI copilot that lets IT administrators query fleet telemetry in natur
 
 ## Design principles
 
-1. **LLM for judgment, code for truth.** Detectors, verification and policy checks are deterministic code; the LLM plans and explains.
-2. **Autonomy scales with reversibility.** Reads are free, proposals are checked, execution needs a human, and destructive actions are never available.
-3. **Every claim has a receipt.** Answers carry evidence IDs that trace back to individual telemetry snapshots.
+1. **Telemetry is the only source of truth.** Every claim cites the snapshots it came from, and weak signals are labeled as weak.
+2. **Copilot, not autopilot.** The agent proposes, a human approves, and the audit log records who decided.
+3. **No evidence, no action.** Every proposal must be backed by evidence retrieved in the current session.
 4. **The tenant boundary comes before capability.** A session can never see another company's data.
-5. **"Nothing needs attention" is a valid answer.** The copilot prioritizes rather than alarms.
+5. **Notice what changed, not just what is.** Detectors look across the full telemetry window and report only real patterns.
+6. **A person is behind every device.** Notifications use neutral templates, and network and hardware identifiers stay away from the LLM.
+7. **A guarantee is only as good as its test.** Every guardrail has an evaluation case that must pass.
+
+See [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) for the reasoning behind these principles and the trade-offs they involve.
 
 ## Planned architecture
 
