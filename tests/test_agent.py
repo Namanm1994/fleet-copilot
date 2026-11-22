@@ -215,3 +215,20 @@ def test_sqlite_checkpointer_resume(home):
     assert res.pending_approval and home.checkpoints_db.exists()
     pid = res.proposals[0]["proposal_id"]
     assert sess.decide({pid: "later"}) == [{"proposal_id": pid, "status": "pending", "error": None}]
+
+
+def test_cancel_mid_turn_keeps_proposal_pending(home):  # TC-45
+    def interrupt(_msgs):
+        raise KeyboardInterrupt
+
+    steps = [plan(intent_class="action"), call("get_device", {"device_id": "FX-DRIFT-01"}),
+             call("open_remediation_ticket", {"device_id": "FX-DRIFT-01", "check_id": "screen_lock",
+                                              "evidence_ids": ["FX-DRIFT-01@2026-06-12#screen_lock"]}),
+             interrupt]
+    sess, _ = session(home, steps, interactive=True)
+    with pytest.raises(KeyboardInterrupt):
+        sess.ask("Open a ticket for FX-DRIFT-01's screen lock")
+    assert any(e["event"] == "cancelled" for e in sess.tracer.events)
+    props = sess.tk.store.list()
+    assert len(props) == 1 and props[0]["status"] == "proposed"
+    assert not sess.tk.paths.outbox.exists()
