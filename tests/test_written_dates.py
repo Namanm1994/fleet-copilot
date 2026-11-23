@@ -98,11 +98,13 @@ def test_a_period_from_the_question_may_be_named_back(home):
             summary=summary, claims=[{"text": "FX-SHORT-01 has snapshots from 2026-06-10.", "evidence_ids": res.evidence_ids}],
             definitions_used=["min_points_for_trend"], answer_type="insufficient_data"), question)
 
-    assert check("There is no data for April 2026.", "What was the battery trend in April?").ok
-    assert check("There is no data for April 3.", "What happened on April 3?").ok
-    not_asked = check("There is no data for March 2026.", "What was the battery trend in April?")
+    lo, hi = (d[:10] for d in tk.repo.data_window())
+    covers = f"The data covers {lo} to {hi}."                       # rule 8 wants the window stated
+    assert check(f"There is no data for April 2026. {covers}", "What was the battery trend in April?").ok
+    assert check(f"There is no data for April 3. {covers}", "What happened on April 3?").ok
+    not_asked = check(f"There is no data for March 2026. {covers}", "What was the battery trend in April?")
     assert not not_asked.ok and any("March 2026" in e for e in not_asked.errors)
-    wrong_year = check("There is no data for April 2019.", "What was the battery trend in April?")
+    wrong_year = check(f"There is no data for April 2019. {covers}", "What was the battery trend in April?")
     assert not wrong_year.ok and any("April 2019" in e for e in wrong_year.errors)
-    a_day_not_asked = check("Nothing was recorded on April 3.", "What was the battery trend in April?")
+    a_day_not_asked = check(f"Nothing was recorded on April 3. {covers}", "What was the battery trend in April?")
     assert not a_day_not_asked.ok
