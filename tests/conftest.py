@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 
 import pytest
+
+os.environ["FLEET_STRICT_CONTRACT"] = "1"  # tool outputs must match tools/outputs.py in every test
 
 from fleet_copilot.config import load_app_config
 from fleet_copilot.data.loader import load

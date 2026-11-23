@@ -25,6 +25,7 @@ class ToolResult(BaseModel):
     data: Any = None
     total_count: int | None = None
     truncated: bool = False
+    next_offset: int | None = None  # pass as `offset` to get the next page of a long list
     evidence_ids: list[str] = Field(default_factory=list)
     receipt_id: str | None = None
     as_of: str | None = None

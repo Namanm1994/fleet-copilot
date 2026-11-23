@@ -1,0 +1,861 @@
+{
+  "envelope": {
+    "as_of": {
+      "required": false
+    },
+    "caveats": {
+      "required": false
+    },
+    "data": {
+      "required": false
+    },
+    "definitions_used": {
+      "required": false
+    },
+    "error": {
+      "fields": {
+        "code": {
+          "required": true
+        },
+        "hint": {
+          "required": false
+        },
+        "message": {
+          "required": true
+        }
+      },
+      "required": false
+    },
+    "evidence_ids": {
+      "required": false
+    },
+    "next_offset": {
+      "required": false
+    },
+    "ok": {
+      "required": false
+    },
+    "receipt_id": {
+      "required": false
+    },
+    "total_count": {
+      "required": false
+    },
+    "truncated": {
+      "required": false
+    }
+  },
+  "error_codes": [
+    "AMBIGUOUS",
+    "AUTO_PROPOSAL_CAP",
+    "BATCH_LIMIT",
+    "BUDGET_EXCEEDED",
+    "DUPLICATE",
+    "DUPLICATE_CALL",
+    "FORBIDDEN_ACTION",
+    "INSUFFICIENT_DATA",
+    "INTERNAL_ERROR",
+    "INVALID_ARGUMENT",
+    "NOT_FOUND",
+    "PRECONDITION_FAILED",
+    "REJECTED_THIS_SESSION"
+  ],
+  "tools": {
+    "acknowledge_finding": {
+      "input": {
+        "insight_id": {
+          "required": true
+        },
+        "reason": {
+          "required": true
+        },
+        "until": {
+          "required": true
+        }
+      },
+      "kind": "action",
+      "output": {
+        "action": {
+          "required": true
+        },
+        "note": {
+          "required": true
+        },
+        "origin": {
+          "required": true
+        },
+        "preview": {
+          "required": true
+        },
+        "proposal_id": {
+          "required": true
+        },
+        "reason": {
+          "required": true
+        },
+        "status": {
+          "required": true
+        },
+        "warnings": {
+          "required": true
+        }
+      }
+    },
+    "create_upgrade_order": {
+      "input": {
+        "component": {
+          "required": true
+        },
+        "device_id": {
+          "required": true
+        },
+        "evidence_ids": {
+          "required": true
+        },
+        "spec_gb": {
+          "required": true
+        }
+      },
+      "kind": "action",
+      "output": {
+        "action": {
+          "required": true
+        },
+        "note": {
+          "required": true
+        },
+        "origin": {
+          "required": true
+        },
+        "preview": {
+          "required": true
+        },
+        "proposal_id": {
+          "required": true
+        },
+        "reason": {
+          "required": true
+        },
+        "status": {
+          "required": true
+        },
+        "warnings": {
+          "required": true
+        }
+      }
+    },
+    "find_devices": {
+      "input": {
+        "criteria": {
+          "fields": {
+            "battery_not_normal": {
+              "required": false
+            },
+            "device_ids": {
+              "required": false
+            },
+            "disk_free_gb_lt": {
+              "required": false
+            },
+            "disk_free_pct_lt": {
+              "required": false
+            },
+            "employee_id": {
+              "required": false
+            },
+            "failing_check": {
+              "required": false
+            },
+            "failing_severity": {
+              "required": false
+            },
+            "has_prohibited_software": {
+              "required": false
+            },
+            "has_software": {
+              "required": false
+            },
+            "is_laptop": {
+              "required": false
+            },
+            "low_disk": {
+              "required": false
+            },
+            "manufacturer": {
+              "required": false
+            },
+            "model_contains": {
+              "required": false
+            },
+            "os_older_than": {
+              "fields": {
+                "platform": {
+                  "required": true
+                },
+                "version": {
+                  "required": true
+                }
+              },
+              "required": false
+            },
+            "platform": {
+              "required": false
+            },
+            "ram_used_pct_gte": {
+              "required": false
+            },
+            "stale": {
+              "required": false
+            }
+          },
+          "required": false
+        },
+        "group_by": {
+          "required": false
+        },
+        "limit": {
+          "required": false
+        },
+        "offset": {
+          "required": false
+        },
+        "sort_by": {
+          "required": false
+        }
+      },
+      "kind": "read",
+      "output": {
+        "devices": {
+          "fields": {
+            "device_id": {
+              "required": true
+            },
+            "employee_id": {
+              "required": true
+            },
+            "hostname": {
+              "required": true
+            },
+            "last_seen": {
+              "required": true
+            },
+            "matched_values": {
+              "required": true
+            },
+            "model": {
+              "required": true
+            },
+            "os": {
+              "required": true
+            },
+            "stale": {
+              "required": true
+            }
+          },
+          "required": false
+        },
+        "groups": {
+          "fields": {
+            "count": {
+              "required": true
+            },
+            "device_ids": {
+              "required": true
+            }
+          },
+          "required": false
+        },
+        "total": {
+          "required": true
+        }
+      }
+    },
+    "flag_device_for_replacement": {
+      "input": {
+        "device_id": {
+          "required": true
+        },
+        "evidence_ids": {
+          "required": true
+        },
+        "reason": {
+          "required": false
+        }
+      },
+      "kind": "action",
+      "output": {
+        "action": {
+          "required": true
+        },
+        "note": {
+          "required": true
+        },
+        "origin": {
+          "required": true
+        },
+        "preview": {
+          "required": true
+        },
+        "proposal_id": {
+          "required": true
+        },
+        "reason": {
+          "required": true
+        },
+        "status": {
+          "required": true
+        },
+        "warnings": {
+          "required": true
+        }
+      }
+    },
+    "get_compliance_overview": {
+      "input": {
+        "check_id": {
+          "required": false
+        },
+        "severity": {
+          "required": false
+        }
+      },
+      "kind": "read",
+      "output": {
+        "as_of_latest_snapshot_per_device": {
+          "required": true
+        },
+        "checks": {
+          "fields": {
+            "check_id": {
+              "required": true
+            },
+            "fail": {
+              "required": true
+            },
+            "failing_devices": {
+              "fields": {
+                "device_id": {
+                  "required": true
+                },
+                "evidence_id": {
+                  "required": true
+                },
+                "hostname": {
+                  "required": true
+                }
+              },
+              "required": true
+            },
+            "pass": {
+              "required": true
+            },
+            "severity": {
+              "required": true
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "get_definitions": {
+      "input": {
+        "names": {
+          "required": false
+        }
+      },
+      "kind": "read",
+      "output": {
+        "root": {
+          "required": true
+        }
+      }
+    },
+    "get_device": {
+      "input": {
+        "device_id": {
+          "required": true
+        }
+      },
+      "kind": "read",
+      "output": {
+        "battery_condition": {
+          "required": true
+        },
+        "battery_cycle_count": {
+          "required": true
+        },
+        "compliance": {
+          "fields": {
+            "check_id": {
+              "required": true
+            },
+            "evidence_id": {
+              "required": true
+            },
+            "severity": {
+              "required": true
+            },
+            "status": {
+              "required": true
+            }
+          },
+          "required": true
+        },
+        "device_id": {
+          "required": true
+        },
+        "disk_free_gb": {
+          "required": true
+        },
+        "disk_free_pct": {
+          "required": true
+        },
+        "disk_total_gb": {
+          "required": true
+        },
+        "employee_id": {
+          "required": true
+        },
+        "first_seen": {
+          "required": true
+        },
+        "hostname": {
+          "required": true
+        },
+        "is_laptop": {
+          "required": true
+        },
+        "last_seen": {
+          "required": true
+        },
+        "manufacturer": {
+          "required": true
+        },
+        "model": {
+          "required": true
+        },
+        "open_proposals": {
+          "fields": {
+            "action": {
+              "required": true
+            },
+            "proposal_id": {
+              "required": true
+            },
+            "status": {
+              "required": true
+            }
+          },
+          "required": true
+        },
+        "os": {
+          "required": true
+        },
+        "ram_total_gb": {
+          "required": true
+        },
+        "ram_used_pct": {
+          "required": true
+        },
+        "snapshot_id": {
+          "required": true
+        },
+        "software_count": {
+          "required": true
+        },
+        "stale": {
+          "required": true
+        }
+      }
+    },
+    "get_device_history": {
+      "input": {
+        "device_id": {
+          "required": true
+        },
+        "end": {
+          "required": false
+        },
+        "metrics": {
+          "required": true
+        },
+        "start": {
+          "required": false
+        }
+      },
+      "kind": "read",
+      "output": {
+        "device_id": {
+          "required": true
+        },
+        "series": {
+          "fields": {
+            "date": {
+              "required": true
+            },
+            "evidence_id": {
+              "required": true
+            },
+            "value": {
+              "required": true
+            }
+          },
+          "required": true
+        },
+        "window": {
+          "required": true
+        }
+      }
+    },
+    "get_software": {
+      "input": {
+        "device_id": {
+          "required": false
+        },
+        "name": {
+          "required": false
+        }
+      },
+      "kind": "read",
+      "output": {
+        "device_id": {
+          "required": false
+        },
+        "installed_on": {
+          "fields": {
+            "device_id": {
+              "required": false
+            },
+            "evidence_id": {
+              "required": true
+            },
+            "first_seen": {
+              "required": false
+            },
+            "name": {
+              "required": true
+            },
+            "prohibited": {
+              "required": true
+            },
+            "version": {
+              "required": true
+            }
+          },
+          "required": false
+        },
+        "query": {
+          "required": false
+        },
+        "software": {
+          "fields": {
+            "device_id": {
+              "required": false
+            },
+            "evidence_id": {
+              "required": true
+            },
+            "first_seen": {
+              "required": false
+            },
+            "name": {
+              "required": true
+            },
+            "prohibited": {
+              "required": true
+            },
+            "version": {
+              "required": true
+            }
+          },
+          "required": false
+        }
+      }
+    },
+    "list_proposals": {
+      "input": {
+        "device_id": {
+          "required": false
+        },
+        "status": {
+          "required": false
+        }
+      },
+      "kind": "read",
+      "output": {
+        "root": {
+          "fields": {
+            "action": {
+              "required": true
+            },
+            "device_id": {
+              "required": true
+            },
+            "employee_id": {
+              "required": true
+            },
+            "origin": {
+              "required": true
+            },
+            "proposal_id": {
+              "required": true
+            },
+            "reason": {
+              "required": true
+            },
+            "reject_reason": {
+              "required": true
+            },
+            "status": {
+              "required": true
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "notify_employee": {
+      "input": {
+        "check_id": {
+          "required": false
+        },
+        "device_id": {
+          "required": true
+        },
+        "employee_id": {
+          "required": true
+        },
+        "evidence_ids": {
+          "required": true
+        },
+        "template": {
+          "required": true
+        }
+      },
+      "kind": "action",
+      "output": {
+        "action": {
+          "required": true
+        },
+        "note": {
+          "required": true
+        },
+        "origin": {
+          "required": true
+        },
+        "preview": {
+          "required": true
+        },
+        "proposal_id": {
+          "required": true
+        },
+        "reason": {
+          "required": true
+        },
+        "status": {
+          "required": true
+        },
+        "warnings": {
+          "required": true
+        }
+      }
+    },
+    "open_remediation_ticket": {
+      "input": {
+        "check_id": {
+          "required": true
+        },
+        "device_id": {
+          "required": true
+        },
+        "evidence_ids": {
+          "required": true
+        },
+        "note": {
+          "required": false
+        }
+      },
+      "kind": "action",
+      "output": {
+        "action": {
+          "required": true
+        },
+        "note": {
+          "required": true
+        },
+        "origin": {
+          "required": true
+        },
+        "preview": {
+          "required": true
+        },
+        "proposal_id": {
+          "required": true
+        },
+        "reason": {
+          "required": true
+        },
+        "status": {
+          "required": true
+        },
+        "warnings": {
+          "required": true
+        }
+      }
+    },
+    "request_software_removal": {
+      "input": {
+        "device_id": {
+          "required": true
+        },
+        "evidence_ids": {
+          "required": true
+        },
+        "software_name": {
+          "required": true
+        }
+      },
+      "kind": "action",
+      "output": {
+        "action": {
+          "required": true
+        },
+        "note": {
+          "required": true
+        },
+        "origin": {
+          "required": true
+        },
+        "preview": {
+          "required": true
+        },
+        "proposal_id": {
+          "required": true
+        },
+        "reason": {
+          "required": true
+        },
+        "status": {
+          "required": true
+        },
+        "warnings": {
+          "required": true
+        }
+      }
+    },
+    "resolve_entities": {
+      "input": {
+        "refs": {
+          "required": true
+        }
+      },
+      "kind": "read",
+      "output": {
+        "root": {
+          "fields": {
+            "employee_ids": {
+              "required": false
+            },
+            "matches": {
+              "fields": {
+                "device_id": {
+                  "required": false
+                },
+                "employee_id": {
+                  "required": false
+                },
+                "label": {
+                  "required": false
+                },
+                "type": {
+                  "required": true
+                }
+              },
+              "required": true
+            },
+            "ref": {
+              "required": true
+            },
+            "status": {
+              "required": true
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "run_insights": {
+      "input": {
+        "detectors": {
+          "required": false
+        },
+        "device_ids": {
+          "required": false
+        },
+        "include_acknowledged": {
+          "required": false
+        }
+      },
+      "kind": "read",
+      "output": {
+        "detectors_run": {
+          "required": true
+        },
+        "devices_checked": {
+          "required": true
+        },
+        "insights": {
+          "fields": {
+            "acknowledged_until": {
+              "required": false
+            },
+            "caveats": {
+              "required": true
+            },
+            "data": {
+              "required": true
+            },
+            "definitions_used": {
+              "required": true
+            },
+            "detector": {
+              "required": true
+            },
+            "device_id": {
+              "required": true
+            },
+            "eligible_actions": {
+              "required": true
+            },
+            "evidence_ids": {
+              "required": true
+            },
+            "explanation": {
+              "required": true
+            },
+            "finding": {
+              "required": true
+            },
+            "hostname": {
+              "required": true
+            },
+            "insight_id": {
+              "required": true
+            },
+            "severity": {
+              "required": true
+            },
+            "stale": {
+              "required": true
+            }
+          },
+          "required": true
+        },
+        "insufficient_data_devices": {
+          "required": true
+        }
+      }
+    }
+  },
+  "version": "1"
+}

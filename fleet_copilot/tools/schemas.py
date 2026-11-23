@@ -73,6 +73,7 @@ class FindDevicesArgs(Strict):
     group_by: Literal["platform", "manufacturer", "model", "os_version", "employee"] | None = None
     sort_by: Literal["disk_free_pct", "ram_used_pct", "last_seen", "device_id"] | None = None
     limit: int = Field(25, ge=1, le=25)
+    offset: int = Field(0, ge=0, description="Skip this many matches; use the next_offset of the previous result to page.")
 
 
 class GetDeviceArgs(Strict):
@@ -194,7 +195,7 @@ ACTION_ARGS = {
 
 DESCRIPTIONS = {
     "resolve_entities": "Map the admin's words for devices or employees ('the Dell', a hostname, a serial, an employee ID) to IDs. Returns 'ambiguous' with candidates when several match.",
-    "find_devices": "Main query tool. Filter devices on their latest snapshot (platform, OS older than, low disk, RAM, failing checks, software, battery, stale) and optionally group or count. Returns matched values and evidence IDs.",
+    "find_devices": "Main query tool. Filter devices on their latest snapshot (platform, OS older than, low disk, RAM, failing checks, software, battery, stale) and optionally group or count. Returns matched values and evidence IDs. Lists come 25 at a time: when the result has next_offset, call again with that offset for the next page.",
     "get_device": "Latest-snapshot summary of one device: OS, RAM, disk, battery condition, compliance, last seen, open proposals.",
     "get_device_history": "Time series of one device's metrics over the telemetry window (disk, RAM, battery, OS version, or compliance:<check_id>).",
     "get_compliance_overview": "Pass/fail counts per compliance check on latest snapshots, with the failing devices.",
