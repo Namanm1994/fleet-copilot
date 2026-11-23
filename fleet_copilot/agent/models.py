@@ -19,6 +19,7 @@ class Plan(BaseModel):
     intent_class: str = "other"
     in_scope: bool = True
     refusal_reason: str | None = None
+    forbidden_action: str | None = None      # set when the admin asks for an action policy.yaml forbids
     entities: list[str] = Field(default_factory=list)
     needs_clarification: bool = False
     clarification_question: str | None = None

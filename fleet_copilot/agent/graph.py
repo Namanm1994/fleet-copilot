@@ -96,6 +96,12 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
             return stop(state, exc, "planner")
         plan_d = plan.model_dump()
         trace("planner", "plan", plan_d)
+        if plan.forbidden_action in policy.forbidden_actions:
+            # The refusal is written here, not by the model: what is forbidden is policy, and so is how it is said.
+            name = plan.forbidden_action.replace("_", " ")
+            tk.audit_event("refused", detail={"reason": f"forbidden action {plan.forbidden_action}", "question": state["question"][:200]})
+            return {"plan": plan_d, "status": "refused",
+                    "note": f"I can't do that: \"{name}\" is not available in this assistant, and no approval can enable it. {CAPABILITIES}"}
         if not plan.in_scope:
             reason = plan.refusal_reason or "That's outside what I can help with."
             tk.audit_event("refused", detail={"reason": reason, "question": state["question"][:200]})
