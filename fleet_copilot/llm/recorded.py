@@ -48,12 +48,15 @@ class CassetteModel:
     def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, timeout_s: float,
                effort: str | None = None) -> LLMResponse:
         key = f"{self._seq:03d}-{request_key(messages, tools)}"
-        self._seq += 1
         if self.mode == "replay":
             if key not in self.entries:
                 raise CassetteMiss(f"No recorded response for request {key} in {self.path.name}. Re-record with --mode live --record.")
+            self._seq += 1
             return LLMResponse.from_dict(self.entries[key])
+        # Numbered only once a reply arrives. A call that fails (timeout, rate limit) and is retried must not
+        # use up a number: the replay has no failed call, so its numbering would no longer match.
         resp = self.inner.invoke(messages, tools, timeout_s, effort)  # type: ignore[union-attr]
+        self._seq += 1
         data = resp.to_dict()
         data["content"] = redact(data["content"])
         self.entries[key] = data

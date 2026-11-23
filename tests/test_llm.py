@@ -140,3 +140,19 @@ def test_redaction(monkeypatch):
     text = "auth failed for sk-ant-secretvalue1234567890; api_key=abcdef1234567890xyz"
     out = redact(text)
     assert "secretvalue" not in out and "abcdef1234567890xyz" not in out and "[REDACTED]" in out
+
+
+def test_a_failed_call_does_not_use_up_a_recording_number(tmp_path):
+    """Seen live (F02): a call timed out and was retried while recording; the retry was saved as request 2,
+    but a replay has no failed call and asks for request 1, so the case reported "cassette out of date"."""
+    path = tmp_path / "c.json"
+    live = ScriptedModel([say("one"), Step(raise_=HTTPError(503)), say("two")])
+    rec = CassetteModel(path, "record", live)
+    first, second = [{"role": "user", "content": "a"}], [{"role": "user", "content": "b"}]
+    assert rec.invoke(first, None, 30).content == "one"
+    with pytest.raises(HTTPError):
+        rec.invoke(second, None, 30)
+    assert rec.invoke(second, None, 30).content == "two"
+    rec.save()
+    rep = CassetteModel(path, "replay")
+    assert [rep.invoke(first, None, 30).content, rep.invoke(second, None, 30).content] == ["one", "two"]
