@@ -321,6 +321,11 @@ def _run_case(env: EvalEnv, case: Case, run: int, model_factory: ModelFactory | 
             (item["device_id"], item["detector"]) not in found or chk.fail(f"scan: unexpected {item['detector']} for {item['device_id']}")
         if "clean_detectors_include" in case.expect:
             for d in case.expect["clean_detectors_include"]:
+                # {detector, unless: {oracle: ...}}: clean is expected only when the oracle finds nothing either
+                if isinstance(d, dict):
+                    if chk.resolve(d["unless"]):
+                        continue
+                    d = d["detector"]
                 d in result.clean_detectors or chk.fail(f"scan: detector {d} should report no issues")
         if "proposals" in case.expect:
             chk.check_proposals("scan", case.expect["proposals"], result.proposals)
