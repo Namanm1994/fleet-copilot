@@ -134,3 +134,41 @@
         answer_type: no_matches
         verifier_ok: true
         no_data_of_tenant: fixture-998
+
+# ---- follow-ups and rephrasings (same facts, different wording) ----
+
+- id: F13
+  category: factual
+  title: Follow-up that refers back to the previous answer
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Which devices are low on disk space?"
+      expect:
+        devices_exact: {oracle: low_disk}
+    - ask: "What OS version is that one running?"
+      expect:
+        text_contains: [{oracle: os_version, args: {device_id: FX-DISK-01}}]
+        verifier_ok: true
+
+- id: F14
+  category: factual
+  title: Rephrased screen-lock question (informal wording)
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Who's got their screen lock switched off?"
+      expect:
+        devices_exact: {oracle: failing_check, args: {check_id: screen_lock}}
+        verifier_ok: true
+
+- id: F15
+  category: factual
+  title: Rephrased prohibited-software question (no product name)
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Is anyone running a torrent client?"
+      expect:
+        devices_include: {oracle: prohibited_software}
+        verifier_ok: true

@@ -444,6 +444,7 @@ def summarize(cases: list[Case], results: list[RunResult], runs: int) -> dict[st
     return {
         "categories": cats, "bars": bars, "all_bars_met": all(b["met"] is not False for b in bars.values()),
         "runs_per_case": runs, "flaky": flaky,
+        "run_pass_rate": round(sum(r.passed for r in ran) / len(ran), 3) if ran else None,
         "device_precision": round(statistics.mean(prec), 3) if prec else None,
         "device_recall": round(statistics.mean(rec), 3) if rec else None,
         "verifier_pass_rate": round(sum(ver) / len(ver), 3) if ver else None,
@@ -472,7 +473,7 @@ def write_report(out: dict[str, Any], out_dir: Path) -> tuple[Path, Path]:
         lines.append(f"| {cat} | {b['total']} | {b['run']} | {b['passed']} | {b['skipped']} | {bar_txt} | {met} |")
     lines += ["", "| Metric | Value |", "|---|---|"]
     for k in ("device_precision", "device_recall", "verifier_pass_rate", "repairs", "retries", "tokens_in",
-              "tokens_out", "cost_usd", "latency_p50_s", "latency_p95_s", "runs_per_case"):
+              "tokens_out", "cost_usd", "latency_p50_s", "latency_p95_s", "runs_per_case", "run_pass_rate"):
         lines.append(f"| {k} | {s[k] if s[k] is not None else 'n/a'} |")
     if s["flaky"]:
         lines += ["", f"Flaky (passed in some runs only): {', '.join(s['flaky'])}"]
