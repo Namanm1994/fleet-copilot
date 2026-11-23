@@ -26,6 +26,7 @@ class LLMResponse:
     input_tokens: int = 0
     output_tokens: int = 0
     model: str = ""
+    truncated: bool = False  # the provider stopped the reply at the output-token limit
 
     def to_message(self) -> Message:
         msg: Message = {"role": "assistant", "content": self.content}
@@ -35,12 +36,13 @@ class LLMResponse:
 
     def to_dict(self) -> dict[str, Any]:
         return {"content": self.content, "tool_calls": [t.__dict__ for t in self.tool_calls],
-                "input_tokens": self.input_tokens, "output_tokens": self.output_tokens, "model": self.model}
+                "input_tokens": self.input_tokens, "output_tokens": self.output_tokens, "model": self.model,
+                "truncated": self.truncated}
 
     @staticmethod
     def from_dict(d: dict[str, Any]) -> LLMResponse:
         return LLMResponse(d.get("content", ""), [ToolCall(**t) for t in d.get("tool_calls", [])],
-                           d.get("input_tokens", 0), d.get("output_tokens", 0), d.get("model", ""))
+                           d.get("input_tokens", 0), d.get("output_tokens", 0), d.get("model", ""), bool(d.get("truncated", False)))
 
 
 class ChatModel(Protocol):

@@ -53,7 +53,7 @@ auto_propose_rules:
 budgets:
   max_input_tokens_per_turn: 60000
   max_output_tokens_per_turn: 8000     # includes hidden reasoning tokens; a first live run used 3,092 with 2 plan repairs
-  turn_deadline_s: 90
+  turn_deadline_s: 180
   # Caps across turns, in input tokens. 0 turns a cap off. These are starting values, not measured:
   # set them to about 3 times the heaviest realistic session or day once real usage is known.
   max_input_tokens_per_session: 500000

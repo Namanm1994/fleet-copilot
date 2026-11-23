@@ -184,11 +184,11 @@ The rule behind the split: fixed steps run as code, and unpredictable questions 
 
 **LLM calls.** Every call goes through the same wrapper:
 
-- a 30 s timeout per call and a 90 s deadline per turn; no retry starts if it would end past the deadline
+- a 60 s timeout per call and a 180 s deadline per turn; no retry starts if it would end past the deadline
 - up to 3 retries with exponential backoff and jitter, only on 429, 5xx or timeout, honoring `Retry-After`
 - a per-turn budget of 60k input and 8k output tokens (hidden reasoning tokens count as output)
 - a cap per session (500k input tokens) and per company per day (2M input tokens); once reached, the next question is refused before any LLM call. Both are starting values in `policy.yaml`, not measured ones
-- up to 2 repair retries when structured output is invalid
+- up to 2 repair retries when structured output is invalid; when a reply was cut off at the output limit, the retry asks for a shorter one instead of repeating the request
 - text after a complete JSON reply (a stray brace, a repeated object) is ignored and counted in the trace, not re-asked for
 
 **Context management.** The prompt stays bounded however long a session runs. The limits below are settings under `context:` in `policy.yaml`:

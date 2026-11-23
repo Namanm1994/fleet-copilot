@@ -1,6 +1,6 @@
 """Timeouts, retries and the turn deadline (G29, G30).
 
-- 30 s per call (config), provider SDK retries off
+- a timeout per call (config), provider SDK retries off
 - up to 3 retries with exponential backoff + jitter, only for 429, 5xx and timeouts
 - `Retry-After` honored when the API sends it
 - the turn deadline wins: a retry starts only if its wait plus a full call fits

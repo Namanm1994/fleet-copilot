@@ -29,6 +29,12 @@ if TYPE_CHECKING:
 
 
 
+# Asking again in the same words would be cut off at the same place, so ask for less.
+CUT_OFF_REPAIR = ("Your reply was cut off at the output limit before submit_answer was complete. Call submit_answer "
+                  "now with a shorter answer: one claim per finding, devices that share a finding in a single claim, "
+                  "and only the evidence IDs each claim needs.")
+
+
 class TurnState(TypedDict, total=False):
     question: str
     interactive: bool
@@ -108,16 +114,19 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
         except (BudgetExceeded, LLMCallError) as exc:
             return stop(state, exc, "agent") | {"messages": context, "seen_calls": seen}
         msg = resp.to_message()
-        messages = context + [msg]
+        # A reply cut off before any text or tool call is empty, and some providers reject empty messages.
+        messages = context + ([msg] if resp.content or resp.tool_calls else [])
         if resp.content and resp.tool_calls:
             trace("agent", "deviation_reason", {"text": resp.content[:500]})
         if not resp.tool_calls:
             repairs = state.get("repairs", 0) + 1
-            trace("agent", "repair_attempt", {"reason": "no submit_answer call", "attempt": repairs})
+            reason = "reply cut off at the output limit" if resp.truncated else "no submit_answer call"
+            trace("agent", "repair_attempt", {"reason": reason, "attempt": repairs})
             if repairs > sess.settings.repair_retries:
                 return {"messages": messages, "seen_calls": seen, "status": "partial",
                         "note": "I couldn't produce a verifiable answer. Please rephrase the question."}
-            messages.append({"role": "user", "content": "Call submit_answer with the structured answer (do not reply in plain text)."})
+            messages.append({"role": "user", "content": CUT_OFF_REPAIR if resp.truncated else
+                             "Call submit_answer with the structured answer (do not reply in plain text)."})
             return {"messages": messages, "seen_calls": seen, "repairs": repairs}
         return {"messages": messages, "seen_calls": seen}
 

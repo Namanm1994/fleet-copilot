@@ -11,8 +11,9 @@ api_key_env:
   openai: OPENAI_API_KEY
   openrouter: OPENROUTER_API_KEY
 temperature: 0
-max_output_tokens: 1500
-call_timeout_s: 30
+# Per call, and it includes hidden reasoning tokens. An answer listing 12 findings did not fit in 1,500.
+max_output_tokens: 4000
+call_timeout_s: 60      # a 4,000-token reply at about 70 tokens a second takes close to a minute
 network_retries: 3
 backoff_base_s: 1.0
 repair_retries: 2
