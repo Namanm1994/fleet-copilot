@@ -468,6 +468,23 @@ def trace_show(ctx: Ctx, session_id: str, tenant: str) -> None:
         say(f"{e['ts'][11:23]} t{e['turn']} {e['node']:<12} {e['event']:<16}{extra} {payload[:300]}")
 
 
+@main.command()
+@tenant_opt
+@click.option("--days", default=7, show_default=True, help="How many days back, counting today (UTC).")
+@click.option("--json", "as_json", is_flag=True, help="Print the numbers as JSON.")
+@pass_ctx
+def stats(ctx: Ctx, tenant: str, days: int, as_json: bool) -> None:
+    """Usage and answer quality across sessions: tokens, cost, latency, verifier rejections, errors."""
+    from fleet_copilot.stats import collect, render
+
+    t = ctx.tenant(tenant)
+    result = collect(ctx.paths.traces, t.tenant_id, days)
+    if as_json:
+        click.echo(json.dumps(result, indent=2))
+    else:
+        say(render(result))
+
+
 # ---- evals -------------------------------------------------------------------------------------
 @main.command("eval")
 @click.option("--mode", type=click.Choice(["recorded", "live"]), default="recorded", show_default=True,
@@ -492,6 +509,11 @@ def eval_cmd(ctx: Ctx, mode: str, record: bool, runs: int, only: tuple[str, ...]
             "red" if bar and bar["met"] is False else None)
     if not s["has_real_data"]:
         say("Real data not found in data/raw/: real-data cases were skipped.", "yellow")
+    change = out.get("comparison")
+    if change and change["comparable"]:
+        worse, better = len(change["now_failing"]), len(change["now_passing"])
+        say(f"Since the previous run: {worse} case(s) now fail, {better} now pass."
+            + (f" Now failing: {', '.join(change['now_failing'])}" if worse else ""), "red" if worse else None)
     say(f"Report: {md}")
     if not s["all_bars_met"]:
         sys.exit(1)

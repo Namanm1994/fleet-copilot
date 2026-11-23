@@ -456,10 +456,55 @@ def summarize(cases: list[Case], results: list[RunResult], runs: int) -> dict[st
     }
 
 
+def case_status(results: list[dict[str, Any]]) -> dict[str, str]:
+    """One status per case: pass (every run passed), fail, or skipped."""
+    by_case: dict[str, list[dict]] = {}
+    for r in results:
+        by_case.setdefault(r["case_id"], []).append(r)
+    out = {}
+    for cid, rs in by_case.items():
+        ran = [r for r in rs if not r.get("skipped")]
+        out[cid] = "skipped" if not ran else ("pass" if all(r["passed"] for r in ran) else "fail")
+    return out
+
+
+def compare_runs(previous: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
+    """What changed since the last run of the same mode: cases that flipped, and the key numbers."""
+    prev, cur = case_status(previous.get("results", [])), case_status(current["results"])
+    ps, cs = previous.get("summary", {}), current["summary"]
+    both = [c for c in cur if c in prev and "skipped" not in (prev[c], cur[c])]
+    deltas = {}
+    for key in ("tokens_in", "tokens_out", "cost_usd", "latency_p95_s", "verifier_pass_rate", "run_pass_rate"):
+        if ps.get(key) is not None and cs.get(key) is not None:
+            deltas[key] = {"previous": ps[key], "current": cs[key]}
+    return {
+        "comparable": ps.get("mode") == cs.get("mode"),
+        "previous_run": ps.get("generated_at"), "previous_mode": ps.get("mode"),
+        "now_failing": sorted(c for c in both if prev[c] == "pass" and cur[c] == "fail"),
+        "now_passing": sorted(c for c in both if prev[c] == "fail" and cur[c] == "pass"),
+        "newly_run": sorted(c for c in cur if cur[c] != "skipped" and prev.get(c, "skipped") == "skipped"),
+        "no_longer_run": sorted(c for c in prev if prev[c] != "skipped" and cur.get(c, "skipped") == "skipped"),
+        "deltas": deltas,
+    }
+
+
 def write_report(out: dict[str, Any], out_dir: Path) -> tuple[Path, Path]:
+    from datetime import datetime, timezone
+
     out_dir.mkdir(parents=True, exist_ok=True)
     js = out_dir / "eval_results.json"
+    stamp = datetime.now(timezone.utc)
+    out["summary"]["generated_at"] = stamp.isoformat(timespec="seconds")
+    if js.exists():  # compare with the run that this one replaces
+        try:
+            out["comparison"] = compare_runs(json.loads(js.read_text(encoding="utf-8")), out)
+        except (json.JSONDecodeError, KeyError, TypeError):
+            out["comparison"] = None
     js.write_text(json.dumps(out, indent=2, default=str), encoding="utf-8")
+    history = out_dir / "history"  # every run is kept, so any two can be compared later
+    history.mkdir(exist_ok=True)
+    (history / f"eval_results-{stamp.strftime('%Y%m%dT%H%M%S%fZ')}-{out['summary']['mode']}.json").write_text(
+        json.dumps(out, indent=2, default=str), encoding="utf-8")
     s = out["summary"]
     cases = {c["id"]: c for c in out["cases"]}
     lines = [f"# Eval report ({s['mode']} mode, data as of {s['as_of'][:10]})", ""]
@@ -477,6 +522,17 @@ def write_report(out: dict[str, Any], out_dir: Path) -> tuple[Path, Path]:
         lines.append(f"| {k} | {s[k] if s[k] is not None else 'n/a'} |")
     if s["flaky"]:
         lines += ["", f"Flaky (passed in some runs only): {', '.join(s['flaky'])}"]
+    cmp_ = out.get("comparison")
+    if cmp_:
+        lines += ["", f"## Changes since the previous run ({cmp_['previous_mode']} mode, {cmp_['previous_run'] or 'time unknown'})", ""]
+        if not cmp_["comparable"]:
+            lines.append("The previous run used a different mode, so pass and fail changes are listed for reference only.")
+        for label, key in (("Now failing", "now_failing"), ("Now passing", "now_passing"), ("Run for the first time", "newly_run"),
+                           ("No longer run", "no_longer_run")):
+            lines.append(f"- {label}: {', '.join(cmp_[key]) if cmp_[key] else 'none'}")
+        if cmp_["deltas"]:
+            lines += ["", "| Metric | Previous | Current |", "|---|---|---|"]
+            lines += [f"| {k} | {v['previous']} | {v['current']} |" for k, v in cmp_["deltas"].items()]
     lines += ["", "## Cases", "", "| ID | Category | TC | Title | Result |", "|---|---|---|---|---|"]
     for r in out["results"]:
         c = cases[r["case_id"]]
