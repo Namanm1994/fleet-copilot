@@ -14,7 +14,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from fleet_copilot.agent.proposals import auto_propose
-from fleet_copilot.agent.verifier import DEVICE_RE, EMP_RE, _matches, _numbers
+from fleet_copilot.agent.verifier import DATE_RE, DEVICE_RE, EMP_RE, _matches, _numbers, quantities
 from fleet_copilot.insights.detectors import DETECTORS
 from fleet_copilot.toolkit import Toolkit
 
@@ -75,13 +75,20 @@ def verify_summary(s: ScanSummary, result: ScanResult) -> list[str]:
     corpus = json.dumps(result.insights, ensure_ascii=False)
     errors = []
     for token in set(DEVICE_RE.findall(s.summary)) | set(s.device_ids) | set(EMP_RE.findall(s.summary)):
+        if DATE_RE.fullmatch(token):                         # a date, checked as one below
+            continue
         if token not in allowed_devices and token not in corpus:
             errors.append(f"'{token}' is not in the findings")
     allowed_nums = set(_numbers(corpus)) | {float(len(result.insights)), float(len(result.proposals))}
     allowed_nums |= {float(sum(1 for i in result.insights if i["severity"] == sev)) for sev in ("low", "medium", "high")}
-    for x in _numbers(s.summary):
+    q = quantities(s.summary)
+    for x in q.numbers:
         if not _matches(x, allowed_nums):
             errors.append(f"number {x:g} is not in the findings")
+    dated = corpus + " " + result.as_of                     # a date must be one the findings or the briefing header show
+    for shown, needle in q.dates:
+        if needle not in dated:
+            errors.append(f"date '{shown}' is not in the findings")
     return errors
 
 

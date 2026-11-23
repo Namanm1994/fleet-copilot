@@ -46,9 +46,81 @@ UNIT_RE = re.compile(r"\s?-?\s?(?:%|percent\b|(?:[KMGT]i?B|mAh|Wh)\b|(?:days?|ho
 MONTHS = {m: i for i, names in enumerate((("January", "Jan"), ("February", "Feb"), ("March", "Mar"), ("April", "Apr"), ("May",),
                                           ("June", "Jun"), ("July", "Jul"), ("August", "Aug"), ("September", "Sep", "Sept"),
                                           ("October", "Oct"), ("November", "Nov"), ("December", "Dec")), 1) for m in names}
-# "May 2026", "22 May 2026", "May 22", "May 22, 2026". Month names are matched with their capital letter only.
-WRITTEN_DATE_RE = re.compile(r"\b(?:(\d{1,2})(?:st|nd|rd|th)?\s+)?(" + "|".join(sorted(MONTHS, key=len, reverse=True)) + r")\b\.?"
-                             r"(?:\s+(\d{1,2})(?:st|nd|rd|th)?(?!\d|\s?[%\w]))?(?:,?\s+((?:19|20)\d{2})\b)?")
+# Written dates. Month names are matched with their capital letter only ("may" is a verb).
+#   one day        May 22 · May 22nd · 22 May · 22nd of May · May 22, 2026 · May 2026
+#   several days   June 10-12 · June 10 to 12 · June 10 and 11 · June 10, 11 and 12 · 10-12 June 2026
+# Every day written is a date of its own and must appear in a tool result.
+MONTH_RE = re.compile(r"\b(" + "|".join(sorted(MONTHS, key=len, reverse=True)) + r")\b\.?")
+_NOUNS = (r"devices?|laptops?|machines?|computers?|endpoints?|checks?|snapshots?|points?|failures?|fails?|passes|times|items?"
+          r"|apps?|applications?|results?|records?|entries|changes?|cycles?|proposals?|tickets?|employees?|users?|volumes?")
+# A day is one or two digits, not part of a longer number, a measurement ("May 16 GB") or a count ("May 12 devices").
+_DAY = (r"(\d{1,2})(?:st|nd|rd|th)?(?![\d\w]|[.:/]\d|\s?(?:%|percent\b|(?:[KMGT]i?B|mAh|Wh)\b)"
+        r"|\s+(?:days?|hours?|hrs?|minutes?|mins?|seconds?|secs?|weeks?|months?|years?|" + _NOUNS + r")\b)")
+_SEP = r"(\s*,\s*and\s+|\s+and\s+|\s*&\s*|\s*[-–—]\s*|\s+(?:to|through|thru|until|till)\s+|\s*,\s*)"
+DAY_AFTER_RE = re.compile(r"\s+" + _DAY)
+NEXT_DAY_RE = re.compile(_SEP + _DAY)
+DAYS_BEFORE_RE = re.compile(r"(?<![\w.,/:@#$-])\d{1,2}(?:st|nd|rd|th)?(?:" + _SEP + r"\d{1,2}(?:st|nd|rd|th)?)*\s+(?:of\s+)?\Z")
+DAY_IN_LIST_RE = re.compile(_SEP + r"?(\d{1,2})(?:st|nd|rd|th)?")
+YEAR_AFTER_RE = re.compile(r",?\s+((?:19|20)\d{2})\b(?![.,]\d)")
+LIST_END_RE = re.compile(r"\s*(?:\Z|[.;:)\]])")
+
+
+def _is_comma(sep: str) -> bool:
+    return sep.strip() == ","
+
+
+def written_dates(text: str) -> tuple[list[tuple[str, str]], str]:
+    """Written dates in the text, and the text with them blanked out.
+
+    Each date is (as written, the text that must appear in a tool result): "2026-05-22" with a year,
+    "-05-22" without one, "2026-05-" for a month and year."""
+    dates: list[tuple[str, str]] = []
+    spans: list[tuple[int, int]] = []
+    for m in MONTH_RE.finditer(text):
+        month = MONTHS[m.group(1)]
+        start, end = m.start(), m.end()
+        days: list[int] = []
+        before = DAYS_BEFORE_RE.search(text, max(0, start - 60), start)
+        if before:                                           # "10-12 June", "22nd of May"
+            items = [(sep or "", int(d)) for sep, d in DAY_IN_LIST_RE.findall(before.group())]
+            keep = len(items) - 1                            # the day next to the month always counts
+            if not all(_is_comma(sep) for sep, _ in items[1:]):  # "3, 10 June" keeps only the 10 ...
+                while keep > 0 and items[keep - 1][1] < items[keep][1]:
+                    keep -= 1                                # ... "10, 11 and 12 June" keeps all three
+            days = [d for _, d in items[keep:]]
+            lead = DAY_IN_LIST_RE.finditer(before.group())
+            start = before.start() + [x.start(2) for x in lead][keep]
+        else:                                                # "June 10", "June 10, 11 and 12"
+            first = DAY_AFTER_RE.match(text, end)
+            if first:
+                items = [("", int(first.group(1)))]
+                ends = [first.end()]
+                while (nxt := NEXT_DAY_RE.match(text, ends[-1])) and int(nxt.group(2)) > items[-1][1]:
+                    items.append((nxt.group(1), int(nxt.group(2))))
+                    ends.append(nxt.end())
+                # a last day joined by a bare comma is a day only if the list ends there: "May 3, 5 checks failed"
+                while len(items) > 1 and _is_comma(items[-1][0]) and not (
+                        LIST_END_RE.match(text, ends[-1]) or YEAR_AFTER_RE.match(text, ends[-1])):
+                    items.pop()
+                    ends.pop()
+                days, end = [d for _, d in items], ends[-1]
+        days = [d for d in days if 1 <= d <= 31]
+        year = YEAR_AFTER_RE.match(text, end)
+        if year:
+            end = year.end()
+        if not days and not year:
+            continue                                         # a month name alone states no number
+        shown = text[start:end].strip()
+        if not days:
+            dates.append((shown, f"{year.group(1)}-{month:02d}-"))
+        for d in days:
+            dates.append((shown, f"{year.group(1)}-{month:02d}-{d:02d}" if year else f"-{month:02d}-{d:02d}"))
+        spans.append((start, end))
+    for a, b in spans:
+        text = text[:a] + " " * (b - a) + text[b:]
+    return dates, text
+
+
 # A bare year ("during 2026"). Not a year: part of a larger number, a measurement, or a device count.
 YEAR_RE = re.compile(r"(?<![\w.,-])((?:19|20)\d{2})(?![\w%-]|[.,]\d|\s?(?:[KMGT]i?B|mAh|Wh)\b"
                      r"|\s+(?:\w+\s+)?(?:devices?|laptops?|machines?|computers?|endpoints?)\b)")
@@ -107,21 +179,8 @@ def quantities(text: str) -> Quantities:
     text = DEVICE_RE.sub(_blank, text)
     text = EMP_RE.sub(_blank, text)
 
-    def written(m: re.Match) -> str:
-        day, month, day2, year = m.group(1), MONTHS[m.group(2)], m.group(3), m.group(4)
-        day = day or day2
-        if not day and not year:
-            return m.group()                                # a month name alone states no number
-        if year and day:
-            needle = f"{year}-{month:02d}-{int(day):02d}"
-        elif year:
-            needle = f"{year}-{month:02d}-"
-        else:
-            needle = f"-{month:02d}-{int(day):02d}"
-        q.dates.append((m.group().strip(), needle))
-        return _blank(m)
-
-    text = WRITTEN_DATE_RE.sub(written, text)
+    found, text = written_dates(text)
+    q.dates.extend(found)
     for m in YEAR_RE.finditer(text):                        # a bare year: "during 2026"
         q.dates.append((m.group(1), f"{m.group(1)}-"))
     text = YEAR_RE.sub(_blank, text)
@@ -181,6 +240,17 @@ class Verifier:
     def _corpus(self) -> str:
         return "\n".join(self.tk.tool_corpus)
 
+    def _names(self, corpus: str) -> list[re.Pattern]:
+        """Model names and hostnames a tool returned. A digit inside one is part of the name, not a number
+        of its own: "Dell XPS 15 laptop" is one laptop, not fifteen."""
+        names: set[str] = set()
+        for d in self.tk.repo.devices():
+            for key in ("model_name", "model_identifier", "hostname"):
+                name = (d.get(key) or "").strip()
+                if name and any(ch.isdigit() for ch in name) and name in corpus:
+                    names.add(name)
+        return [re.compile(rf"(?<![\w-]){re.escape(n)}(?![\w-])") for n in sorted(names, key=len, reverse=True)]
+
     def _short_histories(self) -> tuple[dict[str, int], set[str]]:
         """Evidence that belongs only to a history with too few snapshots for a trend.
 
@@ -209,6 +279,17 @@ class Verifier:
         failed: set[int] = set()
         corpus = self._corpus()
         allowed_nums = self._allowed_numbers()
+        # A period the user asked about may be named back ("no data for April 2026"), even when no tool
+        # result holds it: that is what an answer about a period outside the data has to say.
+        names = self._names(corpus)
+        asked_dates = {needle for _, needle in quantities(question).dates}
+        asked_months = {MONTHS[m.group(1)] for m in MONTH_RE.finditer(question)}
+
+        def date_ok(needle: str) -> bool:
+            if needle in corpus or needle in asked_dates:
+                return True
+            month_and_year = re.fullmatch(r"(\d{4})-(\d{2})-", needle)   # "April 2026" for a question about "April"
+            return bool(month_and_year and int(month_and_year.group(2)) in asked_months and f"{month_and_year.group(1)}-" in corpus)
 
         def ids_ok(text: str, where: str, idx: int | None) -> None:
             for token in set(DEVICE_RE.findall(EVID_RE.sub(" ", text))) | set(EMP_RE.findall(text)):
@@ -218,10 +299,12 @@ class Verifier:
                         failed.add(idx)
 
         def nums_ok(text: str, where: str, idx: int | None, extra: set[float], count_ok: set[float] | None = None) -> None:
+            for name in names:
+                text = name.sub(_blank, text)
             q = quantities(text)
             bad: list[str] = []
             for shown, needle in q.dates:
-                if needle not in corpus:
+                if not date_ok(needle):
                     bad.append(f"date '{shown}' does not appear in any tool result (rule 3).")
             for x in q.measurements + q.values:
                 if not _matches(x, allowed_nums | extra):
