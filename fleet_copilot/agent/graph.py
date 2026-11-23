@@ -17,7 +17,7 @@ from pydantic import ValidationError
 
 from fleet_copilot.agent.models import SUBMIT_ANSWER_DESCRIPTION, SUBMIT_ANSWER_SPEC_NAME, FinalAnswer, Plan
 from fleet_copilot.agent.proposals import auto_propose
-from fleet_copilot.agent.render import CAPABILITIES, render_turn
+from fleet_copilot.agent.render import CAPABILITIES, device_names, render_turn
 from fleet_copilot.agent.verifier import Verifier, strip_failed
 from fleet_copilot.llm.base import BudgetExceeded
 from fleet_copilot.llm.retry import LLMCallError
@@ -218,7 +218,8 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
         proposals = [tk.store.get(p["proposal_id"]) | {"preview": p.get("preview")} for p in state.get("proposals", [])]
         text = render_turn(tenant_name=tk.ctx.tenant_name, as_of=tk.repo.as_of, status=state.get("status", ""),
                            answer=state.get("answer"), note=state.get("note"), proposals=proposals,
-                           skipped=state.get("skipped", []), thresholds=tk.config.thresholds)
+                           skipped=state.get("skipped", []), thresholds=tk.config.thresholds,
+                           names=device_names(tk.repo.devices(), "\n".join(tk.tool_corpus)) if state.get("answer") else None)
         trace("respond", "final_answer", {"status": state.get("status"), "answer": state.get("answer"),
                                           "verification": state.get("verification"), "text": text,
                                           "proposals": [p["proposal_id"] for p in proposals]})

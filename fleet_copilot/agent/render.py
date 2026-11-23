@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from fleet_copilot.config import Thresholds
@@ -13,6 +14,37 @@ CAPABILITIES = (
 )
 
 
+def device_names(devices: list[dict[str, Any]], seen_in: str) -> dict[str, str]:
+    """Hostname -> device ID for the devices this session's tools returned.
+
+    `seen_in` is the text of the tool results, so a device no tool returned is never named. A hostname
+    shared by two devices is left out: adding one ID to it would be a guess.
+    """
+    by_host: dict[str, set[str]] = {}
+    for d in devices:
+        host = (d.get("hostname") or "").strip()
+        if host and host != d["device_id"] and d["device_id"] in seen_in:
+            by_host.setdefault(host, set()).add(d["device_id"])
+    return {h: next(iter(ids)) for h, ids in by_host.items() if len(ids) == 1}
+
+
+def _standalone(name: str) -> re.Pattern:
+    return re.compile(rf"(?<![\w-]){re.escape(name)}(?![\w-])", re.IGNORECASE)
+
+
+def label_devices(text: str, names: dict[str, str] | None) -> str:
+    """Show every device the same way: where the text names one by hostname, add its ID once.
+
+    "acme-macbook-2 is failing" becomes "acme-macbook-2 (1LYSSFD074BB) is failing". The model may use
+    either name; the admin always gets both, and anything that looks for the ID finds it.
+    """
+    for host, device_id in sorted((names or {}).items(), key=lambda kv: -len(kv[0])):
+        if _standalone(device_id).search(text):
+            continue                                        # the ID is already there
+        text = _standalone(host).sub(lambda m, i=device_id: f"{m.group()} ({i})", text, count=1)
+    return text
+
+
 def _ids(ids: list[str], n: int = 3) -> str:
     if not ids:
         return ""
@@ -21,17 +53,18 @@ def _ids(ids: list[str], n: int = 3) -> str:
 
 
 def render_turn(*, tenant_name: str, as_of: str, status: str, answer: dict[str, Any] | None, note: str | None,
-                proposals: list[dict[str, Any]], skipped: list[dict[str, Any]], thresholds: Thresholds) -> str:
+                proposals: list[dict[str, Any]], skipped: list[dict[str, Any]], thresholds: Thresholds,
+                names: dict[str, str] | None = None) -> str:
     lines = [f"As of {as_of[:10]} · {tenant_name}", ""]
     if note:
         lines += [note, ""]
     if answer:
-        lines.append(answer["summary"])
+        lines.append(label_devices(answer["summary"], names))
         if answer.get("claims"):
             lines.append("")
             for c in answer["claims"]:
                 ev = _ids(c.get("evidence_ids", []))
-                lines.append(f"• {c['text']}" + (f"  [evidence: {ev}]" if ev else ""))
+                lines.append(f"• {label_devices(c['text'], names)}" + (f"  [evidence: {ev}]" if ev else ""))
         defs = [d for d in answer.get("definitions_used", []) if d in thresholds.names()]
         if defs:
             lines += ["", "Definitions:"] + [f"  {d}: {thresholds.describe(d)}" for d in defs]

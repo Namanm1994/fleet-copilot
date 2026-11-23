@@ -10,6 +10,7 @@ from fleet_copilot.data.sanitize import normalize_name, software_matches
 from fleet_copilot.data.versions import normalize_platform, parse_version
 from fleet_copilot.evidence import check_eid, software_eid
 from fleet_copilot.insights.detectors import Detectors, failing_check_actions, sort_insights
+from fleet_copilot.session import whole_numbers
 from fleet_copilot.tools.envelope import ToolError, ToolResult
 from fleet_copilot.tools.schemas import (
     FindDevicesArgs,
@@ -50,7 +51,7 @@ class ReadTools:
         self.tk.check_output(tool, result.data)
         result.as_of = self.repo.as_of
         result.receipt_id = self.tk.evidence.add_receipt(tool, args, count, self.repo.as_of, result.evidence_ids,
-                                                         result.definitions_used)
+                                                         result.definitions_used, whole_numbers(result.data))
         return result
 
     def _require_device(self, device_id: str) -> dict:
@@ -334,46 +335,36 @@ class ReadTools:
             res.caveats.append("No compliance results matched; cite the receipt for this 'no matches' result.")
         return self._finish("get_compliance_overview", args.model_dump(exclude_none=True), res, len(rows))
 
+    def _software_item(self, row: dict, first_seen: dict[tuple, str], with_device: bool) -> dict:
+        """One software entry. Both routes of get_software build their rows here, so they carry the same facts."""
+        eid = software_eid(row["snapshot_id"], row["name_norm"])
+        prohibited = any(b in row["name_norm"] for b in self.tk.config.blocklist)
+        seen = first_seen.get((row["device_id"], row["name_norm"]))
+        self.tk.evidence.add(eid, {"name": row["name"], "version": row["version"], "prohibited": prohibited,
+                                   "first_seen": seen}, row["device_id"])
+        item = {"name": row["name"], "version": row["version"], "first_seen": seen, "prohibited": prohibited,
+                "evidence_id": eid}
+        return {"device_id": row["device_id"]} | item if with_device else item
+
     def get_software(self, args: GetSoftwareArgs) -> ToolResult:
         if not args.name and not args.device_id:
             raise ToolError("INVALID_ARGUMENT", "Give a software name or a device ID.")
-        bl = self.tk.config.blocklist
-        evidence = []
         if args.device_id:
             self._require_device(args.device_id)
-            rows = self.repo.software_latest(args.device_id)
-            if args.name:
-                rows = [r for r in rows if software_matches(args.name, r["name"])]
-            items = []
-            for r in rows:
-                eid = software_eid(r["snapshot_id"], r["name_norm"])
-                prohibited = any(b in r["name_norm"] for b in bl)
-                self.tk.evidence.add(eid, {"name": r["name"], "version": r["version"], "prohibited": prohibited}, r["device_id"])
-                evidence.append(eid)
-                items.append({"name": r["name"], "version": r["version"], "prohibited": prohibited, "evidence_id": eid})
-            data = {"device_id": args.device_id, "software": items}
-            count = len(items)
-        else:
-            q = normalize_name(args.name or "")
-            hist = [r for r in self.repo.software_history(q) if software_matches(args.name or "", r["name"])]
-            latest = {(r["device_id"], r["name_norm"]): r for r in self.repo.software_latest()
-                      if software_matches(args.name or "", r["name"])}
-            first_seen: dict[tuple, str] = {}
-            for r in hist:
-                first_seen.setdefault((r["device_id"], r["name_norm"]), r["collected_at"][:10])
-            items = []
-            for key, r in sorted(latest.items()):
-                eid = software_eid(r["snapshot_id"], r["name_norm"])
-                prohibited = any(b in r["name_norm"] for b in bl)
-                self.tk.evidence.add(eid, {"name": r["name"], "version": r["version"], "prohibited": prohibited}, r["device_id"])
-                evidence.append(eid)
-                items.append({"device_id": r["device_id"], "name": r["name"], "version": r["version"],
-                              "first_seen": first_seen.get(key), "prohibited": prohibited, "evidence_id": eid})
-            data = {"query": args.name, "installed_on": items}
-            count = len(items)
+        rows = self.repo.software_latest(args.device_id)
+        if args.name:
+            rows = [r for r in rows if software_matches(args.name, r["name"])]
+        # first day each (device, software) pair appears in the window; history is ordered by date
+        first_seen: dict[tuple, str] = {}
+        for r in self.repo.software_history(normalize_name(args.name) if args.name else None):
+            first_seen.setdefault((r["device_id"], r["name_norm"]), r["collected_at"][:10])
+        by_device = bool(args.device_id)
+        ordered = rows if by_device else sorted(rows, key=lambda r: (r["device_id"], r["name_norm"]))
+        items = [self._software_item(r, first_seen, with_device=not by_device) for r in ordered]
+        data = {"device_id": args.device_id, "software": items} if by_device else {"query": args.name, "installed_on": items}
         return self._finish("get_software", args.model_dump(exclude_none=True),
-                            ToolResult(data=data, evidence_ids=evidence, total_count=count,
-                                       definitions_used=["prohibited_software"]), count)
+                            ToolResult(data=data, evidence_ids=[i["evidence_id"] for i in items], total_count=len(items),
+                                       definitions_used=["prohibited_software"]), len(items))
 
     def run_insights(self, args: RunInsightsArgs) -> ToolResult:
         if args.device_ids:
