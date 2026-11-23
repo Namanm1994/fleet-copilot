@@ -15,7 +15,7 @@ OPEN_STATUSES = ("proposed", "pending", "approved", "executed", "failed")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS proposals (
-    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    seq INTEGER NOT NULL,
     tenant_id TEXT NOT NULL,
     session_id TEXT NOT NULL,
     action TEXT NOT NULL,
@@ -34,7 +34,8 @@ CREATE TABLE IF NOT EXISTS proposals (
     decided_by TEXT,
     reject_reason TEXT,
     executed_at TEXT,
-    error TEXT
+    error TEXT,
+    PRIMARY KEY (tenant_id, seq)
 );
 CREATE INDEX IF NOT EXISTS ix_prop_tenant ON proposals(tenant_id, status);
 CREATE TABLE IF NOT EXISTS usage (
@@ -78,7 +79,27 @@ class AppStore:
         self._conn = sqlite3.connect(path, check_same_thread=False, timeout=10)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(SCHEMA)
+        self._migrate_numbering()
         self.tenant_id = tenant_id
+
+    def _migrate_numbering(self) -> None:
+        """Databases created before proposals were numbered per company used one shared sequence
+        (seq alone was the key). Rebuild the table with (tenant_id, seq) as the key, keeping every
+        row and its number, so IDs already written to the audit log and outbox stay valid."""
+        key_columns = [r["name"] for r in self._conn.execute("PRAGMA table_info(proposals)") if r["pk"]]
+        if sorted(key_columns) == ["seq", "tenant_id"]:
+            return
+        columns = [r["name"] for r in self._conn.execute("PRAGMA table_info(proposals)")]
+        names = ", ".join(columns)
+        new_table = SCHEMA[SCHEMA.index("CREATE TABLE IF NOT EXISTS proposals ("):SCHEMA.index("CREATE INDEX IF NOT EXISTS ix_prop_tenant")]
+        self._conn.executescript(
+            "BEGIN IMMEDIATE;"
+            "ALTER TABLE proposals RENAME TO proposals_shared_numbering;"
+            + new_table +
+            f"INSERT INTO proposals ({names}) SELECT {names} FROM proposals_shared_numbering;"
+            "DROP TABLE proposals_shared_numbering;"
+            "CREATE INDEX IF NOT EXISTS ix_prop_tenant ON proposals(tenant_id, status);"
+            "COMMIT;")
 
     def _row(self, r: sqlite3.Row) -> dict[str, Any]:
         d = {k: r[k] for k in r.keys()}
@@ -93,14 +114,23 @@ class AppStore:
     def create(self, *, session_id: str, action: str, device_id: str | None, employee_id: str | None,
                params: dict, evidence_ids: list[str], origin: str, dedup_key: str, reason: str,
                preview: str, warnings: list[str]) -> dict[str, Any]:
-        cur = self._conn.execute(
-            "INSERT INTO proposals (tenant_id, session_id, action, device_id, employee_id, params, evidence_ids, origin,"
-            " dedup_key, status, reason, preview, warnings, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (self.tenant_id, session_id, action, device_id, employee_id, json.dumps(params), json.dumps(evidence_ids),
-             origin, dedup_key, "proposed", reason, preview, json.dumps(warnings), now_iso()),
-        )
-        self._conn.commit()
-        return self.get(pid(cur.lastrowid))  # type: ignore[return-value]
+        # Each company has its own sequence (PRP-1, PRP-2, ...), so a proposal number says nothing
+        # about how many proposals other companies have. The write lock makes "next number" safe.
+        self._conn.execute("BEGIN IMMEDIATE")
+        try:
+            seq = self._conn.execute("SELECT COALESCE(MAX(seq), 0) + 1 FROM proposals WHERE tenant_id = ?",
+                                     (self.tenant_id,)).fetchone()[0]
+            self._conn.execute(
+                "INSERT INTO proposals (seq, tenant_id, session_id, action, device_id, employee_id, params, evidence_ids,"
+                " origin, dedup_key, status, reason, preview, warnings, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (seq, self.tenant_id, session_id, action, device_id, employee_id, json.dumps(params), json.dumps(evidence_ids),
+                 origin, dedup_key, "proposed", reason, preview, json.dumps(warnings), now_iso()),
+            )
+            self._conn.commit()
+        except Exception:
+            self._conn.rollback()
+            raise
+        return self.get(pid(seq))  # type: ignore[return-value]
 
     def get(self, proposal_id: str) -> dict[str, Any] | None:
         seq = seq_of(proposal_id)

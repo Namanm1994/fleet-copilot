@@ -53,7 +53,9 @@ class Executor:
         if not path.exists():
             return False
         for line in path.read_text(encoding="utf-8").splitlines():
-            if line.strip() and json.loads(line).get("proposal_id") == proposal_id:
+            rec = json.loads(line) if line.strip() else {}
+            # proposal numbers are per company, so the company is part of the identity
+            if rec.get("proposal_id") == proposal_id and rec.get("tenant") == self.tk.ctx.tenant_id:
                 return True
         return False
 

@@ -27,7 +27,7 @@ Fleet Copilot v1 has no authentication. Whoever runs the CLI chooses the tenant 
 
 ### Tenant isolation
 
-Tenant isolation is enforced in the data access layer, not by the prompt. Every query is filtered by the session's tenant, the tenant is never a tool argument, and a device ID belonging to another tenant returns "not found", so the agent cannot even confirm that it exists.
+Tenant isolation is enforced in the data access layer, not by the prompt. Every query is filtered by the session's tenant, the tenant is never a tool argument, and a device ID belonging to another tenant returns "not found", so the agent cannot even confirm that it exists. Proposals are numbered separately for each company (each starts at PRP-1), so a proposal number does not reveal how many proposals other companies have.
 
 ### Prompt injection
 
