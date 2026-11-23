@@ -78,19 +78,33 @@ def iter_records(path: Path) -> Iterable[tuple[int, dict]]:
                 raise LoadError(f"{path}:{lineno}: invalid JSON ({exc})") from exc
 
 
-def load(raw_paths: list[Path], db_path: Path, registered_tenants: Iterable[str] = ()) -> dict[str, Any]:
-    """Load one or more NDJSON files into a fresh database. Returns the data-quality report."""
+def load(raw_paths: list[Path], db_path: Path, registered_tenants: Iterable[str] = (), rebuild: bool = False) -> dict[str, Any]:
+    """Load one or more NDJSON files. Returns the data-quality report.
+
+    By default the load appends: snapshots already in the database are skipped and only new ones
+    are added, in one transaction, so a running session keeps its view (it reads up to its own
+    as-of time). `rebuild=True`, or a missing database, builds a fresh one from the files."""
     for p in raw_paths:
         if not p.is_file():
             raise LoadError(f"Raw data not found: {p}")
     db_path.parent.mkdir(parents=True, exist_ok=True)
+    fresh = rebuild or not db_path.exists()
     tmp = db_path.with_suffix(".tmp")
-    if tmp.exists():
-        tmp.unlink()
-    conn = sqlite3.connect(tmp)
-    conn.executescript(SCHEMA)
-
     seen_ids: dict[str, str] = {}
+    existing_devices: dict[str, dict] = {}
+    if fresh:
+        if tmp.exists():
+            tmp.unlink()
+        conn = sqlite3.connect(tmp)
+        conn.executescript(SCHEMA)
+    else:
+        conn = sqlite3.connect(db_path, timeout=10)
+        conn.row_factory = sqlite3.Row
+        seen_ids = {r["snapshot_id"]: r["collected_at"] for r in conn.execute("SELECT snapshot_id, collected_at FROM snapshots")}
+        existing_devices = {r["device_id"]: dict(r) for r in conn.execute("SELECT * FROM devices")}
+        conn.row_factory = None
+    preloaded = set(seen_ids)
+    already_loaded = 0
     exact_dupes = 0
     report: dict[str, Any] = {"sources": [str(p) for p in raw_paths]}
     per_device: dict[str, list[dict]] = defaultdict(list)
@@ -114,12 +128,17 @@ def load(raw_paths: list[Path], db_path: Path, registered_tenants: Iterable[str]
                 raise LoadError(f"{p}:{lineno}: missing or invalid key field ({exc})") from exc
             day = ts.date().isoformat()
             snapshot_id = f"{device_id}@{day}"
-            if snapshot_id in seen_ids:
-                if seen_ids[snapshot_id] == collected_at:
+            if snapshot_id in seen_ids and seen_ids[snapshot_id] != collected_at:
+                snapshot_id = f"{device_id}@{ts.strftime('%Y-%m-%dT%H%M')}"  # second snapshot on the same day
+            if seen_ids.get(snapshot_id) == collected_at:
+                if snapshot_id in preloaded:
+                    already_loaded += 1  # loaded by an earlier run
+                else:
                     exact_dupes += 1
-                    continue
-                snapshot_id = f"{device_id}@{ts.strftime('%Y-%m-%dT%H%M')}"
+                continue
             seen_ids[snapshot_id] = collected_at
+            if device_id in existing_devices and existing_devices[device_id]["tenant_id"] != tenant_id:
+                raise LoadError(f"{p}:{lineno}: device {device_id} appears under two tenants")
 
             os_ = rec.get("os") or {}
             ident = rec.get("device_identity") or {}
@@ -225,33 +244,44 @@ def load(raw_paths: list[Path], db_path: Path, registered_tenants: Iterable[str]
         dec = sum(1 for a, b in zip(snaps, snaps[1:], strict=False) if a["cycles"] is not None and b["cycles"] is not None and b["cycles"] < a["cycles"])
         if dec:
             cycle_decreases[device_id] = dec
+        first, last, count = snaps[0]["ts"].isoformat(), snaps[-1]["ts"].isoformat(), len(snaps)
+        prev = existing_devices.get(device_id)
+        if prev:
+            first, count = min(first, prev["first_seen"]), count + prev["snapshot_count"]
+            if prev["last_seen"] >= last:  # older data arriving late: keep the newer identity fields
+                conn.execute("UPDATE devices SET first_seen = ?, snapshot_count = ? WHERE device_id = ?", (first, count, device_id))
+                continue
         conn.execute(
-            "INSERT INTO devices VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT OR REPLACE INTO devices VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 device_id, info["tenant_id"], info["employee_id"], info["hostname"], info["model_name"],
                 info["model_identifier"], derive_manufacturer(info["model_name"]), info["platform"],
-                int(derive_is_laptop(info["model_name"], info["battery_present"])),
-                snaps[0]["ts"].isoformat(), snaps[-1]["ts"].isoformat(), len(snaps),
+                int(derive_is_laptop(info["model_name"], info["battery_present"])), first, last, count,
             ),
         )
 
     as_of = conn.execute("SELECT max(collected_at) FROM snapshots").fetchone()[0]
     if as_of is None:
         raise LoadError("No snapshots found in the raw data")
-    conn.execute("INSERT INTO meta VALUES ('as_of', ?)", (as_of,))
-    conn.execute("INSERT INTO meta VALUES ('sources', ?)", (json.dumps(report["sources"]),))
+    conn.execute("INSERT OR REPLACE INTO meta VALUES ('as_of', ?)", (as_of,))
+    conn.execute("INSERT OR REPLACE INTO meta VALUES ('sources', ?)", (json.dumps(report["sources"]),))
+    tenants_in_data = sorted(r[0] for r in conn.execute("SELECT DISTINCT tenant_id FROM devices"))
+    total_devices = conn.execute("SELECT count(*) FROM devices").fetchone()[0]
     conn.commit()
     conn.close()
-    if db_path.exists():
-        db_path.unlink()
-    tmp.rename(db_path)
+    if fresh:
+        if db_path.exists():
+            db_path.unlink()
+        tmp.rename(db_path)
 
-    tenants_in_data = sorted({i["tenant_id"] for i in device_info.values()})
     registered = set(registered_tenants)
     report.update({
+        "mode": "rebuild" if fresh else "append",
         "rows": rows,
+        "new_snapshots": rows - exact_dupes - already_loaded,
+        "already_loaded": already_loaded,
         "exact_duplicates_dropped": exact_dupes,
-        "devices": len(device_info),
+        "devices": total_devices,
         "tenants_in_data": tenants_in_data,
         "unregistered_tenants": [t for t in tenants_in_data if registered and t not in registered],
         "as_of": as_of,
