@@ -157,9 +157,12 @@ def main(click_ctx: click.Context) -> None:
 # ---- data -------------------------------------------------------------------------------------
 @main.command()
 @click.argument("raw", nargs=-1, type=click.Path(dir_okay=False))
+@click.option("--rebuild", is_flag=True, help="Discard the database and build it again from the files.")
 @pass_ctx
-def load(ctx: Ctx, raw: tuple[str, ...]) -> None:
-    """Build the telemetry database from raw NDJSON (default: data/raw/*.ndjson)."""
+def load(ctx: Ctx, raw: tuple[str, ...], rebuild: bool) -> None:
+    """Load raw NDJSON into the telemetry database (default: data/raw/*.ndjson).
+
+    Appends by default: snapshots already loaded are skipped. Use --rebuild to start fresh."""
     from pathlib import Path
 
     from fleet_copilot.data.loader import LoadError
@@ -170,11 +173,13 @@ def load(ctx: Ctx, raw: tuple[str, ...]) -> None:
         fail(f"No raw data in {ctx.paths.raw_data.parent}. Copy the NDJSON file there.")
     ensure_private_dir(ctx.paths.var)
     try:
-        report = load_raw(paths, ctx.paths.telemetry_db, ctx.config.policy.tenants.keys())
+        report = load_raw(paths, ctx.paths.telemetry_db, ctx.config.policy.tenants.keys(), rebuild=rebuild)
     except LoadError as exc:
         fail(str(exc))
     ctx.paths.data_quality.write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
-    say(f"Loaded {report['rows']} snapshots for {report['devices']} devices; data as of {report['as_of']}.", "green")
+    skipped = f" ({report['already_loaded']} already loaded, skipped)" if report["already_loaded"] else ""
+    say(f"Loaded {report['new_snapshots']} new snapshots{skipped}; {report['devices']} devices in total; "
+        f"data as of {report['as_of']}.", "green")
     say(f"Data-quality report: {ctx.paths.data_quality}")
     for key in ("duplicates", "cycle_count_decreases", "encrypted_flag_mismatches"):
         if report.get(key):
