@@ -74,7 +74,7 @@ def collect(traces_dir: Path, tenant_id: str, days: int = 7, today: str | None =
                         counts["verifier_rejections"] += 1
                 elif kind == "tool_result" and payload.get("error"):
                     tool_errors[payload["error"].get("code", "UNKNOWN")] += 1
-                elif kind in ("repair_attempt", "llm_retry", "deadline_reached", "budget_stop", "context_compacted",
+                elif kind in ("repair_attempt", "trailing_text_ignored", "llm_retry", "deadline_reached", "budget_stop", "context_compacted",
                               "tool_output_shortened", "cancelled", "error", "proposal"):
                     counts[kind] += 1
     latencies.sort()
@@ -88,7 +88,8 @@ def collect(traces_dir: Path, tenant_id: str, days: int = 7, today: str | None =
         "verifier_checks": checks, "verifier_rejections": counts.get("verifier_rejections", 0),
         "verifier_rejection_rate": round(counts.get("verifier_rejections", 0) / checks, 3) if checks else None,
         "answers_with_claims_removed": counts.get("answers_with_claims_removed", 0),
-        "repairs": counts.get("repair_attempt", 0), "llm_retries": counts.get("llm_retry", 0),
+        "repairs": counts.get("repair_attempt", 0), "trailing_text_ignored": counts.get("trailing_text_ignored", 0),
+        "llm_retries": counts.get("llm_retry", 0),
         "deadline_stops": counts.get("deadline_reached", 0), "budget_stops": counts.get("budget_stop", 0),
         "context_condensed": counts.get("context_compacted", 0), "tool_outputs_shortened": counts.get("tool_output_shortened", 0),
         "cancelled_turns": counts.get("cancelled", 0), "failed_turns": counts.get("error", 0),
@@ -109,7 +110,7 @@ def render(s: dict[str, Any]) -> str:
         f"Turn latency p50 {val(s['latency_p50_s'], ' s')} · p95 {val(s['latency_p95_s'], ' s')}", "",
         f"Verifier: {s['verifier_rejections']} of {s['verifier_checks']} answers rejected at first ({rate}); "
         f"{s['answers_with_claims_removed']} shown with unverified claims removed",
-        f"Repairs {s['repairs']} · LLM retries {s['llm_retries']} · deadline stops {s['deadline_stops']} · "
+        f"Repairs {s['repairs']} · trailing text ignored {s['trailing_text_ignored']} · LLM retries {s['llm_retries']} · deadline stops {s['deadline_stops']} · "
         f"budget stops {s['budget_stops']} · failed turns {s['failed_turns']} · cancelled {s['cancelled_turns']}",
         f"Context condensed {s['context_condensed']} · tool outputs shortened {s['tool_outputs_shortened']} · "
         f"proposals created {s['proposals_created']}",
