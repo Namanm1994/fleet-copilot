@@ -17,12 +17,16 @@ Rules:
    min_points_for_trend, the answer may state the recorded values and that a trend cannot be
    assessed, but not a trend or the absence of one; a question about a trend that rests only on
    such a history must be answered as "insufficient_data"
+8  no answer about a period outside the telemetry window: when every month or date the question names
+   lies outside the window, the answer must be "insufficient_data" and must state the window
 """
 
 from __future__ import annotations
 
+import calendar
 import re
 from dataclasses import dataclass, field
+from datetime import date
 from typing import TYPE_CHECKING, Any
 
 from fleet_copilot.agent.models import FinalAnswer
@@ -140,6 +144,40 @@ LOOKUP_TOOLS = {"resolve_entities", "get_definitions"}
 def trend_statements(text: str) -> list[str]:
     """Sentences that state a trend without saying it cannot be assessed."""
     return [s.strip() for s in SENTENCE_RE.split(text) if TREND_RE.search(s) and not CANNOT_TELL_RE.search(s)]
+
+
+def asked_periods(question: str, as_of: date) -> list[tuple[date, date, str]]:
+    """Months and dates the question names, as (first day, last day, as written).
+
+    A month or day without a year means its latest occurrence up to the as-of date: in June 2026, "April"
+    is April 2026 and "December" is December 2025. Relative wording ("last quarter") is not read."""
+    def month_span(year: int, month: int) -> tuple[date, date]:
+        return date(year, month, 1), date(year, month, calendar.monthrange(year, month)[1])
+
+    out: list[tuple[date, date, str]] = []
+    q = quantities(question)
+    for shown, needle in q.dates:
+        try:
+            if m := re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", needle):
+                day = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+                out.append((day, day, shown))
+            elif m := re.fullmatch(r"(\d{4})-(\d{2})-", needle):
+                out.append((*month_span(int(m.group(1)), int(m.group(2))), shown))
+            elif m := re.fullmatch(r"-(\d{2})-(\d{2})", needle):
+                day = date(as_of.year, int(m.group(1)), int(m.group(2)))
+                if day > as_of:
+                    day = date(as_of.year - 1, day.month, day.day)
+                out.append((day, day, shown))
+            elif m := re.fullmatch(r"(\d{4})-", needle):
+                out.append((date(int(m.group(1)), 1, 1), date(int(m.group(1)), 12, 31), shown))
+        except ValueError:                                   # "February 30": not a date, nothing to place
+            continue
+    _, rest = written_dates(DATE_RE.sub(_blank, EVID_RE.sub(_blank, question)))
+    for m in MONTH_RE.finditer(rest):                        # a month named alone: "in April"
+        month = MONTHS[m.group(1)]
+        year = as_of.year if (as_of.year, month) <= (as_of.year, as_of.month) else as_of.year - 1
+        out.append((*month_span(year, month), m.group(1)))
+    return out
 
 
 @dataclass
@@ -282,18 +320,25 @@ class Verifier:
         # A period the user asked about may be named back ("no data for April 2026"), even when no tool
         # result holds it: that is what an answer about a period outside the data has to say.
         names = self._names(corpus)
+        lo, hi = self.tk.repo.data_window()
+        window = (date.fromisoformat(lo[:10]), date.fromisoformat(hi[:10])) if lo and hi else None
+        asked = asked_periods(question, window[1]) if window else []
         asked_dates = {needle for _, needle in quantities(question).dates}
         asked_months = {MONTHS[m.group(1)] for m in MONTH_RE.finditer(question)}
 
         def date_ok(needle: str) -> bool:
             if needle in corpus or needle in asked_dates:
                 return True
+            if window and needle in (window[0].isoformat(), window[1].isoformat()):   # the window itself may always be stated
+                return True
             month_and_year = re.fullmatch(r"(\d{4})-(\d{2})-", needle)   # "April 2026" for a question about "April"
             return bool(month_and_year and int(month_and_year.group(2)) in asked_months and f"{month_and_year.group(1)}-" in corpus)
 
         def ids_ok(text: str, where: str, idx: int | None) -> None:
             for token in set(DEVICE_RE.findall(EVID_RE.sub(" ", text))) | set(EMP_RE.findall(text)):
-                if token not in corpus:
+                # a date is held to the rule for dates (a tool result, the question, or the window), wherever it is written
+                known = date_ok(token) if DATE_RE.fullmatch(token) else token in corpus
+                if not known:
                     errors.append(f"{where}: '{token}' does not appear in any tool result (rule 2).")
                     if idx is not None:
                         failed.add(idx)
@@ -419,6 +464,16 @@ class Verifier:
             if only_short and TREND_RE.search(question) and ans.answer_type == "answer":
                 errors.append(f"The question asks about a trend and the only history has {fewest} snapshot(s), fewer than the "
                               f"{min_pts} a trend needs: set answer_type to \"insufficient_data\" (rule 7).")
+
+        # rule 8: no answer about a period outside the telemetry window
+        if window and asked and all(end < window[0] or start > window[1] for start, end, _ in asked):
+            lo, hi = window[0].isoformat(), window[1].isoformat()
+            named = ", ".join(sorted({shown for _, _, shown in asked}))
+            whole = " ".join([ans.summary, *(c.text for c in ans.claims), *ans.caveats])
+            if ans.answer_type != "insufficient_data" or lo not in whole or hi not in whole:
+                errors.append(f"The question asks about {named}, but the telemetry covers only {lo} to {hi}. Nothing can be said "
+                              f"about that period, including that nothing happened in it: set answer_type to \"insufficient_data\", "
+                              f"state that the data covers {lo} to {hi}, and do not describe that period (rule 8).")
 
         # rule 5: no-matches must cite a zero-result receipt
         if ans.answer_type == "no_matches":
