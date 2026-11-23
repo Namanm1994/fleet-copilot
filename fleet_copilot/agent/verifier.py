@@ -13,6 +13,10 @@ Rules:
 4  thresholds the cited tool results used are stated in definitions_used
 5  no factual claim without evidence; "no matches" must cite a zero-result receipt
 6  completeness: a claim built on a device list names every device or states the count
+7  no trend from too few snapshots: when the history a claim cites has fewer snapshots than
+   min_points_for_trend, the answer may state the recorded values and that a trend cannot be
+   assessed, but not a trend or the absence of one; a question about a trend that rests only on
+   such a history must be answered as "insufficient_data"
 """
 
 from __future__ import annotations
@@ -48,6 +52,22 @@ WRITTEN_DATE_RE = re.compile(r"\b(?:(\d{1,2})(?:st|nd|rd|th)?\s+)?(" + "|".join(
 # A bare year ("during 2026"). Not a year: part of a larger number, a measurement, or a device count.
 YEAR_RE = re.compile(r"(?<![\w.,-])((?:19|20)\d{2})(?![\w%-]|[.,]\d|\s?(?:[KMGT]i?B|mAh|Wh)\b"
                      r"|\s+(?:\w+\s+)?(?:devices?|laptops?|machines?|computers?|endpoints?)\b)")
+
+
+# Words that state a trend (or the absence of one). Past-tense facts ("fell from 50% to 45%") are not in the list.
+TREND_RE = re.compile(r"\b(?:trend\w*|rising|falling|declining|increasing|decreasing|growing|shrinking|worsening|improving"
+                      r"|deteriorating|degrading|stable|steady)\b", re.I)
+# A sentence that says a trend cannot be assessed may use those words.
+CANNOT_TELL_RE = re.compile(r"insufficient|not enough|too few|fewer than|less than|below the|cannot|can't|can not|could not|couldn't"
+                            r"|unable|minimum|at least|required|needs?\b|needed", re.I)
+SENTENCE_RE = re.compile(r"(?<=[.!?;])\s+")
+# Lookups that carry no finding of their own; citing them beside a short history does not make the answer mixed.
+LOOKUP_TOOLS = {"resolve_entities", "get_definitions"}
+
+
+def trend_statements(text: str) -> list[str]:
+    """Sentences that state a trend without saying it cannot be assessed."""
+    return [s.strip() for s in SENTENCE_RE.split(text) if TREND_RE.search(s) and not CANNOT_TELL_RE.search(s)]
 
 
 @dataclass
@@ -161,7 +181,29 @@ class Verifier:
     def _corpus(self) -> str:
         return "\n".join(self.tk.tool_corpus)
 
-    def verify(self, ans: FinalAnswer) -> Verification:
+    def _short_histories(self) -> tuple[dict[str, int], set[str]]:
+        """Evidence that belongs only to a history with too few snapshots for a trend.
+
+        Returns {evidence or receipt ID: snapshots in that history} and the IDs of lookups that carry no
+        finding. A snapshot that a long-enough history also returned is not short."""
+        ev = self.tk.evidence
+        min_pts = int(self.tk.config.thresholds.get("min_points_for_trend", "points"))
+        short: dict[str, int] = {}
+        long_ids: set[str] = set()
+        lookups: set[str] = set()
+        for rid, r in ev.receipts.items():
+            if r["tool"] in LOOKUP_TOOLS:
+                lookups.add(rid)
+            if r["tool"] != "get_device_history":
+                continue
+            if r["result_count"] < min_pts:
+                for e in [rid, *r["evidence_ids"]]:
+                    short[e] = r["result_count"]
+            else:
+                long_ids.update(r["evidence_ids"])
+        return {e: n for e, n in short.items() if e not in long_ids}, lookups
+
+    def verify(self, ans: FinalAnswer, question: str = "") -> Verification:
         ev = self.tk.evidence
         errors: list[str] = []
         failed: set[int] = set()
@@ -274,6 +316,26 @@ class Verifier:
         missing_defs = sorted(d for d in cited_defs if d not in ans.definitions_used and d != "min_points_for_trend")
         if missing_defs:
             errors.append(f"definitions_used must include {missing_defs}, which the cited results applied (rule 4).")
+
+        # rule 7: no trend from too few snapshots
+        short, lookups = self._short_histories()
+        if short:
+            min_pts = int(self.tk.config.thresholds.get("min_points_for_trend", "points"))
+            on_short = [i for i, c in enumerate(ans.claims) if any(e in short for e in c.evidence_ids)]
+            fewest = min((short[e] for i in on_short for e in ans.claims[i].evidence_ids if e in short), default=0)
+            how = (f"the history it rests on has {fewest} snapshot(s) and a trend needs at least {min_pts}. State the recorded "
+                   "values and that a trend cannot be assessed; do not say whether the value is or is not rising, falling or stable")
+            for i in on_short:
+                for sentence in trend_statements(ans.claims[i].text):
+                    errors.append(f"claim {i + 1}: \"{sentence[:120]}\" states a trend, but {how} (rule 7).")
+                    failed.add(i)
+            if on_short:
+                for sentence in trend_statements(ans.summary):
+                    errors.append(f"summary: \"{sentence[:120]}\" states a trend, but {how} (rule 7).")
+            only_short = on_short and all(e in short or e in lookups for c in ans.claims for e in c.evidence_ids)
+            if only_short and TREND_RE.search(question) and ans.answer_type == "answer":
+                errors.append(f"The question asks about a trend and the only history has {fewest} snapshot(s), fewer than the "
+                              f"{min_pts} a trend needs: set answer_type to \"insufficient_data\" (rule 7).")
 
         # rule 5: no-matches must cite a zero-result receipt
         if ans.answer_type == "no_matches":

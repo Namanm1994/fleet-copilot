@@ -10,7 +10,11 @@
     insights_include:
       - {device_id: {oracle: prohibited_software}, detector: prohibited_software}
       - {device_id: {oracle: failing_check, args: {check_id: screen_lock}}, detector: compliance_drift}
-    clean_detectors_include: [battery_eol]
+      # every battery the data reports as not "Normal" must be found (none in the small sample, three in the full data)
+      - {device_id: {oracle: battery_not_normal}, detector: battery_eol}
+    # ... and when the data has none, the scan must say the detector found nothing
+    clean_detectors_include:
+      - {detector: battery_eol, unless: {oracle: battery_not_normal}}
     no_data_of_tenant: initech-003
     proposals: {max: 5}
 

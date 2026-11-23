@@ -189,7 +189,7 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
             messages.append({"role": "tool", "tool_call_id": submit["id"], "name": SUBMIT_ANSWER_SPEC_NAME,
                              "content": f"Invalid answer format: {err}. Call submit_answer again with valid fields."})
             return {"messages": messages, "repairs": repairs}
-        v = Verifier(tk).verify(answer)
+        v = Verifier(tk).verify(answer, state.get("question", ""))
         trace("verifier", "verifier_result", {"ok": v.ok, "errors": v.errors})
         if v.ok:
             messages.append({"role": "tool", "tool_call_id": submit["id"], "name": SUBMIT_ANSWER_SPEC_NAME, "content": "Accepted."})
