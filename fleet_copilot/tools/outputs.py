@@ -15,7 +15,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
-TOOL_CONTRACT_VERSION = "1"
+TOOL_CONTRACT_VERSION = "2"
 
 
 class Out(BaseModel):
@@ -170,11 +170,16 @@ class InsightRow(Out):
     acknowledged_until: str | None = None
 
 
+class TrendGap(Out):
+    count: int                        # devices with too few snapshots for the trend part of a detector
+    device_ids: list[str] | None = None   # only when the call named specific devices
+
+
 class RunInsightsOut(Out):
     detectors_run: list[str]
     devices_checked: dict[str, int]
     insights: list[InsightRow]
-    insufficient_data_devices: Any
+    trend_not_assessed: dict[str, TrendGap]
 
 
 # ---- get_definitions, list_proposals ------------------------------------------------------------

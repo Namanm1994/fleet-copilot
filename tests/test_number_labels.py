@@ -90,8 +90,10 @@ def test_checked_count_from_the_cited_result_is_a_count(home):  # seen live (I05
     assert not wrong.ok and any("'25 devices'" in e for e in wrong.errors)
 
 
-def test_naming_an_unrelated_device_is_not_a_partial_list(home):  # seen live (I05): rule 6 on FX-SHORT-01
-    v = check(battery_tk(home), "The detector checked 24 devices; FX-SHORT-01 had too little data.", ["Q-1-1"])
+def test_naming_an_unrelated_device_is_not_a_partial_list(home):  # seen live (I05): rule 6 on a device outside the list
+    tk = battery_tk(home)
+    tk.call("get_device", {"device_id": "FX-DELL-01"})        # a device the tools returned, but not a battery finding
+    v = check(tk, "The detector checked 24 devices; FX-DELL-01 was one of them and is fine.", ["Q-1-1"])
     assert v.ok, v.errors
 
 

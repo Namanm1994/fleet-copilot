@@ -200,7 +200,7 @@ DESCRIPTIONS = {
     "get_device_history": "Time series of one device's metrics over the telemetry window (disk, RAM, battery, OS version, or compliance:<check_id>).",
     "get_compliance_overview": "Pass/fail counts per compliance check on latest snapshots, with the failing devices.",
     "get_software": "Find which devices have a piece of software (by name), or list the software on one device.",
-    "run_insights": "Run pattern detectors across the telemetry window: battery_eol, ram_constrained, low_storage, compliance_drift, prohibited_software.",
+    "run_insights": "Run pattern detectors across the telemetry window: battery_eol, ram_constrained, low_storage, compliance_drift, prohibited_software. Omit device_ids to check the whole fleet; pass device_ids for a question about particular devices, which also names any of them with too little history for a trend.",
     "get_definitions": "Return the threshold definitions in use, so answers can state them.",
     "list_proposals": "List action proposals and their status for this tenant.",
     "open_remediation_ticket": "PROPOSE an IT ticket for a compliance check failing on the device's latest snapshot. Creates a proposal only; a human must approve.",

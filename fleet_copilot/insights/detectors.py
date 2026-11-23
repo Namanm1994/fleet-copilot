@@ -44,7 +44,7 @@ class Insight:
 @dataclass
 class DetectorResult:
     insights: list[Insight]
-    insufficient_data: list[str]          # device IDs skipped for too few snapshots
+    insufficient_data: list[str]          # devices with too few snapshots for the TREND part; their latest snapshot was still checked
     devices_checked: int
 
 

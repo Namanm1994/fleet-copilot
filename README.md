@@ -264,7 +264,7 @@ The tenant is never an argument: it comes from the session.
 | `get_device_history` | Time series over the window: disk, RAM, battery, OS version, or `compliance:<check_id>` |
 | `get_compliance_overview` | Pass/fail counts per check, with failing devices |
 | `get_software` | Devices with a given software, or the software on one device, each entry with the first day it was seen in the window. Names match on whole words ("chrome" finds Google Chrome, "go" does not); part of a word counts only from 5 characters ("torrent" finds uTorrent) |
-| `run_insights` | Run detectors: `battery_eol`, `ram_constrained`, `low_storage`, `compliance_drift`, `prohibited_software` |
+| `run_insights` | Run detectors: `battery_eol`, `ram_constrained`, `low_storage`, `compliance_drift`, `prohibited_software`. Devices with too little history for a trend are still checked on their latest snapshot; a fleet-wide call reports how many there are, and a call about specific devices names them |
 | `get_definitions` | Thresholds in use, so answers can state them |
 | `list_proposals` | This tenant's proposals and their status |
 
