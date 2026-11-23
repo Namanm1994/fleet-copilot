@@ -399,6 +399,8 @@ The reasoning behind the principles is in [docs/PHILOSOPHY.md](docs/PHILOSOPHY.m
 - Scheduled scans with alert deduplication
 - Database-level tenant isolation (for example, Postgres row-level security) and an external anchor for the audit hash
 - Real integrations behind the outbox (ticketing, procurement, email)
+- Swapping the data source (a production telemetry store or device-management service) behind the repository layer. A cache for repeated lookups was considered and deferred: it only pays off if that source is slow, rate-limited or charged per request. It would sit in the repository layer, keyed by tenant, query and as-of time.
+- A maximum session age or a refresh command. Each session pins its as-of time at startup so answers stay consistent, which means a long session answers from older data.
 - A fleet-wide `find_devices` at past dates (today it filters latest snapshots; history is per device)
 
 ## License
