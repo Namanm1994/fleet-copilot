@@ -98,11 +98,18 @@ class CopilotSession:
         tools = "\n".join(f"- {s['name']}: {s['description']}" for s in self.tk.tool_specs())
         older = "\n".join(self.history_digest()) or "(none)"
         return self.prompts["planner"].format(tenant_name=self.tk.ctx.tenant_name, as_of=self.tk.repo.as_of[:10],
-                                              tool_list=tools, older=older)
+                                              tool_list=tools, older=older, **self._data_facts(),
+                                              forbidden_actions=", ".join(self.tk.config.policy.forbidden_actions) or "(none)")
+
+    def _data_facts(self) -> dict[str, str]:
+        """What the model is told about the data before it plans: the dates it covers."""
+        lo, hi = self.tk.repo.data_window()
+        return {"window_start": (lo or self.tk.repo.as_of)[:10], "window_end": (hi or self.tk.repo.as_of)[:10]}
 
     def agent_prompt(self, plan: dict) -> str:
         return self.prompts["agent"].format(tenant_name=self.tk.ctx.tenant_name, as_of=self.tk.repo.as_of[:10],
-                                            plan=json.dumps(plan, ensure_ascii=False), history=self.history_text())
+                                            plan=json.dumps(plan, ensure_ascii=False), history=self.history_text(),
+                                            **self._data_facts())
 
     def history_digest(self) -> list[str]:
         """Turns older than the recent window, one line each (built in code, no LLM call)."""
