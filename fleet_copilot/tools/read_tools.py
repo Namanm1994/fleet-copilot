@@ -38,6 +38,30 @@ def _device_label(d: dict) -> str:
     return f"{d.get('hostname') or d['device_id']} ({d.get('model_name') or 'unknown model'}, {d['device_id']})"
 
 
+def series_summary(points: list[dict]) -> dict[str, Any]:
+    """Counts and turning points of one history series, worked out in code.
+
+    The model is meant to read "13 passes, 1 fail" here, not count rows itself: a number the model
+    makes cannot be checked, and one it reads from a tool result can.
+    """
+    values = [p["value"] for p in points]
+    out: dict[str, Any] = {"points": len(points)}
+    if not points:
+        return out
+    changes = [i for i in range(1, len(values)) if values[i] != values[i - 1]]
+    out |= {"changes": len(changes), "current": values[-1],
+            "current_since": points[changes[-1]]["date"] if changes else points[0]["date"]}
+    if all(v in ("pass", "fail") for v in values):
+        out |= {"pass_count": values.count("pass"), "fail_count": values.count("fail")}
+        fails = [p["date"] for p in points if p["value"] == "fail"]
+        if fails:
+            out |= {"first_fail": fails[0], "last_fail": fails[-1]}
+    nums = [v for v in values if isinstance(v, (int, float)) and not isinstance(v, bool)]
+    if nums and len(nums) == len(values):
+        out |= {"min": min(nums), "max": max(nums), "first": nums[0], "last": nums[-1]}
+    return out
+
+
 class ReadTools:
     def __init__(self, tk: Toolkit):
         self.tk = tk
@@ -310,7 +334,8 @@ class ReadTools:
         caveats = []
         if len(snaps) < min_pts:
             caveats.append(f"Only {len(snaps)} snapshots in range; fewer than {min_pts} is insufficient data for a trend.")
-        data = {"device_id": args.device_id, "window": [lo[:10] if lo else None, hi[:10] if hi else None], "series": series}
+        data = {"device_id": args.device_id, "window": [lo[:10] if lo else None, hi[:10] if hi else None], "series": series,
+                "summary": {metric: series_summary(points) for metric, points in series.items()}}
         return self._finish("get_device_history", args.model_dump(exclude_none=True),
                             ToolResult(data=data, evidence_ids=sorted(set(evidence)), caveats=caveats,
                                        definitions_used=["min_points_for_trend"]), len(snaps))

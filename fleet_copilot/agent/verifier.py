@@ -132,10 +132,16 @@ def _decimals(x: float, raw: str | None = None) -> int:
 
 
 def _matches(x: float, allowed: set[float]) -> bool:
-    if x in allowed or abs(x) in ALWAYS_OK_NUMBERS:
+    """True when the number equals a tool value, or the tool value rounded to the precision the answer used.
+
+    Sizes are compared, not signs: an answer says "falling 0.51% a day" for a slope of -0.51, and the
+    direction is in the words. A different size (0.61) still fails.
+    """
+    x = abs(x)
+    if x in ALWAYS_OK_NUMBERS:
         return True
     d = _decimals(x)
-    return any(round(y, d) == x for y in allowed) or any(abs(y - x) < 1e-6 for y in allowed)
+    return any(abs(y) == x or round(abs(y), d) == x or abs(abs(y) - x) < 1e-6 for y in allowed)
 
 
 class Verifier:

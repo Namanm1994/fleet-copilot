@@ -261,7 +261,7 @@ The tenant is never an argument: it comes from the session.
 | `resolve_entities` | Map words ("the Dell", a hostname, serial or employee ID) to IDs; returns candidates when ambiguous |
 | `find_devices` | Main query tool: filter on the latest snapshot by platform, manufacturer, model, OS older than, low disk, free %/GB, RAM %, failing check or severity, software, battery, staleness; group or sort |
 | `get_device` | Latest-snapshot summary of one device, including compliance and open proposals |
-| `get_device_history` | Time series over the window: disk, RAM, battery, OS version, or `compliance:<check_id>` |
+| `get_device_history` | Time series over the window: disk, RAM, battery, OS version, or `compliance:<check_id>`. Each series comes with a summary computed in code (points, pass and fail counts, first and last fail, min and max, when the current value began), so the model states counts it was given and does not count rows |
 | `get_compliance_overview` | Pass/fail counts per check, with failing devices |
 | `get_software` | Devices with a given software, or the software on one device, each entry with the first day it was seen in the window. Names match on whole words ("chrome" finds Google Chrome, "go" does not); part of a word counts only from 5 characters ("torrent" finds uTorrent) |
 | `run_insights` | Run detectors: `battery_eol`, `ram_constrained`, `low_storage`, `compliance_drift`, `prohibited_software`. Devices with too little history for a trend are still checked on their latest snapshot; a fleet-wide call reports how many there are, and a call about specific devices names them |
@@ -351,6 +351,7 @@ Employee notifications and acknowledgements are never proposed unprompted, and n
      | Plain value | cycle count 993 | A tool value or a threshold |
 
      A count is checked against the claim's own evidence, not against every number seen in the session
+   - numbers are compared by size, because direction is said in words: "falling 0.51% a day" matches a slope of −0.51, and 0.61 does not
    - every threshold the cited results used is stated
    - every factual claim has evidence, and "no matches" cites a query that returned zero rows
    - an answer that lists some devices from a result lists all of them or states the total
