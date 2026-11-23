@@ -136,9 +136,9 @@ Every case also checks that the outbox contains exactly the approved-and-execute
 
 **Data.** Cases run on the real data in `data/raw/` and on a committed synthetic fixture (`evals/fixtures/fixture.ndjson`, seeded generator). The fixture exists for signals the sample lacks: injection strings, terminal markup, five Dells, a failing battery, RAM pressure, storage decline, blips vs drift, stale and short histories. Its tenants exist only in `config/policy.eval.yaml`, so `fleet chat` and `fleet scan` cannot select them. When `data/raw/` is missing (as in CI), real-data cases are skipped and reported as skipped.
 
-**Recorded mode.** Cassettes in `evals/cassettes/` store only model responses, redacted and keyed by a request digest. A changed prompt, tool output or dataset makes the affected cases report "cassette out of date" rather than a false pass or fail. CI (`.github/workflows/ci.yml`) runs ruff, pytest and the recorded evals on pinned dependencies.
+**Recorded mode.** Cassettes in `evals/cassettes/` store model responses, redacted and keyed by a request digest, with the model name and the settings they were recorded under. They never store prompts or keys. A changed prompt, tool output or dataset makes the affected cases report "cassette out of date" rather than a false pass or fail. CI (`.github/workflows/ci.yml`) runs ruff, pytest and the recorded evals on pinned dependencies.
 
-> **Current state.** The 184 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 52 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
+> **Current state.** The 221 unit tests and the 3 scan cases pass. Six of the 52 LLM cases have been run live so far, on free OpenRouter models, and the limits in `config/llm.yaml` and `config/policy.yaml` were raised as a result; they are starting values, not yet set from a full run. No cassettes are committed yet: the LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
 
 ## Architecture
 
