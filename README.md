@@ -19,7 +19,8 @@ Python 3.10+, LangGraph, SQLite. Works with Anthropic, OpenAI or OpenRouter mode
 6. [Grounding strategy](#grounding-strategy)
 7. [Guardrails](#guardrails)
 8. [Design decisions and trade-offs](#design-decisions-and-trade-offs)
-9. [Future work](#future-work)
+9. [How I used AI](#how-i-used-ai)
+10. [Future work](#future-work)
 
 ## Install
 
@@ -416,6 +417,31 @@ See [docs/SECURITY.md](docs/SECURITY.md) for the threat model, the mapping to th
 | **Thresholds set from the data profile** (low disk < 15%, stale ≥ 10 days, RAM ≥ 95%, trends need ≥ 7 snapshots) | Defaults are visible, stated in answers and adjustable | RAM is one reading per day, so it shows usage, not proven pressure; answers say so |
 
 The reasoning behind the principles is in [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md).
+
+## How I used AI
+
+I built this project with Claude (Anthropic) working as a coding agent. Every commit it wrote ends with a `Co-Authored-By` line, so the history shows this as well.
+
+**What Claude did.** It wrote most of the code, tests and documentation, one feature branch at a time, from specifications we drafted together. It also proposed many of the design options and the reasons for and against each.
+
+**What I decided.**
+
+- The definitions the answers rest on: low disk as one percentage of the system volume, and battery end-of-life as the device's own reported condition.
+- To design for a production data source, not for the static 30-day file. This is why `fleet load` appends and why context limits are configurable.
+- How conversation context is carried: verified summaries and a focus state, with tools called again when older data is needed.
+- An audit of the finished build against six areas (system design, tool contract, retrieval, reliability, security, evaluation and observability), and which of its findings to fix.
+
+**What I turned down or deferred.**
+
+- A cache or persistent memory for tool results. It depends on the production data source, so it is listed under Future work.
+- Auditing reads and a retention period for traces. I chose to document these as limits.
+- Loosening eval assertions before seeing a live run, and making the plan parser more tolerant after a single failure. Both wait for evidence.
+
+**What I checked myself.**
+
+- I ran the test suite on Windows, which exposed file-handle errors that never appeared on Linux.
+- I ran scans and approvals by hand for each company. That exposed an approval prompt that looped and proposal numbers that were shared across companies.
+- I ran the first live evals. They showed that a model's hidden reasoning tokens could use up a turn's output budget before it answered.
 
 ## Future work
 
