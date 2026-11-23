@@ -64,7 +64,7 @@ def run_scan(tk: Toolkit) -> ScanResult:
     proposals = [tk.store.get(p["proposal_id"]) for p in proposals]
     tk.audit_event("scan_finished", detail={"insights": len(data["insights"]), "proposals": len(proposals)})
     return ScanResult(tenant_name=tk.ctx.tenant_name, as_of=tk.repo.as_of, insights=data["insights"],
-                      clean_detectors=clean, insufficient=data["insufficient_data_devices"],
+                      clean_detectors=clean, insufficient=data["trend_not_assessed"],
                       definitions_used=res.definitions_used, proposals=proposals, skipped=skipped,
                       receipt_id=res.receipt_id)
 
@@ -131,9 +131,9 @@ def render_scan(result: ScanResult, thresholds) -> str:
     for d in result.clean_detectors:
         lines.append(f"✓ {DETECTOR_LABELS.get(d, d)}: no issues found")
     if result.insufficient:
-        n = sum(len(v) if isinstance(v, list) else 1 for v in result.insufficient.values())
-        lines.append(f"Insufficient data for {n} device/detector combination(s) (fewer than "
-                     f"{thresholds.get('min_points_for_trend', 'points')} snapshots).")
+        n = max(v["count"] for v in result.insufficient.values())
+        lines.append(f"Too few snapshots for a trend on {n} device(s) (a trend needs "
+                     f"{thresholds.get('min_points_for_trend', 'points')}). Their latest snapshot was still checked.")
     if result.definitions_used:
         lines += ["", "Definitions:"] + [f"  {d}: {thresholds.describe(d)}" for d in result.definitions_used
                                          if d in thresholds.names()]

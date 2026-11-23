@@ -372,10 +372,16 @@ class ReadTools:
                 self._require_device(dev)
         results = Detectors(self.repo, self.tk.config).run(args.detectors, set(args.device_ids) if args.device_ids else None)
         acks = self.tk.store.acknowledgements()
-        insights, insufficient, definitions = [], {}, set()
+        insights, no_trend, definitions = [], {}, set()
         for name, res in results.items():
             if res.insufficient_data:
-                insufficient[name] = res.insufficient_data
+                # These devices WERE checked on their latest snapshot; only the trend part needs more history.
+                # A fleet-wide call gets the count. The IDs are given only when the caller asked about
+                # specific devices, so an answer about the whole fleet does not name devices it has no finding for.
+                gap: dict[str, Any] = {"count": len(res.insufficient_data)}
+                if args.device_ids:
+                    gap["device_ids"] = sorted(res.insufficient_data)
+                no_trend[name] = gap
             for ins in res.insights:
                 ack = acks.get(ins.insight_id)
                 if ack and ack["until"] >= self.repo.as_of[:10] and not args.include_acknowledged:
@@ -398,9 +404,16 @@ class ReadTools:
             "devices_checked": {n: r.devices_checked for n, r in results.items()},
             "insights": [{k: v for k, v in i.to_dict().items() if k != "eligible_actions"} | {
                 "eligible_actions": [a["action"] for a in i.eligible_actions]} for i in insights],
-            "insufficient_data_devices": insufficient,
+            "trend_not_assessed": no_trend,
         }
         res = ToolResult(data=data, evidence_ids=evidence, total_count=len(insights), definitions_used=sorted(definitions))
+        if no_trend:
+            need = int(self.tk.config.thresholds.get("min_points_for_trend", "points"))
+            who = (", ".join(sorted({d for g in no_trend.values() for d in g["device_ids"]})) if args.device_ids
+                   else f"{max(g['count'] for g in no_trend.values())} device(s)")
+            res.caveats.append(f"Too few snapshots for a trend on {who} (a trend needs {need}). Their latest snapshot "
+                               "was still checked, so this says nothing about their current state."
+                               + ("" if args.device_ids else " Pass device_ids to see which devices."))
         if not insights:
             res.caveats.append("No findings from the detectors that ran; a valid 'no issues found' result.")
         return self._finish("run_insights", args.model_dump(exclude_none=True), res, len(insights))
