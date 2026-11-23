@@ -27,6 +27,7 @@ def collect(traces_dir: Path, tenant_id: str, days: int = 7, today: str | None =
     statuses: Counter = Counter()
     tool_errors: Counter = Counter()
     counts: Counter = Counter()
+    models: Counter = Counter()  # sessions per model and settings fingerprint
     per_day: dict[str, dict[str, Any]] = {}
     for day_dir in sorted(p for p in traces_dir.glob("*") if p.is_dir()):
         try:
@@ -49,7 +50,9 @@ def collect(traces_dir: Path, tenant_id: str, days: int = 7, today: str | None =
             d["sessions"] += 1
             for e in events:
                 kind, payload = e.get("event"), e.get("payload") or {}
-                if kind == "usage":
+                if kind == "run_settings":
+                    models[f"{payload.get('model') or 'unknown'} ({payload.get('fingerprint', 'no fingerprint')})"] += 1
+                elif kind == "usage":
                     turns += 1
                     d["turns"] += 1
                     llm_calls += payload.get("llm_calls", 0)
@@ -93,7 +96,8 @@ def collect(traces_dir: Path, tenant_id: str, days: int = 7, today: str | None =
         "deadline_stops": counts.get("deadline_reached", 0), "budget_stops": counts.get("budget_stop", 0),
         "context_condensed": counts.get("context_compacted", 0), "tool_outputs_shortened": counts.get("tool_output_shortened", 0),
         "cancelled_turns": counts.get("cancelled", 0), "failed_turns": counts.get("error", 0),
-        "proposals_created": counts.get("proposal", 0), "tool_errors": dict(tool_errors), "per_day": per_day,
+        "proposals_created": counts.get("proposal", 0), "tool_errors": dict(tool_errors), "models": dict(models),
+        "per_day": per_day,
     }
 
 
@@ -117,6 +121,8 @@ def render(s: dict[str, Any]) -> str:
     ]
     if s["turn_outcomes"]:
         lines.append("Turn outcomes: " + ", ".join(f"{k} {v}" for k, v in sorted(s["turn_outcomes"].items())))
+    if s.get("models"):
+        lines.append("Models (sessions): " + ", ".join(f"{k} {v}" for k, v in sorted(s["models"].items())))
     if s["tool_errors"]:
         lines.append("Tool errors: " + ", ".join(f"{k} {v}" for k, v in sorted(s["tool_errors"].items())))
     if s["per_day"]:

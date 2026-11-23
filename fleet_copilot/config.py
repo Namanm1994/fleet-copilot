@@ -258,6 +258,7 @@ class LLMSettings:
     backoff_base_s: float
     repair_retries: int
     reasoning_effort: Mapping[str, str] = field(default_factory=dict)
+    save_prompts: bool = True
     pricing: Mapping[str, Mapping[str, float]] = field(default_factory=dict)
 
 
@@ -301,6 +302,7 @@ def load_llm_settings(config_dir: Path) -> LLMSettings:
         backoff_base_s=float(data.get("backoff_base_s", 1.0)),
         repair_retries=int(data.get("repair_retries", 2)),
         reasoning_effort=_freeze(_reasoning_effort(data.get("reasoning_effort"))),
+        save_prompts=bool(data.get("save_prompts", True)),
         pricing=_freeze(pricing),
     )
 

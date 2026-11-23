@@ -58,7 +58,9 @@ Only data from the active tenant is sent, and only the fields a question needs. 
 
 ## Stored files
 
-The SQLite database, traces, audit log and outbox are local files, excluded from git. They are created readable by the owner only where the operating system supports it (POSIX file modes; on Windows they inherit the folder's permissions). Every proposal, outbox and audit record carries its tenant, and listing commands show only the selected tenant's records.
+The SQLite database, traces, saved model requests, audit log and outbox are local files, excluded from git. They are created readable by the owner only where the operating system supports it (POSIX file modes; on Windows they inherit the folder's permissions). Every proposal, outbox and audit record carries its tenant, and listing commands show only the selected tenant's records.
+
+Saved requests (`var/traces/<date>/prompts/`) are the full prompts and replies of each model call, so they hold the same company data as the traces; `save_prompts: false` in `config/llm.yaml` turns them off. Eval recordings, which are committed, store replies, the model name and its settings, and never the prompts or the key.
 
 ### Tamper-evident audit log
 
@@ -128,7 +130,7 @@ These threats are deliberately not defended against in v1:
 - **Physical access or malware on the machine.** Outside the application boundary.
 - **Recomputing the audit chain.** The hash chain detects tampering but cannot stop someone with file access from rewriting it entirely.
 - **Auditing what was read.** The audit log records sessions, proposals, decisions, executions, refusals and tool failures. It does not record each question or which records were shown. Those are in the session trace, which is a plain file and not tamper-evident. A deployment that must prove who viewed which data would add one audit entry per question.
-- **Trace retention.** Traces hold the tenant's telemetry in plain text and are kept until someone deletes them. There is no retention period or automatic cleanup.
+- **Trace retention.** Traces and saved model requests hold the tenant's telemetry in plain text and are kept until someone deletes them. There is no retention period or automatic cleanup.
 
 ## Future work
 

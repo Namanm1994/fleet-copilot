@@ -2,6 +2,8 @@
 
 A cassette stores, per request digest, the model response only. Requests are keyed on
 the messages and tool names (not on the key or headers, which are never stored).
+The cassette also names the model and the settings it was recorded with. Prompts are not
+stored here: cassettes are committed, and prompts hold company data.
 """
 
 from __future__ import annotations
@@ -35,8 +37,12 @@ class CassetteModel:
         self.path, self.mode, self.inner = path, mode, inner
         self.model = getattr(inner, "model", model_name)
         self.entries: dict[str, Any] = {}
+        self.recorded_settings: dict[str, Any] | None = None  # what the recording was made with
         if mode == "replay" and path.exists():  # a new recording starts empty, so no stale entries survive
-            self.entries = json.loads(path.read_text(encoding="utf-8")).get("entries", {})
+            data = json.loads(path.read_text(encoding="utf-8"))
+            self.entries = data.get("entries", {})
+            self.recorded_settings = data.get("settings")
+            self.model = data.get("model") or self.model
         self._seq = 0
 
     def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, timeout_s: float,
@@ -53,9 +59,14 @@ class CassetteModel:
         self.entries[key] = data
         return resp
 
+    def note_settings(self, settings: dict[str, Any]) -> None:
+        if self.mode == "record":
+            self.recorded_settings = settings
+
     def save(self) -> None:
         if self.mode != "record":
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps({"model": self.model, "entries": self.entries}, indent=1, ensure_ascii=False),
+        self.path.write_text(json.dumps({"model": self.model, "settings": self.recorded_settings, "entries": self.entries},
+                                        indent=1, ensure_ascii=False),
                              encoding="utf-8")
