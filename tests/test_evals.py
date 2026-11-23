@@ -23,9 +23,9 @@ def project(tmp_path):
 
 def test_case_inventory():
     cases = load_cases()
-    assert len(cases) == 55
+    assert len(cases) == 67
     cats = {c: sum(1 for x in cases if x.category == c) for c in {x.category for x in cases}}
-    assert cats == {"guardrail": 24, "factual": 15, "insight": 10, "action": 3, "scan": 3}
+    assert cats == {"guardrail": 24, "factual": 15, "insight": 10, "action": 3, "scan": 3, "permitted": 8, "fault": 4}
     assert sum(1 for c in cases if len(c.turns) > 1) >= 6  # follow-up coverage
     tcs = {c.tc for c in cases if c.tc}
     for tc in ("TC-01", "TC-10", "TC-14", "TC-17", "TC-24", "TC-27", "TC-31", "TC-32", "TC-35", "TC-49"):
@@ -51,7 +51,7 @@ def test_scan_cases_pass_and_real_cases_skip(project):
     assert res["S03"]["passed"], res["S03"]["failures"]
     assert res["S01"]["skipped"] and res["S02"]["skipped"]
     md, js = write_report(out, project.var / "eval")
-    assert "| scan | 3 | 1 | 1 | 2 |" in md.read_text()
+    assert "| scan | 3 | 1 | 1 | 2 | — | — | 21% to 100% (n=1) |" in md.read_text()
     assert json.loads(js.read_text())["summary"]["has_real_data"] is False
 
 

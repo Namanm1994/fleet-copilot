@@ -513,11 +513,28 @@ def stats(ctx: Ctx, tenant: str, days: int, as_json: bool) -> None:
 @click.option("--record", is_flag=True, help="With --mode live: save responses as cassettes for recorded runs.")
 @click.option("--runs", default=1, show_default=True, help="Runs per case (stability check).")
 @click.option("--case", "only", multiple=True, help="Case ID or category to run (repeatable).")
+@click.option("--control", type=click.Choice(["refuse_all", "do_nothing", "list_everything", "all"]), default=None,
+              help="Score a stand-in agent that cannot be right, to check the scoring itself. No model is called.")
 @pass_ctx
-def eval_cmd(ctx: Ctx, mode: str, record: bool, runs: int, only: tuple[str, ...]) -> None:
+def eval_cmd(ctx: Ctx, mode: str, record: bool, runs: int, only: tuple[str, ...], control: str | None) -> None:
     """Run the eval suite (evals/cases/*.yaml) and write eval_report.md + eval_results.json under var/eval/."""
     from evals.runner import run_eval, write_report
 
+    if control:
+        from evals.controls import CONTROLS, run_control
+
+        weak = False
+        for name in (CONTROLS if control == "all" else (control,)):
+            out, md = run_control(ctx.paths, name, list(only) or None)
+            s = out["summary"]
+            cells = ", ".join(f"{cat} {b['passed']}/{b['run']}" for cat, b in sorted(s["categories"].items()) if b["run"])
+            say(f"{name:<16} {cells}")
+            if s["unexpected_passes"]:
+                weak = True
+                say(f"  passes without being on the allowed list: {', '.join(s['unexpected_passes'])}", "red")
+            say(f"  report: {md}")
+        say("Run `fleet eval --mode recorded` to include these in the main report.")
+        sys.exit(1 if weak else 0)
     if record and mode != "live":
         fail("--record needs --mode live.")
     out = run_eval(ctx.paths, mode=mode, record=record, runs=runs, only=list(only) or None)

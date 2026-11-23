@@ -10,6 +10,11 @@
       expect:
         text_contains: [{oracle: first_failure_after_pass, args: {device_id: 1LYSSFD074BB, check_id: screen_lock}}]
         verifier_ok: true
+        tool_called_with:
+          - any_of:
+              - {tool: get_device_history, args: {device_id: 1LYSSFD074BB, metrics: ["compliance:screen_lock"]}}
+              - {tool: run_insights, args: {detectors: [compliance_drift]}}
+              - {tool: run_insights, args: {device_ids: [1LYSSFD074BB]}}
 
 - id: I02
   category: insight
@@ -66,6 +71,7 @@
     - ask: "Which devices are consistently running out of memory?"
       expect:
         devices_include: [FX-RAM-01]
+        devices_exclude: [FX-DELL-01, FX-DISK-01]   # naming every device must not pass
         verifier_ok: true
 
 - id: I07
@@ -88,6 +94,7 @@
     - ask: "Which devices will run out of disk space soon?"
       expect:
         devices_include: [FX-DISK-01]
+        devices_exclude: [FX-DELL-01, FX-RAM-01]    # naming every device must not pass
         verifier_ok: true
 
 - id: I09

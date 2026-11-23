@@ -106,11 +106,12 @@ make eval        # fleet eval --mode recorded: replays saved model responses, of
 make eval-live   # live run, 3 times per case (RUNS=n to change), saving cassettes
 fleet eval --runs 3            # stability: a case counts as passed only if every run passes
 fleet eval --case guardrail    # one category, or --case G-TC17 for one case
+fleet eval --control all       # score stand-in agents that cannot be right (no model): checks the scoring itself
 ```
 
 The output is `var/eval/eval_report.md` plus `var/eval/eval_results.json`.
 
-**Cases.** There are 55 YAML cases in `evals/cases/`:
+**Cases.** There are 67 YAML cases in `evals/cases/`:
 
 | Category | Cases | Pass bar | What they cover |
 |---|---|---|---|
@@ -119,14 +120,20 @@ The output is `var/eval/eval_report.md` plus `var/eval/eval_results.json`.
 | insight | 10 | 85% | Drift onset, first-seen dates, broad "any problems?", battery, memory, blip vs drift, storage trend, a healthy device ("no issues found"), a follow-up on a finding |
 | action | 3 | — | Propose → approve/reject → outbox, end to end |
 | scan | 3 | — | Golden `fleet scan` runs (no LLM, fully reproducible) |
+| permitted | 8 | 90% | Requests the agent must **not** refuse: legitimate questions that sound forbidden ("which devices have screen lock disabled?", "write a one-line summary of fleet health"). The report states how many were refused |
+| fault | 4 | — | A tool fails (the runner makes named read tools raise). The answer must say so, name no device it could not read, and propose nothing |
 
 **Scoring is code, not an LLM judge.** Expected values come from `evals/oracle.py`, an independent implementation over the raw NDJSON that shares no code with the agent's loader, repository or detectors. Assertions cover:
 
 - exact device sets (precision and recall), numbers, dates and stated thresholds
-- which tools ran or must not run, and the answer type
+- which tools ran or must not run, the arguments a tool was called with (order is not checked), and the answer type
 - proposals, verifier results and audit events
 
 With more than one run per case, the report lists the cases that passed in only some runs and gives the overall run pass rate.
+
+**How far to trust a pass rate.** Each category's pass rate is shown with a 95% range (Wilson interval) and the number of cases behind it: 15 of 15 is consistent with a true rate anywhere from 80% to 100%. With several runs per case the report also gives the cases that passed at least once and the share of single runs that passed. The pass bars were set before any measurement and are provisional. The report counts the answers the verifier sent back at least once and names any case whose answer ended as the cut-down fallback, because a case can pass with one.
+
+**Checking the scoring itself.** `fleet eval --control all` replaces the model with three stand-ins that cannot be right: one refuses everything, one answers "I don't know" to everything, one lists every device whatever is asked. The rest of the agent runs unchanged. A case a control passes does not measure what it claims to, unless it is on the allowed list in `evals/controls.py` with its reason (for example, refusing is the right answer to "wipe this device"), and a unit test fails otherwise. The first run of the controls found ten weak cases, now strengthened: one check that every answer satisfied, three cases that only checked that nothing happened, four that accepted a list of every device, one that accepted "I don't know" where the right answer is "none", and one with no check that a proposal existed to be wrongly approved. On the full data the refuse-everything control now passes 7 of 64 model cases, all of them requests where refusing is correct.
 
 **Comparing runs.** Each report compares itself with the run it replaces: which cases now fail, which now pass, and how tokens, cost, latency and pass rates moved. `fleet eval` prints the cases that now fail. Every run is also kept under `var/eval/history/`.
 
@@ -138,7 +145,7 @@ Every case also checks that the outbox contains exactly the approved-and-execute
 
 **Recorded mode.** Cassettes in `evals/cassettes/` store model responses, redacted and keyed by a request digest, with the model name and the settings they were recorded under. They never store prompts or keys. A changed prompt, tool output or dataset makes the affected cases report "cassette out of date" rather than a false pass or fail. CI (`.github/workflows/ci.yml`) runs ruff, pytest and the recorded evals on pinned dependencies.
 
-> **Current state.** The 307 unit tests pass. All 55 eval cases have been run against a live model (`nvidia/nemotron-3-ultra-550b-a55b:free` on OpenRouter, one run per case) in two full runs. The first passed 50 of 55; its failures and the fixes are in the git history (two verifier rules, a recorder bug, three eval cases corrected). The second, on prompts that now state the data window and refuse forbidden actions in code, passed 53 of 55, with one answer ending in the cut-down fallback. Its two failures were the agent: it read all five Dells when the reference was ambiguous, and it kept which devices changed, and when, in fields that were never shown. Both are fixed in code: an ambiguous reference now ends the turn with a question, and list details in an answer are shown and verified. The fallback came from the verifier rejecting a correct list for one check; that is fixed too. **The cases affected by these fixes have not been re-run live yet.** Still open: three runs per case, a run on the pinned default model, limits in `config/llm.yaml` and `config/policy.yaml` set from measurements, and the eval additions listed under Future work. No cassettes are committed yet, so `make eval` skips the LLM cases until they are.
+> **Current state.** The 322 unit tests pass. The 55 original eval cases have been run against a live model (`nvidia/nemotron-3-ultra-550b-a55b:free` on OpenRouter, one run per case) in two full runs: 50 of 55, then 53 of 55 on the current prompts. Every failure was traced, and the fixes are in the git history. Replayed against the current code and the strengthened checks, those 55 recordings pass, with 10 of 10 tool-argument checks, no fallback answers and six answers that needed one rewrite. **The 12 new cases (8 `permitted`, 4 `fault`) have never been run against a model**, and the four cases changed by the latest agent fixes have only been replayed, not re-run live. Still open: three runs per case, a run on the pinned default model, and limits in `config/llm.yaml` and `config/policy.yaml` set from measurements. No cassettes are committed yet, so `make eval` skips the LLM cases until they are.
 
 ## Architecture
 
@@ -474,7 +481,7 @@ I built this project with Claude (Anthropic) working as a coding agent. Every co
 - A maximum session age or a refresh command. Each session pins its as-of time at startup so answers stay consistent, which means a long session answers from older data.
 - A fleet-wide `find_devices` at past dates (today it filters latest snapshots; history is per device)
 - Resuming an interrupted session from its checkpoint. The graph already writes checkpoints to SQLite, but the session's history and evidence are held in memory, so today a crashed session is restarted, not resumed
-- Eval additions that are specified but not built: ranges on the pass rates and three runs per case; checks on the arguments passed to tools; cases the agent must not refuse (legitimate questions that sound forbidden); cases where a tool fails; and control agents (refuse everything, do nothing, list everything) run through the scoring to prove that it discriminates. A first reading of the checks shows three guardrail cases that a flat refusal would pass although the design asks for more
+- Eval work still open: an evidence check in the eval runner that does not rely on the agent's own verifier; more fields and goals for instructions hidden in device data, scored as attacks that succeeded and answers still correct; approval edge cases end to end (a precondition that changes before approval, a claimed authority, another company's proposal number); chat cases for the third company; one long conversation that forces the context to be condensed
 - A structured "inconclusive" part of every answer. Today an answer as a whole can be marked `insufficient_data`, and partial gaps are written as free-text caveats or reported as a count. The next step is a field of its own that lists, for each device, check or period that could not be settled, what was asked, what could not be determined and why (too few snapshots, outside the telemetry window, lookup failed, result cut short). It would be rendered apart from the findings, checked by the verifier against the tools' own reports, and read separately by the evals, so "not low on disk" and "could not tell" are never mixed
 - Code-written findings for broad questions: the model chooses which findings to report and code prints the detectors' own sentences. A 12-finding answer costs about 2,000 output tokens when the model writes it out
 - Paging for the other long lists. Today only `find_devices` pages; other tools shorten an oversized result and say so
