@@ -205,3 +205,44 @@ def test_eval_command_keeps_history_and_compares_runs(run, home):
     assert "Since the previous run: 0 case(s) now fail, 0 now pass." in second.output
     assert len(list((home.var / "eval" / "history").glob("eval_results-*.json"))) == 2
     assert "## Changes since the previous run" in (home.var / "eval" / "eval_report.md").read_text()
+
+
+# ---- the approval prompt itself (found on the first real run: the key hints were invisible) -------
+def _typed(monkeypatch, answers):
+    buf = io.StringIO()
+    monkeypatch.setattr(cli, "console", Console(file=buf, force_terminal=False, width=200))
+    feed = iter(answers)
+    monkeypatch.setattr("builtins.input", lambda *a, **k: next(feed))
+    cli.set_approval_hook(None)
+    return buf
+
+
+def test_prompt_shows_its_keys_literally(monkeypatch):
+    buf = _typed(monkeypatch, ["y"])
+    assert cli._ask_decision({}) == ("approve", "")
+    assert "[y] approve  [n] reject  [l] later" in buf.getvalue()  # brackets must not be eaten as markup
+
+
+@pytest.mark.parametrize("typed,expected", [("y", "approve"), ("yes", "approve"), ("approve", "approve"), ("A", "approve"),
+                                            ("n", "reject"), ("reject", "reject"), ("No", "reject"), ("l", "later"),
+                                            ("later", "later"), ("", "later"), ("skip", "later")])
+def test_prompt_accepts_keys_and_whole_words(monkeypatch, typed, expected):
+    _typed(monkeypatch, [typed, "because"])
+    decision, reason = cli._ask_decision({})
+    assert decision == expected and reason == ("because" if expected == "reject" else "")
+
+
+def test_unrecognised_answer_explains_instead_of_repeating_silently(monkeypatch):
+    buf = _typed(monkeypatch, ["maybe", "approve"])
+    assert cli._ask_decision({}) == ("approve", "")
+    assert "Not recognised. Type y (or approve), n (or reject), or l (or later)." in buf.getvalue()
+
+
+def test_confirm_prompt_shows_its_default_literally(run, home, monkeypatch):
+    run("scan", "--tenant", "fixture-999")
+    buf = io.StringIO()
+    monkeypatch.setattr(cli, "console", Console(file=buf, force_terminal=False, width=200))
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "approve")
+    monkeypatch.setattr(cli, "approvals_available", lambda: True)
+    r = run("proposals", "approve", "PRP-1", "--tenant", "fixture-999")
+    assert r.exit_code == 0 and "Approve PRP-1? [y/N]" in buf.getvalue() and "PRP-1: executed" in buf.getvalue()

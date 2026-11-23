@@ -40,17 +40,38 @@ def approvals_available() -> bool:
     return _approval_hook is not None or (sys.stdin.isatty() and sys.stdout.isatty())
 
 
+APPROVE_WORDS = ("y", "yes", "a", "approve")
+REJECT_WORDS = ("n", "no", "r", "reject")
+LATER_WORDS = ("l", "later", "skip", "")
+DECISION_PROMPT = "  [y] approve  [n] reject  [l] later › "
+
+
+def read_line(prompt: str) -> str:
+    """Read one line. The prompt is printed literally: square brackets are not styling."""
+    return console.input(Text(prompt), markup=False).strip()
+
+
+def parse_decision(answer: str) -> str | None:
+    word = answer.strip().lower()
+    if word in APPROVE_WORDS:
+        return "approve"
+    if word in REJECT_WORDS:
+        return "reject"
+    if word in LATER_WORDS:
+        return "later"
+    return None
+
+
 def _ask_decision(p: dict[str, Any]) -> tuple[str, str]:
     if _approval_hook is not None:
         return _approval_hook(p)
     while True:
-        choice = console.input("  [y] approve  [n] reject  [l] later › ").strip().lower()
-        if choice in ("y", "yes"):
-            return "approve", ""
-        if choice in ("n", "no"):
-            return "reject", console.input("  Reason (optional) › ").strip()
-        if choice in ("l", "later", ""):
-            return "later", ""
+        decision = parse_decision(read_line(DECISION_PROMPT))
+        if decision == "reject":
+            return "reject", read_line("  Reason (optional) › ")
+        if decision is not None:
+            return decision, ""
+        say("  Not recognised. Type y (or approve), n (or reject), or l (or later). Enter alone means later.", "yellow")
 
 
 # ---- output -----------------------------------------------------------------------------------
@@ -244,7 +265,7 @@ def chat(ctx: Ctx, tenant: str, operator: str | None, as_of: str | None) -> None
     last_interrupt = 0.0
     while True:
         try:
-            question = console.input("\nYou › ").strip()
+            question = read_line("\nYou › ")
         except EOFError:
             break
         except KeyboardInterrupt:
@@ -371,7 +392,7 @@ def _decide(ctx: Ctx, tenant: str, operator: str | None, proposal_id: str, kind:
             fail("Approvals need an interactive terminal; piped or scripted input is not accepted.", 1)
         proposal_block(p)
         confirm = _ask_decision(p)[0] if _approval_hook else (
-            "approve" if console.input(f"  {kind.capitalize()} {proposal_id}? [y/N] › ").strip().lower() in ("y", "yes") else "later")
+            "approve" if read_line(f"  {kind.capitalize()} {proposal_id}? [y/N] › ").lower() in APPROVE_WORDS else "later")
         if confirm != "approve":
             say("Not approved; nothing changed.", "dim")
             return
