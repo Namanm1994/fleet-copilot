@@ -34,11 +34,13 @@ For pinned versions (as CI uses): `pip install -r requirements.lock && pip insta
 **Data.** Put the telemetry NDJSON at `data/raw/telemetry.ndjson`. It is gitignored and never committed. Then:
 
 ```bash
-make load       # builds var/telemetry.db and var/data_quality.json from data/raw/*.ndjson
+make load       # loads data/raw/*.ndjson into var/telemetry.db; writes var/data_quality.json
 make profile    # value distributions used to set the thresholds in config/thresholds.yaml
 ```
 
-`fleet load` lists any company present in the data but missing from `config/policy.yaml`. Those companies stay inaccessible until they are registered.
+`fleet load` appends: snapshots already in the database are skipped and only new ones are added, in one transaction. Run it again whenever new telemetry arrives; `fleet load --rebuild` discards the database and builds it again. A session that is already open keeps its view, because it reads only up to the as-of time it started with.
+
+`fleet load` also lists any company present in the data but missing from `config/policy.yaml`. Those companies stay inaccessible until they are registered.
 
 **Model.** `config/llm.yaml` pins the model for each provider. `FLEET_LLM_PROVIDER` and `FLEET_LLM_MODEL` override it. For OpenAI and OpenRouter, set `FLEET_LLM_MODEL` because no default is pinned. Without a key, the commands that need an LLM stop with a configuration error before doing anything.
 
@@ -128,7 +130,7 @@ Every case also checks that the outbox contains exactly the approved-and-execute
 
 **Recorded mode.** Cassettes in `evals/cassettes/` store only model responses, redacted and keyed by a request digest. A changed prompt, tool output or dataset makes the affected cases report "cassette out of date" rather than a false pass or fail. CI (`.github/workflows/ci.yml`) runs ruff, pytest and the recorded evals on pinned dependencies.
 
-> **Current state.** The 123 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 52 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
+> **Current state.** The 148 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 52 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
 
 ## Architecture
 
@@ -163,7 +165,7 @@ flowchart LR
 4. The model ends by calling `submit_answer` with a structured answer. `finalize` validates that answer and runs the verifier. On failure the model gets the specific errors and up to two revisions. After that, unverifiable claims are removed and the answer says so.
 5. `auto_propose` creates unprompted proposals in code from this turn's evidence.
 6. `respond` renders the turn.
-7. If proposals are pending in an interactive session, the graph pauses on a LangGraph `interrupt`. The CLI collects your decisions and resumes. The checkpointer is SQLite, so a pending approval survives a crash.
+7. If proposals are pending in an interactive session, the graph pauses on a LangGraph `interrupt`. The CLI collects your decisions and resumes. A proposal is saved to the database the moment it is created, so an undecided one survives a crash and can still be decided with `fleet proposals approve`. The session itself cannot be resumed: its history and evidence live in memory (see Future work).
 
 **Scan (workflow).** Fixed steps in code, with no planner and no ReAct loop:
 
@@ -179,6 +181,7 @@ The rule behind the split: fixed steps run as code, and unpredictable questions 
 - a 30 s timeout per call and a 90 s deadline per turn; no retry starts if it would end past the deadline
 - up to 3 retries with exponential backoff and jitter, only on 429, 5xx or timeout, honoring `Retry-After`
 - a per-turn budget of 60k input and 3k output tokens
+- a cap per session (500k input tokens) and per company per day (2M input tokens); once reached, the next question is refused before any LLM call. Both are starting values in `policy.yaml`, not measured ones
 - up to 2 repair retries when structured output is invalid
 
 **Context management.** The prompt stays bounded however long a session runs:
@@ -187,8 +190,15 @@ The rule behind the split: fixed steps run as code, and unpredictable questions 
 - The last 3 turns are carried as question plus answer summary, with a focus state taken from the verified answer: the devices its claims were about, the evidence it cited, the queries that were run, and any proposals. A follow-up such as "those" resolves to what was answered, not to every device the tools touched.
 - The history is a pointer, not a source of facts. The prompt tells the agent to fetch any fact with a tool before stating it, and the saved queries let it re-run the same lookup. The verifier enforces this: a claim must cite evidence a tool returned.
 - Older turns are condensed in code, with no LLM call, to one line each inside a 1,500-character digest. The oldest lines drop off first.
-- Within a turn, tool output over 12,000 characters is cut with a note to narrow the query.
+- A tool result over 12,000 characters is shortened by dropping list items, never by cutting text, so the model always gets valid JSON, with a note saying how many items were left out.
 - When a turn's messages pass 48,000 characters, the oldest tool results are replaced by a stub holding the receipt, count and evidence IDs. The newest two stay whole. Condensed evidence can still be cited, and the model may run the same query again if it needs the values.
+
+**Reliability outside the LLM path.**
+
+- An unexpected tool or database error becomes a typed `INTERNAL_ERROR` result and an audit entry. The model is told the lookup failed and must not guess; the turn continues.
+- A turn that fails for any other reason is reported and traced, and the chat session stays open.
+- The audit log and outbox are written under a lock file. A lock left behind by a process that died is removed after 30 seconds, so it cannot block writes for good.
+- Loading data is one transaction: it either adds every new snapshot or none.
 
 Providers are wrapped in one small `ChatModel` interface. The same graph runs on the live model, a cassette replay, or a scripted model in tests.
 
@@ -216,7 +226,7 @@ docs/         PHILOSOPHY.md, SECURITY.md
 Every tool has strict typed arguments (unknown fields are rejected) and returns the same envelope:
 
 - `ok` and `data`
-- `total_count` and `truncated` (lists are capped at 25 devices)
+- `total_count` and `truncated` (lists are capped at 25 devices; an oversized result is shortened to valid JSON)
 - `evidence_ids` and a query receipt `Q-<turn>-<n>`
 - `as_of`
 - `definitions_used`, the thresholds applied
@@ -234,7 +244,7 @@ The tenant is never an argument: it comes from the session.
 | `get_device` | Latest-snapshot summary of one device, including compliance and open proposals |
 | `get_device_history` | Time series over the window: disk, RAM, battery, OS version, or `compliance:<check_id>` |
 | `get_compliance_overview` | Pass/fail counts per check, with failing devices |
-| `get_software` | Devices with a given software, or the software on one device |
+| `get_software` | Devices with a given software, or the software on one device. Names match on whole words ("chrome" finds Google Chrome, "go" does not); part of a word counts only from 5 characters ("torrent" finds uTorrent) |
 | `run_insights` | Run detectors: `battery_eol`, `ram_constrained`, `low_storage`, `compliance_drift`, `prohibited_software` |
 | `get_definitions` | Thresholds in use, so answers can state them |
 | `list_proposals` | This tenant's proposals and their status |
@@ -403,6 +413,9 @@ The reasoning behind the principles is in [docs/PHILOSOPHY.md](docs/PHILOSOPHY.m
 - Swapping the data source (a production telemetry store or device-management service) behind the repository layer. A cache for repeated lookups was considered and deferred: it only pays off if that source is slow, rate-limited or charged per request. It would sit in the repository layer, keyed by tenant, query and as-of time.
 - A maximum session age or a refresh command. Each session pins its as-of time at startup so answers stay consistent, which means a long session answers from older data.
 - A fleet-wide `find_devices` at past dates (today it filters latest snapshots; history is per device)
+- Resuming an interrupted session from its checkpoint. The graph already writes checkpoints to SQLite, but the session's history and evidence are held in memory, so today a crashed session is restarted, not resumed
+- Paging for long tool results, typed tool outputs, and a test that pins the tool definitions so a renamed field cannot slip through
+- Reads in the audit log and a retention period for traces (see docs/SECURITY.md)
 
 ## License
 

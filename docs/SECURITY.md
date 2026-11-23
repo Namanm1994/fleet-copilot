@@ -127,6 +127,8 @@ These threats are deliberately not defended against in v1:
 - **LLM provider compromise or network interception.** Production use requires an LLM provider and deployment whose terms meet the customer's data requirements.
 - **Physical access or malware on the machine.** Outside the application boundary.
 - **Recomputing the audit chain.** The hash chain detects tampering but cannot stop someone with file access from rewriting it entirely.
+- **Auditing what was read.** The audit log records sessions, proposals, decisions, executions, refusals and tool failures. It does not record each question or which records were shown. Those are in the session trace, which is a plain file and not tamper-evident. A deployment that must prove who viewed which data would add one audit entry per question.
+- **Trace retention.** Traces hold the tenant's telemetry in plain text and are kept until someone deletes them. There is no retention period or automatic cleanup.
 
 ## Future work
 
