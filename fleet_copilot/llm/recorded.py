@@ -35,7 +35,7 @@ class CassetteModel:
         self.path, self.mode, self.inner = path, mode, inner
         self.model = getattr(inner, "model", model_name)
         self.entries: dict[str, Any] = {}
-        if path.exists():
+        if mode == "replay" and path.exists():  # a new recording starts empty, so no stale entries survive
             self.entries = json.loads(path.read_text(encoding="utf-8")).get("entries", {})
         self._seq = 0
 
