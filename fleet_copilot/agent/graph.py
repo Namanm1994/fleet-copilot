@@ -80,7 +80,8 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
         msgs = [{"role": "system", "content": sess.planner_prompt()}] + sess.history_messages() + [
             {"role": "user", "content": state["question"]}]
         try:
-            plan, repairs = parse_with_repair(lambda m: sess.llm(m, None), msgs, Plan, sess.settings.repair_retries,
+            effort = sess.settings.reasoning_effort.get("planner") or None
+            plan, repairs = parse_with_repair(lambda m: sess.llm(m, None, effort), msgs, Plan, sess.settings.repair_retries,
                                               lambda e, d: trace("planner", e, d))
         except RepairFailed as exc:
             trace("planner", "plan_failed", {"error": str(exc)})

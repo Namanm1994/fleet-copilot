@@ -16,3 +16,10 @@ call_timeout_s: 30
 network_retries: 3
 backoff_base_s: 1.0
 repair_retries: 2
+# Reasoning effort per step, for models that reason before answering. Hidden reasoning tokens
+# count as output tokens, so a step that only classifies should not spend many.
+# Allowed: "" (provider default), minimal, low, medium, high. Sent to OpenRouter and OpenAI;
+# Anthropic models do not reason unless asked, so nothing is sent. Set to "" for an OpenAI
+# model that rejects the setting.
+reasoning_effort:
+  planner: low

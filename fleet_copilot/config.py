@@ -257,10 +257,28 @@ class LLMSettings:
     network_retries: int
     backoff_base_s: float
     repair_retries: int
+    reasoning_effort: Mapping[str, str] = field(default_factory=dict)
     pricing: Mapping[str, Mapping[str, float]] = field(default_factory=dict)
 
 
 SUPPORTED_PROVIDERS = ("anthropic", "openai", "openrouter")
+REASONING_EFFORTS = ("", "minimal", "low", "medium", "high")
+REASONING_STEPS = ("planner",)
+
+
+def _reasoning_effort(data: Any) -> dict[str, str]:
+    data = data or {}
+    if not isinstance(data, dict):
+        raise ConfigError("llm.yaml: reasoning_effort must be a mapping of step to effort")
+    out: dict[str, str] = {}
+    for step, effort in data.items():
+        effort = str(effort or "").lower()
+        if step not in REASONING_STEPS:
+            raise ConfigError(f"llm.yaml: reasoning_effort has unknown step '{step}'. Use one of {REASONING_STEPS}.")
+        if effort not in REASONING_EFFORTS:
+            raise ConfigError(f"llm.yaml: reasoning_effort.{step} is '{effort}'. Use one of {REASONING_EFFORTS}.")
+        out[step] = effort
+    return out
 
 
 def load_llm_settings(config_dir: Path) -> LLMSettings:
@@ -282,6 +300,7 @@ def load_llm_settings(config_dir: Path) -> LLMSettings:
         network_retries=int(data.get("network_retries", 3)),
         backoff_base_s=float(data.get("backoff_base_s", 1.0)),
         repair_retries=int(data.get("repair_retries", 2)),
+        reasoning_effort=_freeze(_reasoning_effort(data.get("reasoning_effort"))),
         pricing=_freeze(pricing),
     )
 

@@ -185,10 +185,10 @@ class CopilotSession:
         return {"focus": devices, "evidence": cited[:self.focus_evidence_ids],
                 "queries": [_clip(q, 200) for q in queries[:self.focus_queries]]}
 
-    def llm(self, messages: list[Message], tools: list[dict[str, Any]] | None) -> LLMResponse:
+    def llm(self, messages: list[Message], tools: list[dict[str, Any]] | None, effort: str | None = None) -> LLMResponse:
         assert self.budget is not None
         start = self.clock.now()
-        resp = self.model.invoke(messages, tools, self.budget)
+        resp = self.model.invoke(messages, tools, self.budget, effort)
         self.tracer.emit("llm", "llm_call", {"tools": bool(tools), "tool_calls": [t.name for t in resp.tool_calls]},
                          tokens={"input": resp.input_tokens, "output": resp.output_tokens},
                          latency_ms=round((self.clock.now() - start) * 1000))
