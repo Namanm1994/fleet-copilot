@@ -98,6 +98,7 @@ class Policy:
     turn_deadline_s: float
     max_input_tokens_per_session: int
     max_input_tokens_per_day: int
+    context: Mapping[str, int]
     upgrade_specs: Mapping[str, tuple[int, ...]]
     notify_templates: Mapping[str, str]
     source: str = ""
@@ -118,6 +119,25 @@ def _require(data: dict, key: str, typ: type | tuple[type, ...], path: Path) -> 
     if not isinstance(value, typ):
         raise ConfigError(f"{path.name}: key '{key}' has the wrong type")
     return value
+
+
+CONTEXT_DEFAULTS = {
+    "history_turns": 3, "digest_max_chars": 1500, "max_chars_per_turn": 48000, "keep_recent_tool_results": 2,
+    "max_tool_output_chars": 12000, "focus_evidence_ids": 12, "focus_queries": 4,
+}
+
+
+def _context(raw: dict[str, Any], path: Path) -> Mapping[str, int]:
+    unknown = set(raw) - set(CONTEXT_DEFAULTS)
+    if unknown:
+        raise ConfigError(f"{path.name}: unknown context setting(s) {sorted(unknown)}")
+    merged = {**CONTEXT_DEFAULTS, **raw}
+    for key, value in merged.items():
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise ConfigError(f"{path.name}: context.{key} must be a whole number of 0 or more")
+    if merged["history_turns"] < 1 or merged["max_tool_output_chars"] < 500:
+        raise ConfigError(f"{path.name}: context.history_turns must be at least 1 and max_tool_output_chars at least 500")
+    return MappingProxyType(merged)
 
 
 def load_policy(path: Path) -> Policy:
@@ -175,6 +195,7 @@ def load_policy(path: Path) -> Policy:
             turn_deadline_s=float(budgets["turn_deadline_s"]),
             max_input_tokens_per_session=int(budgets.get("max_input_tokens_per_session", 0)),
             max_input_tokens_per_day=int(budgets.get("max_input_tokens_per_day", 0)),
+            context=_context(data.get("context") or {}, path),
             upgrade_specs=MappingProxyType({k: tuple(int(x) for x in v) for k, v in specs.items()}),
             notify_templates=_freeze(templates),
             source=str(path),

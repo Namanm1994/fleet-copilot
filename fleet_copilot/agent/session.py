@@ -18,13 +18,6 @@ from fleet_copilot.llm.retry import RetryingModel
 from fleet_copilot.toolkit import Toolkit
 from fleet_copilot.tracing import Tracer
 
-HISTORY_TURNS = 3  # most recent turns kept as question + answer summary
-DIGEST_MAX_CHARS = 1500  # older turns are condensed to one line each, newest first, within this cap
-CONTEXT_MAX_CHARS = 48_000  # in-turn message size (about 12k tokens) above which old tool results are condensed
-KEEP_RECENT_TOOL_RESULTS = 2  # the newest tool results are never condensed
-MAX_FOCUS_EVIDENCE = 12  # evidence IDs carried per past turn
-MAX_FOCUS_QUERIES = 4  # queries carried per past turn, so they can be re-run exactly
-
 
 def _clip(text: str, n: int) -> str:
     text = " ".join(text.split())
@@ -75,8 +68,14 @@ class CopilotSession:
         self.interactive = interactive
         self.history: list[dict[str, Any]] = []
         self.session_input_tokens = 0
-        self.context_max_chars = CONTEXT_MAX_CHARS
-        self.keep_recent_tool_results = KEEP_RECENT_TOOL_RESULTS
+        ctx = tk.config.policy.context  # limits live in policy.yaml (context:)
+        self.history_turns = ctx["history_turns"]
+        self.digest_max_chars = ctx["digest_max_chars"]
+        self.context_max_chars = ctx["max_chars_per_turn"]
+        self.keep_recent_tool_results = ctx["keep_recent_tool_results"]
+        self.max_tool_output_chars = ctx["max_tool_output_chars"]
+        self.focus_evidence_ids = ctx["focus_evidence_ids"]
+        self.focus_queries = ctx["focus_queries"]
         self.budget: TurnBudget | None = None
         self.graph = build_graph(self, checkpointer or InMemorySaver())
         self._thread: dict[str, Any] | None = None
@@ -98,7 +97,7 @@ class CopilotSession:
 
     def history_digest(self) -> list[str]:
         """Turns older than the recent window, one line each (built in code, no LLM call)."""
-        older = self.history[:-HISTORY_TURNS]
+        older = self.history[:-self.history_turns]
         lines: list[str] = []
         used = 0
         for h in reversed(older):  # newest of the old turns first; the oldest fall off the cap
@@ -107,7 +106,7 @@ class CopilotSession:
                 line += f" [in focus: {', '.join(h['focus'][:5])}]"
             if h.get("proposals"):
                 line += f" [proposals: {', '.join(h['proposals'])}]"
-            if used + len(line) > DIGEST_MAX_CHARS:
+            if used + len(line) > self.digest_max_chars:
                 lines.append(f"({len(older) - len(lines)} earlier turn(s) omitted)")
                 break
             lines.append(line)
@@ -146,7 +145,7 @@ class CopilotSession:
         digest = self.history_digest()
         if digest:
             lines += ["Older turns (condensed):"] + [f"  {d}" for d in digest] + ["Recent turns:"]
-        for h in self.history[-HISTORY_TURNS:]:
+        for h in self.history[-self.history_turns:]:
             lines.append(f"Q: {h['question']}\nA: {h['summary']}")
             if h.get("focus"):
                 lines.append(f"   in focus: {', '.join(h['focus'][:25])}")
@@ -160,7 +159,7 @@ class CopilotSession:
 
     def history_messages(self) -> list[Message]:
         out: list[Message] = []
-        for h in self.history[-HISTORY_TURNS:]:
+        for h in self.history[-self.history_turns:]:
             answer = h["summary"] + (f" [in focus: {', '.join(h['focus'][:25])}]" if h.get("focus") else "")
             out += [{"role": "user", "content": h["question"]}, {"role": "assistant", "content": answer}]
         return out
@@ -183,8 +182,8 @@ class CopilotSession:
                         devices.append(rec.device_id)
         queries = [f"{r['tool']} {json.dumps(r['args'], ensure_ascii=False, sort_keys=True)} ({rid}, {r['result_count']} rows)"
                    for rid, r in ev.receipts.items() if r["turn"] == turn]
-        return {"focus": devices, "evidence": cited[:MAX_FOCUS_EVIDENCE],
-                "queries": [_clip(q, 200) for q in queries[:MAX_FOCUS_QUERIES]]}
+        return {"focus": devices, "evidence": cited[:self.focus_evidence_ids],
+                "queries": [_clip(q, 200) for q in queries[:self.focus_queries]]}
 
     def llm(self, messages: list[Message], tools: list[dict[str, Any]] | None) -> LLMResponse:
         assert self.budget is not None

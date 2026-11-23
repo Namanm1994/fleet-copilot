@@ -56,6 +56,16 @@ budgets:
   max_input_tokens_per_session: 500000
   max_input_tokens_per_day: 2000000      # per company, per UTC day
 
+# Context management: what is carried between turns and how large a turn may grow.
+context:
+  history_turns: 3                 # recent turns kept as question + answer summary + focus state
+  digest_max_chars: 1500           # older turns, one line each, newest first, within this size
+  max_chars_per_turn: 48000        # in-turn message size above which old tool results are condensed
+  keep_recent_tool_results: 2      # the newest tool results are never condensed
+  max_tool_output_chars: 12000     # one tool result larger than this is shortened (valid JSON kept)
+  focus_evidence_ids: 12           # evidence IDs carried per past turn
+  focus_queries: 4                 # queries carried per past turn, so they can be re-run exactly
+
 upgrade_specs:
   ram_gb: [16, 32, 64]
   storage_gb: [512, 1024, 2048]
