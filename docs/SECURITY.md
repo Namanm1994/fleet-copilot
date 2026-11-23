@@ -70,6 +70,54 @@ Each audit entry stores the hash of the entry before it (`prev`) and its own SHA
 - YAML loaded with `safe_load`; no `eval`, `exec` or shell calls in the agent.
 - Dependencies pinned with a lock file.
 
+## Security principles
+
+The design uses these standard principles, named here so the controls can be compared with other systems.
+
+| Principle | How it applies here |
+|---|---|
+| Least privilege | The model gets only the tools `policy.yaml` enables. Telemetry is opened read-only. The tenant is never a tool argument. Lock and wipe do not exist as tools. |
+| Defense in depth | Tenant isolation has three layers: the session is fixed at startup, every query must carry the tenant filter, and every returned row is checked again. Actions have four: evidence, precondition, human approval, and a re-check at execution. |
+| Human-in-the-loop | Every state-changing action waits for a person's decision in an interactive terminal. |
+| Direct prompt injection | The admin types "ignore your rules". Rules live in code, so the instruction has nothing to override. |
+| Indirect prompt injection | A device reports a hostname or software name that contains instructions. Such strings are sanitized on load and reach the model marked as data. |
+| Confused deputy | The agent could be tricked into using its authority for someone else. Authority is bound to the session and the approving human, never to model output: the tenant comes from the session, and evidence must belong to the device the action targets. |
+| Excessive agency | The agent proposes and never executes. Unprompted proposals are capped, bulk actions are limited, and message text to employees is fixed. |
+
+## OWASP mapping
+
+Checked in November 2026 against the two current lists from the OWASP GenAI Security Project: the Top 10 for LLM Applications 2026, and the Top 10 for Agentic Applications 2026 (published December 2025). The agentic list fits this project better, because the main risk is what the agent can do, not what it says.
+
+### Top 10 for Agentic Applications 2026
+
+| Risk | Applies? | Control |
+|---|---|---|
+| ASI01 Agent Goal Hijack | Yes | Tool output is wrapped as data; device strings are sanitized; the plan is fixed before data is read; scope, policy and approval are enforced in code |
+| ASI02 Tool Misuse and Exploitation | Yes | Strict typed arguments, the nine policy checks, preconditions on current data, batch and proposal caps |
+| ASI03 Identity and Privilege Abuse | Partly | The agent holds no credentials and cannot change tenant. There is no user authentication in v1 (see Out of scope) |
+| ASI04 Agentic Supply Chain Vulnerabilities | Partly | No plugins, MCP servers or remote tools; prompts are in the repo and versioned by hash; dependencies are pinned |
+| ASI05 Unexpected Code Execution | No | The agent cannot run code or shell commands; no `eval` or `exec`; SQL is parameterized |
+| ASI06 Memory and Context Poisoning | Yes | No long-term memory. Evidence is valid only within its session. The history digest is built in code from verified answers |
+| ASI07 Insecure Inter-Agent Communication | No | Single agent |
+| ASI08 Cascading Failures | Partly | The verifier stops a wrong answer before display; preconditions are re-checked before execution; retries and budgets are bounded |
+| ASI09 Human-Agent Trust Exploitation | Yes | The approval screen shows the evidence and the exact action; device markup is printed literally; the proposal cap limits approval fatigue |
+| ASI10 Rogue Agents | Partly | The agent acts only within a turn and only by proposing. Every step is traced, every decision audited, and Ctrl+C stops a turn without executing anything |
+
+### Top 10 for LLM Applications 2026
+
+| Risk | Applies? | Control |
+|---|---|---|
+| LLM01 Prompt Injection | Yes | See direct and indirect injection above |
+| LLM02 Sensitive Information Disclosure | Yes | Tenant isolation, data minimization, identifiers never loaded, key redaction |
+| LLM03 Excessive Agency | Yes | Proposals only, human approval, caps, no destructive tools |
+| LLM04 Supply Chain | Partly | Pinned dependencies; one hosted model per provider, pinned by ID |
+| LLM05 Data and Model Poisoning | No | No training or fine-tuning. Untrusted telemetry is handled as injection |
+| LLM06 Unbounded Consumption | Yes | Per-turn token, tool-call and time budgets; bounded retries; input cap |
+| LLM07 Misinformation | Yes | Structured answers checked by the verifier; thresholds and caveats stated; "insufficient data" as a valid answer |
+| LLM08 Hidden Context Exposure | Low | Prompts hold no secrets and are public in the repo |
+| LLM09 Vector and Embedding Weaknesses | No | No retrieval index or embeddings |
+| LLM10 Improper Output Handling | Yes | Model output is schema-validated, never executed, never placed in SQL, and printed with markup disabled |
+
 ## Out of scope
 
 These threats are deliberately not defended against in v1:
