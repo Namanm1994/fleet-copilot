@@ -82,7 +82,16 @@ class Toolkit:
 
     # ---- dispatch ------------------------------------------------------------------------------
     def call(self, name: str, args: dict[str, Any] | None, origin: str = "requested") -> ToolResult:
-        result = self._call(name, args or {}, origin)
+        try:
+            result = self._call(name, args or {}, origin)
+        except Exception as exc:  # a tool bug or database error must not end the session
+            from fleet_copilot.data.repository import TenantViolation
+
+            event = "tenant_violation" if isinstance(exc, TenantViolation) else "tool_error"
+            self.audit_event(event, detail={"tool": name, "error": f"{type(exc).__name__}: {str(exc)[:200]}"})
+            result = ToolError("INTERNAL_ERROR", f"The tool '{name}' failed unexpectedly and returned no data.",
+                               "Do not guess the result. Try a different lookup, or tell the admin this lookup failed."
+                               ).result(self.repo.as_of)
         self.tool_corpus.append(result.model_dump_json(exclude_none=True))
         return result
 

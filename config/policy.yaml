@@ -51,6 +51,10 @@ budgets:
   max_input_tokens_per_turn: 60000
   max_output_tokens_per_turn: 3000
   turn_deadline_s: 90
+  # Caps across turns, in input tokens. 0 turns a cap off. These are starting values, not measured:
+  # set them to about 3 times the heaviest realistic session or day once real usage is known.
+  max_input_tokens_per_session: 500000
+  max_input_tokens_per_day: 2000000      # per company, per UTC day
 
 upgrade_specs:
   ram_gb: [16, 32, 64]

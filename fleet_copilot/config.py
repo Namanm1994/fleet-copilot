@@ -96,6 +96,8 @@ class Policy:
     max_input_tokens_per_turn: int
     max_output_tokens_per_turn: int
     turn_deadline_s: float
+    max_input_tokens_per_session: int
+    max_input_tokens_per_day: int
     upgrade_specs: Mapping[str, tuple[int, ...]]
     notify_templates: Mapping[str, str]
     source: str = ""
@@ -171,6 +173,8 @@ def load_policy(path: Path) -> Policy:
             max_input_tokens_per_turn=int(budgets["max_input_tokens_per_turn"]),
             max_output_tokens_per_turn=int(budgets["max_output_tokens_per_turn"]),
             turn_deadline_s=float(budgets["turn_deadline_s"]),
+            max_input_tokens_per_session=int(budgets.get("max_input_tokens_per_session", 0)),
+            max_input_tokens_per_day=int(budgets.get("max_input_tokens_per_day", 0)),
             upgrade_specs=MappingProxyType({k: tuple(int(x) for x in v) for k, v in specs.items()}),
             notify_templates=_freeze(templates),
             source=str(path),

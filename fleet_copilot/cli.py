@@ -255,6 +255,10 @@ def chat(ctx: Ctx, tenant: str, operator: str | None, as_of: str | None) -> None
             continue
         try:
             _turn(sess, question)
+        except Exception as exc:  # keep the session alive; the trace has the details
+            tk.audit_event("turn_failed", detail={"error": type(exc).__name__})
+            say(f"This turn failed ({type(exc).__name__}). Nothing was executed. "
+                f"Details: fleet trace show {tk.ctx.session_id} --tenant {tenant}", "red")
         except KeyboardInterrupt:
             now = time.monotonic()
             tk.audit_event("cancelled", detail={"turn": tk.evidence.turn})
@@ -277,7 +281,11 @@ def ask(ctx: Ctx, tenant: str, operator: str | None, as_of: str | None, as_json:
     """One question, one answer. Proposals stay pending; approve them with `fleet proposals approve`."""
     tk = ctx.toolkit(tenant, operator, as_of)
     sess = _session(ctx, tk, interactive=False)
-    res = sess.ask(question)
+    try:
+        res = sess.ask(question)
+    except Exception as exc:
+        tk.audit_event("turn_failed", detail={"error": type(exc).__name__})
+        fail(f"The question failed ({type(exc).__name__}). Details: fleet trace show {tk.ctx.session_id} --tenant {tenant}", 1)
     if as_json:
         click.echo(json.dumps({"session_id": tk.ctx.session_id, "status": res.status, "answer": res.answer,
                                "verification": res.verification, "proposals": res.proposals, "usage": res.usage},

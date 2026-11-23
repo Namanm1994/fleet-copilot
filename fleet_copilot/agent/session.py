@@ -74,6 +74,7 @@ class CopilotSession:
         self.model = RetryingModel(model, settings, self.clock, on_event=lambda e, d: self.tracer.emit("llm", e, d))
         self.interactive = interactive
         self.history: list[dict[str, Any]] = []
+        self.session_input_tokens = 0
         self.context_max_chars = CONTEXT_MAX_CHARS
         self.keep_recent_tool_results = KEEP_RECENT_TOOL_RESULTS
         self.budget: TurnBudget | None = None
@@ -195,6 +196,25 @@ class CopilotSession:
         self.budget.check()
         return resp
 
+    # ---- usage caps (across turns) ----------------------------------------------------------
+    @staticmethod
+    def _today() -> str:
+        from datetime import datetime, timezone
+
+        return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    def usage_cap_message(self) -> str | None:
+        policy = self.tk.config.policy
+        if policy.max_input_tokens_per_session and self.session_input_tokens >= policy.max_input_tokens_per_session:
+            return (f"This session has reached its usage cap ({policy.max_input_tokens_per_session:,} input tokens). "
+                    "Start a new session to continue.")
+        if policy.max_input_tokens_per_day:
+            used = self.tk.store.usage(self._today())["input_tokens"]
+            if used >= policy.max_input_tokens_per_day:
+                return (f"{self.tk.ctx.tenant_name} has reached today's usage cap ({policy.max_input_tokens_per_day:,} "
+                        "input tokens). It resets at midnight UTC; the cap is set in config/policy.yaml.")
+        return None
+
     # ---- turns ------------------------------------------------------------------------------
     def ask(self, question: str) -> TurnResult:
         turn = self.tk.new_turn()
@@ -208,6 +228,9 @@ class CopilotSession:
             state = self.graph.invoke({"question": question, "interactive": self.interactive}, self._thread)
         except KeyboardInterrupt:
             self.tracer.emit("session", "cancelled", {"turn": turn})
+            raise
+        except Exception as exc:
+            self.tracer.emit("session", "error", {"turn": turn, "error": f"{type(exc).__name__}: {str(exc)[:300]}"})
             raise
         return self._result(turn, state)
 
@@ -224,6 +247,9 @@ class CopilotSession:
                  "latency_s": round(b.elapsed(), 2), "tool_calls": state.get("tool_calls", 0),
                  "cost_usd": cost_usd(self.model.model, b.input_tokens, b.output_tokens, self.settings.pricing)}
         self.tracer.emit("session", "usage", usage)
+        self.session_input_tokens += b.input_tokens
+        if b.input_tokens or b.output_tokens:
+            self.tk.store.add_usage(self._today(), b.input_tokens, b.output_tokens)
         answer = state.get("answer")
         summary = answer["summary"] if answer else (state.get("note") or "")
         focus = self._focus(answer, turn)
