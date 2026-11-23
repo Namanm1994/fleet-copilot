@@ -26,3 +26,24 @@ def normalize_name(value: str | None) -> str:
         return ""
     text = unicodedata.normalize("NFKD", value.replace("µ", "u").replace("μ", "u"))
     return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
+def software_tokens(name: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", name.replace("µ", "u").lower())
+
+
+def software_matches(query: str, name: str) -> bool:
+    """Does a software name match what the admin asked for?
+
+    Whole words first ("chrome" matches "Google Chrome"; "go" does not). A part of a word counts
+    only when the query is at least 5 characters ("torrent" matches "uTorrent"), so short queries
+    cannot hit unrelated names by accident."""
+    q, n = normalize_name(query), normalize_name(name)
+    if not q:
+        return False
+    if q == n:
+        return True
+    qt, nt = software_tokens(query), software_tokens(name)
+    if qt and any(nt[i:i + len(qt)] == qt for i in range(len(nt) - len(qt) + 1)):
+        return True
+    return len(q) >= 5 and q in n
