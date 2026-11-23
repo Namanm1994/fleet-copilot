@@ -138,7 +138,7 @@ Every case also checks that the outbox contains exactly the approved-and-execute
 
 **Recorded mode.** Cassettes in `evals/cassettes/` store model responses, redacted and keyed by a request digest, with the model name and the settings they were recorded under. They never store prompts or keys. A changed prompt, tool output or dataset makes the affected cases report "cassette out of date" rather than a false pass or fail. CI (`.github/workflows/ci.yml`) runs ruff, pytest and the recorded evals on pinned dependencies.
 
-> **Current state.** The 221 unit tests and the 3 scan cases pass. Six of the 52 LLM cases have been run live so far, on free OpenRouter models, and the limits in `config/llm.yaml` and `config/policy.yaml` were raised as a result; they are starting values, not yet set from a full run. No cassettes are committed yet: the LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
+> **Current state.** The 251 unit tests and the 3 scan cases pass. Nine of the 52 LLM cases have been run live so far, on free OpenRouter models. Five passed. The four that failed were traced to the verifier, one tool and the way devices are named, and were fixed at the source; the model's own answers from that run now pass when replayed against the fixed code, and a live re-run is pending. The limits in `config/llm.yaml` and `config/policy.yaml` are starting values, not yet set from a full run. No cassettes are committed yet: the LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
 
 ## Architecture
 
@@ -444,6 +444,7 @@ I built this project with Claude (Anthropic) working as a coding agent. Every co
 - The definitions the answers rest on: low disk as one percentage of the system volume, and battery end-of-life as the device's own reported condition.
 - To design for a production data source, not for the static 30-day file. This is why `fleet load` appends and why context limits are configurable.
 - How conversation context is carried: verified summaries and a focus state, with tools called again when older data is needed.
+- To fix live-run failures at their source. Claude's first plan for one failed case was to relax the eval so it accepted a hostname in place of a device ID. I had one function add the device ID in the output instead, and asked for the same approach on the other failures, which replaced three special cases in the verifier with a single rule for labelling numbers.
 - An audit of the finished build against six areas (system design, tool contract, retrieval, reliability, security, evaluation and observability), and which of its findings to fix.
 
 **What I turned down or deferred.**
@@ -469,6 +470,7 @@ I built this project with Claude (Anthropic) working as a coding agent. Every co
 - A maximum session age or a refresh command. Each session pins its as-of time at startup so answers stay consistent, which means a long session answers from older data.
 - A fleet-wide `find_devices` at past dates (today it filters latest snapshots; history is per device)
 - Resuming an interrupted session from its checkpoint. The graph already writes checkpoints to SQLite, but the session's history and evidence are held in memory, so today a crashed session is restarted, not resumed
+- Code-written findings for broad questions: the model chooses which findings to report and code prints the detectors' own sentences. A 12-finding answer costs about 2,000 output tokens when the model writes it out
 - Paging for the other long lists. Today only `find_devices` pages; other tools shorten an oversized result and say so
 - Reads in the audit log and a retention period for traces (see docs/SECURITY.md)
 
