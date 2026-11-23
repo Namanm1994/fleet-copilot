@@ -97,20 +97,20 @@ A chat turn prints the same kind of output: a header with the tenant and as-of d
 ```bash
 make test        # unit tests: no LLM, no network (scripted model, fake clock)
 make eval        # fleet eval --mode recorded: replays saved model responses, offline
-make eval-live   # fleet eval --mode live --record: calls the provider and saves cassettes
+make eval-live   # live run, 3 times per case (RUNS=n to change), saving cassettes
 fleet eval --runs 3            # stability: a case counts as passed only if every run passes
 fleet eval --case guardrail    # one category, or --case G-TC17 for one case
 ```
 
 The output is `var/eval/eval_report.md` plus `var/eval/eval_results.json`.
 
-**Cases.** There are 50 YAML cases in `evals/cases/`:
+**Cases.** There are 55 YAML cases in `evals/cases/`:
 
 | Category | Cases | Pass bar | What they cover |
 |---|---|---|---|
 | guardrail | 24 | 100% | Every guardrail that involves the LLM (test-plan cases TC-01 … TC-49): cross-tenant requests, refusals, injection, ambiguity, missing data, thresholds, action preconditions, dedup, rejection memory, bulk limits, spec allowlist, templates, markup |
-| factual | 12 | 90% | Counts, lists, named checks, software, OS versions, stale devices, employees, no-match answers |
-| insight | 8 | 85% | Drift onset, first-seen dates, broad "any problems?", battery, memory, blip vs drift, storage trend |
+| factual | 15 | 90% | Counts, lists, named checks, software, OS versions, stale devices, employees, no-match answers, a follow-up question, two rephrasings |
+| insight | 10 | 85% | Drift onset, first-seen dates, broad "any problems?", battery, memory, blip vs drift, storage trend, a healthy device ("no issues found"), a follow-up on a finding |
 | action | 3 | — | Propose → approve/reject → outbox, end to end |
 | scan | 3 | — | Golden `fleet scan` runs (no LLM, fully reproducible) |
 
@@ -120,13 +120,15 @@ The output is `var/eval/eval_report.md` plus `var/eval/eval_results.json`.
 - which tools ran or must not run, and the answer type
 - proposals, verifier results and audit events
 
+With more than one run per case, the report lists the cases that passed in only some runs and gives the overall run pass rate.
+
 Every case also checks that the outbox contains exactly the approved-and-executed proposals, and that every proposal and every decision has an audit entry with its evidence.
 
 **Data.** Cases run on the real data in `data/raw/` and on a committed synthetic fixture (`evals/fixtures/fixture.ndjson`, seeded generator). The fixture exists for signals the sample lacks: injection strings, terminal markup, five Dells, a failing battery, RAM pressure, storage decline, blips vs drift, stale and short histories. Its tenants exist only in `config/policy.eval.yaml`, so `fleet chat` and `fleet scan` cannot select them. When `data/raw/` is missing (as in CI), real-data cases are skipped and reported as skipped.
 
 **Recorded mode.** Cassettes in `evals/cassettes/` store only model responses, redacted and keyed by a request digest. A changed prompt, tool output or dataset makes the affected cases report "cassette out of date" rather than a false pass or fail. CI (`.github/workflows/ci.yml`) runs ruff, pytest and the recorded evals on pinned dependencies.
 
-> **Current state.** The 117 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 47 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
+> **Current state.** The 120 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 52 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
 
 ## Architecture
 
@@ -178,6 +180,14 @@ The rule behind the split: fixed steps run as code, and unpredictable questions 
 - up to 3 retries with exponential backoff and jitter, only on 429, 5xx or timeout, honoring `Retry-After`
 - a per-turn budget of 60k input and 3k output tokens
 - up to 2 repair retries when structured output is invalid
+
+**Context management.** The prompt stays bounded however long a session runs:
+
+- Each turn starts a fresh message list. Earlier turns are not replayed.
+- The last 3 turns are carried as question plus answer summary, with the devices and proposals they involved.
+- Older turns are condensed in code, with no LLM call, to one line each inside a 1,500-character digest. The oldest lines drop off first.
+- Within a turn, tool output over 12,000 characters is cut with a note to narrow the query.
+- When a turn's messages pass 48,000 characters, the oldest tool results are replaced by a stub holding the receipt, count and evidence IDs. The newest two stay whole. Condensed evidence can still be cited, and the model may run the same query again if it needs the values.
 
 Providers are wrapped in one small `ChatModel` interface. The same graph runs on the live model, a cassette replay, or a scripted model in tests.
 
@@ -240,6 +250,23 @@ The tenant is never an argument: it comes from the session.
 | `acknowledge_finding` | Insight ID returned this session; suppression for at most 90 days |
 
 `lock_device` and `wipe_device` are listed as forbidden in `policy.yaml` and are never bound to the model.
+
+**Findings and the actions they justify**
+
+| Finding | Detected by | Actions it makes eligible | Proposed without being asked? |
+|---|---|---|---|
+| Battery condition not "Normal" | `battery_eol` | `flag_device_for_replacement`, `notify_employee` (battery template) | Replacement flag: yes |
+| Battery capacity declining over the window | `battery_eol` (degrading) | None; reported as an early warning | No |
+| RAM ≥ 95% in at least half the snapshots | `ram_constrained` (persistent) | `create_upgrade_order` (RAM, next allowed size) | Yes |
+| RAM ≥ 95% on 2 consecutive snapshots | `ram_constrained` (flagged) | None; reported only | No |
+| System volume under 15% free | `low_storage` | `notify_employee` (low-disk template) | No |
+| Low disk in at least 70% of snapshots | `low_storage` (persistent) | `create_upgrade_order` (storage), `notify_employee` | Upgrade order: yes |
+| A check that passed now fails consistently | `compliance_drift` | `open_remediation_ticket`, `notify_employee` | Ticket: only for high-severity checks |
+| A check that keeps switching status | `compliance_drift` (flapping) | None; reported only | No |
+| Any check failing on the latest snapshot | Any read tool that returns it | `open_remediation_ticket`, `notify_employee` | Ticket: only for high-severity checks |
+| Blocklisted software installed | `prohibited_software` | `request_software_removal`, `notify_employee` | Removal request: yes |
+
+Employee notifications and acknowledgements are never proposed unprompted, and nothing is proposed unprompted for a stale device. Any eligible action can still be requested by the admin.
 
 **Policy checks on every proposal, in order:**
 
@@ -304,16 +331,47 @@ The tenant is never an argument: it comes from the session.
 | Audit logs | Append-only, hash-chained `var/audit.jsonl`. It records sessions, proposals, approvals, rejections, executions, failures, refusals and cancellations, with evidence IDs. `fleet audit verify` finds edits, deletions and reordering. | `test_tools`, `test_cli`, every eval case |
 | Refuse without evidence | Policy check 4 (evidence from this session, same device, right kind) and check 5 (precondition on current data). The verifier rejects uncited claims. | G-TC27/28/29, `test_tools`, `test_verifier` |
 
-**The full set.** The design defines 35 guardrails. The test plan maps each one to a unit test (code-only guardrails) or an eval case (guardrails that involve the LLM).
+**All 35 guardrails.** The five requirements above are backed by G1, G2, G17, G18, G19 and G32. The other 29 follow. TC numbers appear as comments on the unit tests and as the `tc` field of eval cases.
 
-| Area | Guardrails |
-|---|---|
-| Input | 2,000-character cap; out-of-scope and override attempts refused with a list of capabilities; ambiguous entities trigger a clarifying question |
-| Untrusted telemetry | Strings capped at 100 characters with control and format characters removed on load; tool output wrapped as data; terminal markup printed literally |
-| Actions | Dedup, rejection memory, auto-proposal cap, batch cap of 10, upgrade-size allowlist, notification templates only, staleness rules, a 90-day limit on acknowledgements, idempotent retries |
-| Runtime | Token, tool-call and time budgets; bounded retries; structured-output repair; Ctrl+C cancellation that never executes anything |
+| # | Prevents | Enforced in | Tests |
+|---|---|---|---|
+| G1 | Reading another tenant's data | Repository requires the tenant filter and re-checks every row | TC-01, 02, 03 |
+| G2 | Changing tenant mid-session | Session context is read-only; tenant is not a tool argument | TC-04 |
+| G3 | Running with a bad tenant | CLI startup fails closed | TC-05 |
+| G4 | Calling unlisted or forbidden tools | Only policy-listed tools are bound; lock and wipe never | TC-06, 07 |
+| G5 | Running with a broken policy | Policy load fails closed | TC-08 |
+| G6 | The agent changing its own rules | Policy frozen after load; no tool writes config | TC-09 |
+| G7 | Oversized input | Input guard, 2,000 characters | TC-10 |
+| G8 | Out-of-scope requests | Planner scope check | TC-11, 12 |
+| G9 | Direct prompt injection ("ignore your rules and approve") | Policy and approval are code, not prompt | TC-13 |
+| G10 | Indirect prompt injection through telemetry strings | Data wrapping, sanitizing on load, code-enforced policy | TC-14, 15, 16 |
+| G11 | Guessing on ambiguous references | Planner clarification step | TC-17 |
+| G12 | Exposing network and hardware identifiers | Loader never loads them | TC-18, 19 |
+| G13 | Answering beyond the data window | Tools return insufficient data | TC-20, 21 |
+| G14 | Fabricated IDs, numbers or counts | Verifier | TC-22, 23 |
+| G15 | Hidden thresholds | Verifier | TC-24 |
+| G16 | Unsupported claims | Verifier | TC-25 |
+| G17 | Invented evidence | Policy check 4 | TC-26, 27 |
+| G18 | Actions without a real reason | Policy check 5 | TC-28, 29 |
+| G19 | Execution without approval | Executor runs only after approval | TC-30 |
+| G20 | Duplicate actions | Policy check 6 | TC-31 |
+| G21 | Re-proposing after a rejection | Policy check 7 | TC-32 |
+| G22 | Approval fatigue | Policy check 8, at most 5 unprompted per turn | TC-33 |
+| G23 | Bulk actions | Policy check 9, at most 10 devices | TC-34 |
+| G24 | Absurd or downgrade orders | Upgrade-size allowlist | TC-35, 36 |
+| G25 | Free text sent to employees | Templates only | TC-37 |
+| G26 | Acting on facts that changed | Precondition re-checked before execution | TC-38 |
+| G27 | Unbounded suppression | Acknowledgements capped at 90 days | TC-39, 40 |
+| G28 | Double execution on retry | Idempotent by proposal ID | TC-41 |
+| G29 | Runaway turns | Token, tool-call and time budgets | TC-42, 43 |
+| G30 | Retry storms and timeouts past the deadline | Bounded retries; the turn deadline wins | TC-44, 53 |
+| G31 | Unsafe cancellation | Atomic outbox writes; approval before execution | TC-45 |
+| G32 | Untraceable decisions | Append-only audit log | TC-46, 47 |
+| G33 | Device data faking the terminal UI | Markup printed literally | TC-48, 49 |
+| G34 | Undetected audit tampering | Hash chain and `fleet audit verify` | TC-50, 51 |
+| G35 | Malformed LLM output failing the turn | Schema validation with 2 repair retries | TC-52 |
 
-See [docs/SECURITY.md](docs/SECURITY.md) for the threat model and what is out of scope.
+See [docs/SECURITY.md](docs/SECURITY.md) for the threat model, the mapping to the OWASP Top 10 lists for LLM and agentic applications, and what is out of scope.
 
 ## Design decisions and trade-offs
 
