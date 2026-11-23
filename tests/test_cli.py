@@ -34,8 +34,8 @@ def test_tenant_required_and_unknown_fail_closed(run, home):  # TC-05
     r = run("chat")
     assert r.exit_code != 0 and "--tenant" in r.output
     home.telemetry_db.unlink()  # prove the tenant check happens before any DB access
-    r = run("scan", "--tenant", "globex")
-    assert r.exit_code == 2 and "Unknown tenant 'globex'" in r.output and "fleet load" not in r.output
+    r = run("scan", "--tenant", "no-such-company")  # a name no policy file registers
+    assert r.exit_code == 2 and "Unknown tenant 'no-such-company'" in r.output and "fleet load" not in r.output
 
 
 def test_missing_policy_refuses_to_start(run, home):  # TC-08 at CLI level

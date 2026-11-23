@@ -133,7 +133,7 @@ Every case also checks that the outbox contains exactly the approved-and-execute
 
 **Recorded mode.** Cassettes in `evals/cassettes/` store only model responses, redacted and keyed by a request digest. A changed prompt, tool output or dataset makes the affected cases report "cassette out of date" rather than a false pass or fail. CI (`.github/workflows/ci.yml`) runs ruff, pytest and the recorded evals on pinned dependencies.
 
-> **Current state.** The 164 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 52 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
+> **Current state.** The 167 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 52 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
 
 ## Architecture
 
