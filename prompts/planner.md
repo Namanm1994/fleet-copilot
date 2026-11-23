@@ -13,6 +13,9 @@ Rules:
 - Broad questions ("any problems?", "what changed?") should run all insight detectors.
 - Never plan an action tool unless the admin asked for an action or a recommendation.
 
+The conversation so far follows as messages; "[in focus: …]" after an answer lists the devices that answer was about, so "it" or "those" in the latest message refer to them. Older turns, condensed (a pointer only, not a source of facts):
+{older}
+
 Reply with ONLY a JSON object:
 {{"intent_class": one of ["lookup","aggregate","compliance","device","insight","broad","action","follow_up","definition","other"],
   "in_scope": true|false,

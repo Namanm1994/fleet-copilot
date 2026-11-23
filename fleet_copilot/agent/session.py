@@ -22,6 +22,8 @@ HISTORY_TURNS = 3  # most recent turns kept as question + answer summary
 DIGEST_MAX_CHARS = 1500  # older turns are condensed to one line each, newest first, within this cap
 CONTEXT_MAX_CHARS = 48_000  # in-turn message size (about 12k tokens) above which old tool results are condensed
 KEEP_RECENT_TOOL_RESULTS = 2  # the newest tool results are never condensed
+MAX_FOCUS_EVIDENCE = 12  # evidence IDs carried per past turn
+MAX_FOCUS_QUERIES = 4  # queries carried per past turn, so they can be re-run exactly
 
 
 def _clip(text: str, n: int) -> str:
@@ -85,7 +87,9 @@ class CopilotSession:
 
     def planner_prompt(self) -> str:
         tools = "\n".join(f"- {s['name']}: {s['description']}" for s in self.tk.tool_specs())
-        return self.prompts["planner"].format(tenant_name=self.tk.ctx.tenant_name, as_of=self.tk.repo.as_of[:10], tool_list=tools)
+        older = "\n".join(self.history_digest()) or "(none)"
+        return self.prompts["planner"].format(tenant_name=self.tk.ctx.tenant_name, as_of=self.tk.repo.as_of[:10],
+                                              tool_list=tools, older=older)
 
     def agent_prompt(self, plan: dict) -> str:
         return self.prompts["agent"].format(tenant_name=self.tk.ctx.tenant_name, as_of=self.tk.repo.as_of[:10],
@@ -98,8 +102,8 @@ class CopilotSession:
         used = 0
         for h in reversed(older):  # newest of the old turns first; the oldest fall off the cap
             line = f"turn {h['turn']}: asked \"{_clip(h['question'], 90)}\" -> {_clip(h['summary'], 140)}"
-            if h.get("devices"):
-                line += f" [devices: {', '.join(h['devices'][:5])}]"
+            if h.get("focus"):
+                line += f" [in focus: {', '.join(h['focus'][:5])}]"
             if h.get("proposals"):
                 line += f" [proposals: {', '.join(h['proposals'])}]"
             if used + len(line) > DIGEST_MAX_CHARS:
@@ -143,8 +147,12 @@ class CopilotSession:
             lines += ["Older turns (condensed):"] + [f"  {d}" for d in digest] + ["Recent turns:"]
         for h in self.history[-HISTORY_TURNS:]:
             lines.append(f"Q: {h['question']}\nA: {h['summary']}")
-            if h.get("devices"):
-                lines.append(f"   devices mentioned: {', '.join(h['devices'][:25])}")
+            if h.get("focus"):
+                lines.append(f"   in focus: {', '.join(h['focus'][:25])}")
+            if h.get("evidence"):
+                lines.append(f"   evidence cited: {', '.join(h['evidence'])}")
+            for q in h.get("queries", []):
+                lines.append(f"   query run: {q}")
             if h.get("proposals"):
                 lines.append(f"   proposals: {', '.join(h['proposals'])}")
         return "\n".join(lines)
@@ -152,8 +160,30 @@ class CopilotSession:
     def history_messages(self) -> list[Message]:
         out: list[Message] = []
         for h in self.history[-HISTORY_TURNS:]:
-            out += [{"role": "user", "content": h["question"]}, {"role": "assistant", "content": h["summary"]}]
+            answer = h["summary"] + (f" [in focus: {', '.join(h['focus'][:25])}]" if h.get("focus") else "")
+            out += [{"role": "user", "content": h["question"]}, {"role": "assistant", "content": answer}]
         return out
+
+    def _focus(self, answer: dict | None, turn: int) -> dict[str, list[str]]:
+        """Structured focus state for follow-ups, taken only from the verified answer:
+        the devices its claims are about, the evidence they cite, and the queries that were run."""
+        ev = self.tk.evidence
+        devices: list[str] = []
+        cited: list[str] = []
+        for claim in (answer or {}).get("claims", []):
+            for eid in claim.get("evidence_ids", []):
+                if eid not in cited:
+                    cited.append(eid)
+                receipt = ev.receipts.get(eid)
+                members = receipt["evidence_ids"] if receipt else [eid]
+                for m in members:
+                    rec = ev.get(m)
+                    if rec and rec.device_id and rec.device_id not in devices:
+                        devices.append(rec.device_id)
+        queries = [f"{r['tool']} {json.dumps(r['args'], ensure_ascii=False, sort_keys=True)} ({rid}, {r['result_count']} rows)"
+                   for rid, r in ev.receipts.items() if r["turn"] == turn]
+        return {"focus": devices, "evidence": cited[:MAX_FOCUS_EVIDENCE],
+                "queries": [_clip(q, 200) for q in queries[:MAX_FOCUS_QUERIES]]}
 
     def llm(self, messages: list[Message], tools: list[dict[str, Any]] | None) -> LLMResponse:
         assert self.budget is not None
@@ -196,9 +226,8 @@ class CopilotSession:
         self.tracer.emit("session", "usage", usage)
         answer = state.get("answer")
         summary = answer["summary"] if answer else (state.get("note") or "")
-        devices = sorted({e.device_id for e in self.tk.evidence.this_turn() if e.device_id})
-        self.history.append({"turn": turn, "question": _clip(state.get("question", ""), 300), "summary": _clip(summary, 400),
-                             "devices": devices,
+        focus = self._focus(answer, turn)
+        self.history.append({"turn": turn, "question": _clip(state.get("question", ""), 300), "summary": _clip(summary, 400), **focus,
                              "proposals": [p["proposal_id"] for p in state.get("proposals", [])]})
         snapshot = self.graph.get_state(self._thread)
         pending = bool(snapshot.next)
