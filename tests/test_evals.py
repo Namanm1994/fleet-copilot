@@ -21,11 +21,12 @@ def project(tmp_path):
     return Paths(tmp_path)
 
 
-def test_fifty_cases_one_per_guardrail_case():
+def test_case_inventory():
     cases = load_cases()
-    assert len(cases) == 50
+    assert len(cases) == 55
     cats = {c: sum(1 for x in cases if x.category == c) for c in {x.category for x in cases}}
-    assert cats == {"guardrail": 24, "factual": 12, "insight": 8, "action": 3, "scan": 3}
+    assert cats == {"guardrail": 24, "factual": 15, "insight": 10, "action": 3, "scan": 3}
+    assert sum(1 for c in cases if len(c.turns) > 1) >= 6  # follow-up coverage
     tcs = {c.tc for c in cases if c.tc}
     for tc in ("TC-01", "TC-10", "TC-14", "TC-17", "TC-24", "TC-27", "TC-31", "TC-32", "TC-35", "TC-49"):
         assert tc in tcs

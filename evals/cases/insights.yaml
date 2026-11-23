@@ -89,3 +89,30 @@
       expect:
         devices_include: [FX-DISK-01]
         verifier_ok: true
+
+- id: I09
+  category: insight
+  title: Healthy device gets "no issues found", not an invented problem
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Any problems with FX-DELL-01?"
+      expect:
+        status: answered
+        verifier_ok: true
+        no_proposals: true
+        text_contains_any: ["no issues", "no problems", "no findings", "nothing", "not find", "didn't find", "healthy", "passing", "passes"]
+
+- id: I10
+  category: insight
+  title: Follow-up asks when a finding started
+  tenant: fixture-999
+  data: fx
+  turns:
+    - ask: "Any problems with FX-DRIFT-01?"
+      expect:
+        devices_include: [FX-DRIFT-01]
+    - ask: "When did that start?"
+      expect:
+        text_contains: [{oracle: first_failure_after_pass, args: {device_id: FX-DRIFT-01, check_id: screen_lock}}]
+        verifier_ok: true

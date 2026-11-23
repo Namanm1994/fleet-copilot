@@ -27,8 +27,10 @@ fixture:
 eval:
 	fleet eval --mode recorded
 
+# Live run, RUNS times per case (default 3) to measure stability; saves cassettes for `make eval`.
+RUNS ?= 3
 eval-live:
-	fleet eval --mode live --record
+	fleet eval --mode live --record --runs $(RUNS)
 
 lint:
 	ruff check fleet_copilot evals tests
