@@ -46,7 +46,8 @@ class LLMResponse:
 class ChatModel(Protocol):
     model: str
 
-    def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, timeout_s: float) -> LLMResponse: ...
+    def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, timeout_s: float,
+               effort: str | None = None) -> LLMResponse: ...
 
 
 class Clock:

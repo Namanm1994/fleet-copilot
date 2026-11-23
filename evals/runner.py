@@ -370,11 +370,11 @@ class _Replay:
         self.model = self.inner.model
         self.missed = False
 
-    def invoke(self, messages, tools, timeout_s):
+    def invoke(self, messages, tools, timeout_s, effort=None):
         from fleet_copilot.llm.recorded import CassetteMiss
 
         try:
-            return self.inner.invoke(messages, tools, timeout_s)
+            return self.inner.invoke(messages, tools, timeout_s, effort)
         except CassetteMiss:
             self.missed = True
             raise

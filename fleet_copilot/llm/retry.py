@@ -70,7 +70,8 @@ class RetryingModel:
         base = self.s.backoff_base_s * (2 ** (attempt - 1))
         return base + self.rng.uniform(0, 0.25 * base)
 
-    def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, budget: TurnBudget) -> LLMResponse:
+    def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, budget: TurnBudget,
+               effort: str | None = None) -> LLMResponse:
         budget.check()
         attempt = 0
         while True:
@@ -82,7 +83,7 @@ class RetryingModel:
             else:
                 timeout = self.s.call_timeout_s
             try:
-                resp = self.inner.invoke(messages, tools, timeout)
+                resp = self.inner.invoke(messages, tools, timeout, effort)
                 budget.charge(resp)
                 return resp
             except Exception as exc:  # noqa: BLE001 - classified below

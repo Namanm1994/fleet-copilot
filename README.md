@@ -44,6 +44,8 @@ make profile    # value distributions used to set the thresholds in config/thres
 
 **Model.** `config/llm.yaml` pins the model for each provider. `FLEET_LLM_PROVIDER` and `FLEET_LLM_MODEL` override it. For OpenAI and OpenRouter, set `FLEET_LLM_MODEL` because no default is pinned. Without a key, the commands that need an LLM stop with a configuration error before doing anything.
 
+**Reasoning models.** Some models reason before they answer, and those hidden tokens count as output. `reasoning_effort` in `config/llm.yaml` asks for low effort on the planning step, which only classifies the question and lists the tools to use. The tool-calling steps keep the model's default. The setting is sent to OpenRouter and OpenAI; set it to `""` for a model that rejects it.
+
 ## Run
 
 Every command that touches company data needs `--tenant`. There is no default, and an unknown tenant fails before the database is opened.
@@ -183,7 +185,7 @@ The rule behind the split: fixed steps run as code, and unpredictable questions 
 
 - a 30 s timeout per call and a 90 s deadline per turn; no retry starts if it would end past the deadline
 - up to 3 retries with exponential backoff and jitter, only on 429, 5xx or timeout, honoring `Retry-After`
-- a per-turn budget of 60k input and 3k output tokens
+- a per-turn budget of 60k input and 8k output tokens (hidden reasoning tokens count as output)
 - a cap per session (500k input tokens) and per company per day (2M input tokens); once reached, the next question is refused before any LLM call. Both are starting values in `policy.yaml`, not measured ones
 - up to 2 repair retries when structured output is invalid
 

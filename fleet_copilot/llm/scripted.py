@@ -37,9 +37,12 @@ class ScriptedModel:
     model: str = "scripted"
     seen: list[list[Message]] = field(default_factory=list)
     timeouts: list[float] = field(default_factory=list)
+    efforts: list[str | None] = field(default_factory=list)
 
-    def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, timeout_s: float) -> LLMResponse:
+    def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, timeout_s: float,
+               effort: str | None = None) -> LLMResponse:
         self.seen.append([dict(m) for m in messages])
+        self.efforts.append(effort)
         self.timeouts.append(timeout_s)
         if not self.steps:
             raise AssertionError("ScriptedModel ran out of steps")

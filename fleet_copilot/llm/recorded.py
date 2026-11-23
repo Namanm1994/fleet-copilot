@@ -39,14 +39,15 @@ class CassetteModel:
             self.entries = json.loads(path.read_text(encoding="utf-8")).get("entries", {})
         self._seq = 0
 
-    def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, timeout_s: float) -> LLMResponse:
+    def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, timeout_s: float,
+               effort: str | None = None) -> LLMResponse:
         key = f"{self._seq:03d}-{request_key(messages, tools)}"
         self._seq += 1
         if self.mode == "replay":
             if key not in self.entries:
                 raise CassetteMiss(f"No recorded response for request {key} in {self.path.name}. Re-record with --mode live --record.")
             return LLMResponse.from_dict(self.entries[key])
-        resp = self.inner.invoke(messages, tools, timeout_s)  # type: ignore[union-attr]
+        resp = self.inner.invoke(messages, tools, timeout_s, effort)  # type: ignore[union-attr]
         data = resp.to_dict()
         data["content"] = redact(data["content"])
         self.entries[key] = data

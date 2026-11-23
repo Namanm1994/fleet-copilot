@@ -43,6 +43,22 @@ def _text(content: Any) -> str:
     return str(content or "")
 
 
+def reasoning_kwargs(provider: str, effort: str | None) -> dict[str, Any]:
+    """Client settings that ask for a reasoning effort. Empty when none is asked for.
+
+    OpenRouter takes one `reasoning` object for every model and leaves it out for models that
+    do not reason. OpenAI takes `reasoning_effort`. Anthropic models reason only when asked,
+    and we never ask, so nothing is sent.
+    """
+    if not effort:
+        return {}
+    if provider == "openrouter":
+        return {"extra_body": {"reasoning": {"effort": effort}}}
+    if provider == "openai":
+        return {"reasoning_effort": effort}
+    return {}
+
+
 class LangChainModel:
     def __init__(self, settings: LLMSettings):
         if not settings.model:
@@ -53,12 +69,13 @@ class LangChainModel:
         self.settings = settings
         self.model = settings.model
         self._key = key
-        self._clients: dict[float, Any] = {}
+        self._clients: dict[tuple[float, str], Any] = {}
 
-    def _client(self, timeout_s: float):
+    def _client(self, timeout_s: float, effort: str | None = None):
         timeout_s = round(max(1.0, timeout_s), 1)
-        if timeout_s in self._clients:
-            return self._clients[timeout_s]
+        cache_key = (timeout_s, effort or "")
+        if cache_key in self._clients:
+            return self._clients[cache_key]
         s = self.settings
         if s.provider == "anthropic":
             from langchain_anthropic import ChatAnthropic
@@ -72,12 +89,14 @@ class LangChainModel:
                                       "timeout": timeout_s, "max_retries": 0, "api_key": self._key}
             if s.provider == "openrouter":
                 kwargs["base_url"] = s.base_url
+            kwargs.update(reasoning_kwargs(s.provider, effort))
             client = ChatOpenAI(**kwargs)
-        self._clients[timeout_s] = client
+        self._clients[cache_key] = client
         return client
 
-    def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, timeout_s: float) -> LLMResponse:
-        client = self._client(timeout_s)
+    def invoke(self, messages: list[Message], tools: list[dict[str, Any]] | None, timeout_s: float,
+               effort: str | None = None) -> LLMResponse:
+        client = self._client(timeout_s, effort)
         if tools:
             client = client.bind_tools([{"type": "function", "function": t} for t in tools])
         msg = client.invoke(_to_langchain(messages))
