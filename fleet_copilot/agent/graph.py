@@ -27,7 +27,6 @@ from fleet_copilot.toolkit import inline_refs
 if TYPE_CHECKING:
     from fleet_copilot.agent.session import CopilotSession
 
-MAX_TOOL_OUTPUT_CHARS = 12000
 
 
 class TurnState(TypedDict, total=False):
@@ -150,9 +149,9 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
                 if res.ok and isinstance(res.data, dict) and str(res.data.get("proposal_id", "")).startswith("PRP-"):
                     proposals.append(res.data | {"device_id": args.get("device_id")})
                     trace("tools", "proposal", {"proposal_id": res.data["proposal_id"], "origin": "requested"})
-                content = res.to_llm(MAX_TOOL_OUTPUT_CHARS)
+                content = res.to_llm(sess.max_tool_output_chars)
                 if '"Output shortened to fit' in content or '"Result too large to show' in content:
-                    trace("tools", "tool_output_shortened", {"tool": name, "chars": len(content), "limit": MAX_TOOL_OUTPUT_CHARS})
+                    trace("tools", "tool_output_shortened", {"tool": name, "chars": len(content), "limit": sess.max_tool_output_chars})
                 if res.ok:  # what stays in context if this result is condensed later
                     stub = {"condensed": True, "tool": name, "receipt_id": res.receipt_id, "total_count": res.total_count,
                             "evidence_ids": res.evidence_ids[:20], "more_evidence_ids": max(0, len(res.evidence_ids) - 20),
