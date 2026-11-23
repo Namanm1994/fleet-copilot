@@ -24,3 +24,7 @@ repair_retries: 2
 # model that rejects the setting.
 reasoning_effort:
   planner: low
+# Save every request sent to the model, with its reply, next to the session trace
+# (var/traces/<date>/prompts/<session>.jsonl). These files hold the same company data as the
+# traces, stay on this machine and are never committed. Set to false to turn this off.
+save_prompts: true

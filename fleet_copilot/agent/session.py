@@ -15,6 +15,7 @@ from fleet_copilot.agent.graph import build_graph, submit_answer_spec
 from fleet_copilot.config import LLMSettings
 from fleet_copilot.llm.base import ChatModel, Clock, LLMResponse, Message, TurnBudget, cost_usd
 from fleet_copilot.llm.retry import RetryingModel
+from fleet_copilot.runinfo import run_settings
 from fleet_copilot.toolkit import Toolkit
 from fleet_copilot.tracing import Tracer
 
@@ -79,7 +80,15 @@ class CopilotSession:
         self.budget: TurnBudget | None = None
         self.graph = build_graph(self, checkpointer or InMemorySaver())
         self._thread: dict[str, Any] | None = None
-        tk.audit_event("session_started", detail={"prompt_version": self.prompt_version, "model": getattr(model, "model", "")})
+        # What produced this session's answers. A replayed recording reports the settings it was made with.
+        recorded = getattr(model, "recorded_settings", None)
+        self.run_settings = {**recorded, "source": "recording"} if recorded else {
+            **run_settings(settings, tk.config.policy, self.prompt_version, getattr(model, "model", "")), "source": "live"}
+        if hasattr(model, "note_settings"):
+            model.note_settings(self.run_settings)
+        self.tracer.emit("session", "run_settings", self.run_settings)
+        tk.audit_event("session_started", detail={"prompt_version": self.prompt_version, "model": self.run_settings["model"],
+                                                  "settings": self.run_settings["fingerprint"]})
 
     # ---- prompts and context ---------------------------------------------------------------
     def tool_specs(self) -> list[dict[str, Any]]:
@@ -188,8 +197,17 @@ class CopilotSession:
     def llm(self, messages: list[Message], tools: list[dict[str, Any]] | None, effort: str | None = None) -> LLMResponse:
         assert self.budget is not None
         start = self.clock.now()
-        resp = self.model.invoke(messages, tools, self.budget, effort)
-        self.tracer.emit("llm", "llm_call", {"tools": bool(tools), "tool_calls": [t.name for t in resp.tool_calls]},
+        names = [t["name"] for t in tools or []]
+        save = self.settings.save_prompts
+        try:
+            resp = self.model.invoke(messages, tools, self.budget, effort)
+        except Exception as exc:
+            if save:
+                self.tracer.log_request(messages, names, effort, None, f"{type(exc).__name__}: {exc}")
+            raise
+        request = self.tracer.log_request(messages, names, effort, resp.to_dict()) if save else None
+        self.tracer.emit("llm", "llm_call", {"tools": bool(tools), "tool_calls": [t.name for t in resp.tool_calls],
+                                             "request": request, "cut_off": resp.truncated},
                          tokens={"input": resp.input_tokens, "output": resp.output_tokens},
                          latency_ms=round((self.clock.now() - start) * 1000))
         self.budget.check()

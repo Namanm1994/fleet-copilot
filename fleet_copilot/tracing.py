@@ -2,6 +2,10 @@
 
 Each event: {ts, session_id, tenant, turn, node, event, payload, tokens?, latency_ms?}.
 Strings are redacted. Plans and stated reasons are logged, not hidden chain-of-thought.
+
+The first event of a session is `run_settings`: the model and the limits it ran with.
+When `save_prompts` is on, every request to the model and its reply is also written to
+var/traces/YYYY-MM-DD/prompts/<session>.jsonl; an `llm_call` event points at it by number.
 """
 
 from __future__ import annotations
@@ -34,6 +38,23 @@ class Tracer:
         self.prompt_version = prompt_version
         self.turn = 0
         self.events: list[dict[str, Any]] = []
+        self.requests_path = traces_dir / day / "prompts" / f"{session_id}.jsonl"
+        self.request_seq = 0
+
+    def log_request(self, messages: list[dict[str, Any]], tools: list[str], effort: str | None,
+                    response: dict[str, Any] | None, error: str | None = None) -> int:
+        """Append one model request and its reply to the session's prompt log. Returns its number."""
+        self.request_seq += 1
+        entry = {
+            "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+            "session_id": self.session_id, "tenant": self.tenant_id, "turn": self.turn, "request": self.request_seq,
+            "effort": effort, "tools": tools, "messages": _clean(messages), "response": _clean(response),
+            "error": redact(error) if error else None,
+        }
+        touch_private(self.requests_path)
+        with self.requests_path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
+        return self.request_seq
 
     def emit(self, node: str, event: str, payload: dict[str, Any] | None = None, **extra: Any) -> dict[str, Any]:
         entry = {

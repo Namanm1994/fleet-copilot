@@ -130,6 +130,8 @@ With more than one run per case, the report lists the cases that passed in only 
 
 **Comparing runs.** Each report compares itself with the run it replaces: which cases now fail, which now pass, and how tokens, cost, latency and pass rates moved. `fleet eval` prints the cases that now fail. Every run is also kept under `var/eval/history/`.
 
+**What produced a result.** Each report has a Run settings section: provider, model, limits, timeouts, reasoning effort, budgets and prompt version. A recording stores the settings it was made with, and a replay reports those, not the current configuration. When the model or a setting differs from the previous run, the comparison says so, so a change in pass rate is not mistaken for a code change. API keys are never part of this.
+
 Every case also checks that the outbox contains exactly the approved-and-executed proposals, and that every proposal and every decision has an audit entry with its evidence.
 
 **Data.** Cases run on the real data in `data/raw/` and on a committed synthetic fixture (`evals/fixtures/fixture.ndjson`, seeded generator). The fixture exists for signals the sample lacks: injection strings, terminal markup, five Dells, a failing battery, RAM pressure, storage decline, blips vs drift, stale and short histories. Its tenants exist only in `config/policy.eval.yaml`, so `fleet chat` and `fleet scan` cannot select them. When `data/raw/` is missing (as in CI), real-data cases are skipped and reported as skipped.
@@ -202,8 +204,9 @@ The rule behind the split: fixed steps run as code, and unpredictable questions 
 
 **Observability.** There are three levels, all local files:
 
-- One trace per session (`fleet trace show`): plan, tool calls, verifier results, tokens, latency.
-- A view across sessions (`fleet stats`): sessions, turns, tokens and cost, latency p50 and p95, how often the verifier rejected an answer, repairs, retries, tool errors by code, and a per-day breakdown. It reads one company's traces only.
+- One trace per session (`fleet trace show`): plan, tool calls, verifier results, tokens, latency. Its first event names the model and the settings the session ran with (limits, timeouts, reasoning effort, budgets, prompt version) and a short fingerprint of them.
+- Every request sent to the model, with its reply, in `var/traces/<date>/prompts/<session>.jsonl`. Each `llm_call` event in the trace points at its request by number. Turn this off with `save_prompts: false` in `config/llm.yaml`.
+- A view across sessions (`fleet stats`): sessions, turns, tokens and cost, latency p50 and p95, how often the verifier rejected an answer, repairs, retries, tool errors by code, sessions per model, and a per-day breakdown. It reads one company's traces only.
 - The eval report, with its comparison against the previous run.
 
 **Reliability outside the LLM path.**

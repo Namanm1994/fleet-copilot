@@ -30,6 +30,7 @@ from fleet_copilot.data.loader import load
 from fleet_copilot.data.repository import dataset_as_of
 from fleet_copilot.llm.base import Clock, FakeClock
 from fleet_copilot.paths import PROJECT_ROOT, Paths
+from fleet_copilot.runinfo import changed_settings
 
 CASES_DIR = PROJECT_ROOT / "evals" / "cases"
 FIXTURE = PROJECT_ROOT / "evals" / "fixtures" / "fixture.ndjson"
@@ -76,6 +77,7 @@ class RunResult:
     failures: list[str] = field(default_factory=list)
     usage: dict[str, Any] = field(default_factory=dict)
     metrics: dict[str, Any] = field(default_factory=dict)
+    settings: dict[str, Any] | None = None  # model and limits this run used (LLM cases only)
 
 
 # ---- homes ------------------------------------------------------------------------------------
@@ -336,6 +338,7 @@ def _run_case(env: EvalEnv, case: Case, run: int, model_factory: ModelFactory | 
         return rr
     settings = load_llm_settings(home.config)
     sess = CopilotSession(tk, model, settings, PROJECT_ROOT / "prompts", clock=clock_factory(), interactive=True)
+    rr.settings = sess.run_settings
     usage = {"input_tokens": 0, "output_tokens": 0, "llm_calls": 0, "tool_calls": 0, "latency_s": 0.0, "cost_usd": 0.0}
     for i, turn in enumerate(case.turns, 1):
         res = sess.ask(turn["ask"] if "ask" in turn else "x" * int(turn["ask_chars"]))
@@ -368,6 +371,7 @@ class _Replay:
 
         self.inner = CassetteModel(path, "replay")
         self.model = self.inner.model
+        self.recorded_settings = self.inner.recorded_settings
         self.missed = False
 
     def invoke(self, messages, tools, timeout_s, effort=None):
@@ -458,7 +462,14 @@ def summarize(cases: list[Case], results: list[RunResult], runs: int) -> dict[st
         return None if any(v is None for v in vals) else round(sum(vals), 4)
 
     lat = sorted(r.usage["latency_s"] for r in ran if r.usage and r.usage.get("latency_s") is not None)
+    distinct: dict[str, dict[str, Any]] = {}
+    for r in ran:
+        if r.settings:
+            distinct.setdefault(r.settings["fingerprint"], r.settings)
     return {
+        # One entry when every case ran under the same model and limits. More than one means the
+        # numbers below mix settings (for example, recordings made at different times).
+        "run_settings": list(distinct.values()),
         "categories": cats, "bars": bars, "all_bars_met": all(b["met"] is not False for b in bars.values()),
         "runs_per_case": runs, "flaky": flaky,
         "run_pass_rate": round(sum(r.passed for r in ran) / len(ran), 3) if ran else None,
@@ -494,7 +505,10 @@ def compare_runs(previous: dict[str, Any], current: dict[str, Any]) -> dict[str,
     for key in ("tokens_in", "tokens_out", "cost_usd", "latency_p95_s", "verifier_pass_rate", "run_pass_rate"):
         if ps.get(key) is not None and cs.get(key) is not None:
             deltas[key] = {"previous": ps[key], "current": cs[key]}
+    p_set, c_set = ps.get("run_settings") or [], cs.get("run_settings") or []
     return {
+        "settings_changed": changed_settings(p_set[0], c_set[0]) if len(p_set) == 1 and len(c_set) == 1 else {},
+        "settings_mixed": len(p_set) > 1 or len(c_set) > 1,
         "comparable": ps.get("mode") == cs.get("mode"),
         "previous_run": ps.get("generated_at"), "previous_mode": ps.get("mode"),
         "now_failing": sorted(c for c in both if prev[c] == "pass" and cur[c] == "fail"),
@@ -503,6 +517,33 @@ def compare_runs(previous: dict[str, Any], current: dict[str, Any]) -> dict[str,
         "no_longer_run": sorted(c for c in prev if prev[c] != "skipped" and cur.get(c, "skipped") == "skipped"),
         "deltas": deltas,
     }
+
+
+SETTING_LABELS = (("provider", "Provider"), ("model", "Model"), ("source", "Source"), ("temperature", "Temperature"),
+                  ("reasoning_effort", "Reasoning effort"), ("max_output_tokens", "Output limit per call (tokens)"),
+                  ("call_timeout_s", "Timeout per call (s)"), ("max_input_tokens_per_turn", "Input budget per turn (tokens)"),
+                  ("max_output_tokens_per_turn", "Output budget per turn (tokens)"), ("turn_deadline_s", "Deadline per turn (s)"),
+                  ("repair_retries", "Repair retries"), ("network_retries", "Network retries"),
+                  ("prompt_version", "Prompt version"), ("fingerprint", "Settings fingerprint"))
+
+
+def settings_lines(settings: list[dict[str, Any]]) -> list[str]:
+    if not settings:
+        return ["No LLM case ran, so there are no model settings to report."]
+    if len(settings) > 1:
+        lines = [f"**Mixed settings:** the cases ran under {len(settings)} different settings, so totals above combine them.", "",
+                 "| Fingerprint | Model | Source | Output limit per call | Prompt version |", "|---|---|---|---|---|"]
+        return lines + [f"| {s['fingerprint']} | {s['model']} | {s.get('source', '')} | {s['max_output_tokens']} | {s['prompt_version']} |"
+                        for s in settings]
+    s = settings[0]
+
+    def show(key: str) -> str:
+        v = s.get(key)
+        if isinstance(v, dict):
+            return ", ".join(f"{k}: {x or 'default'}" for k, x in v.items()) or "default"
+        return "" if v is None else str(v)
+
+    return ["| Setting | Value |", "|---|---|"] + [f"| {label} | {show(key)} |" for key, label in SETTING_LABELS]
 
 
 def write_report(out: dict[str, Any], out_dir: Path) -> tuple[Path, Path]:
@@ -539,11 +580,18 @@ def write_report(out: dict[str, Any], out_dir: Path) -> tuple[Path, Path]:
         lines.append(f"| {k} | {s[k] if s[k] is not None else 'n/a'} |")
     if s["flaky"]:
         lines += ["", f"Flaky (passed in some runs only): {', '.join(s['flaky'])}"]
+    lines += ["", "## Run settings", ""] + settings_lines(s.get("run_settings") or [])
     cmp_ = out.get("comparison")
     if cmp_:
         lines += ["", f"## Changes since the previous run ({cmp_['previous_mode']} mode, {cmp_['previous_run'] or 'time unknown'})", ""]
         if not cmp_["comparable"]:
             lines.append("The previous run used a different mode, so pass and fail changes are listed for reference only.")
+        if cmp_.get("settings_changed"):
+            lines += ["**The model or its settings changed since the previous run**, so differences below may come "
+                      "from the settings and not from the code:", ""]
+            lines += [f"- {k}: {v['previous']} → {v['current']}" for k, v in cmp_["settings_changed"].items()] + [""]
+        elif cmp_.get("settings_mixed"):
+            lines += ["One of the two runs mixed several settings, so differences below are for reference only.", ""]
         for label, key in (("Now failing", "now_failing"), ("Now passing", "now_passing"), ("Run for the first time", "newly_run"),
                            ("No longer run", "no_longer_run")):
             lines.append(f"- {label}: {', '.join(cmp_[key]) if cmp_[key] else 'none'}")
