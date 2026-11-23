@@ -43,6 +43,15 @@ def _text(content: Any) -> str:
     return str(content or "")
 
 
+def was_truncated(metadata: Any) -> bool:
+    """True when the provider says it stopped at the output-token limit.
+
+    OpenAI and OpenRouter report finish_reason "length"; Anthropic reports stop_reason "max_tokens".
+    """
+    metadata = metadata or {}
+    return metadata.get("finish_reason") == "length" or metadata.get("stop_reason") == "max_tokens"
+
+
 def reasoning_kwargs(provider: str, effort: str | None) -> dict[str, Any]:
     """Client settings that ask for a reasoning effort. Empty when none is asked for.
 
@@ -111,7 +120,8 @@ class LangChainModel:
             calls.append(ToolCall(id=tc.get("id") or f"call_{uuid.uuid4().hex[:8]}", name=tc["name"], args=args))
         usage = getattr(msg, "usage_metadata", None) or {}
         return LLMResponse(content=_text(msg.content), tool_calls=calls, input_tokens=int(usage.get("input_tokens", 0)),
-                           output_tokens=int(usage.get("output_tokens", 0)), model=self.model)
+                           output_tokens=int(usage.get("output_tokens", 0)), model=self.model,
+                           truncated=was_truncated(getattr(msg, "response_metadata", None)))
 
 
 def build_model(settings: LLMSettings) -> LangChainModel:

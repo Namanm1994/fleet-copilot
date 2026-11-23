@@ -69,10 +69,12 @@ def parse_with_repair(invoke: Callable[[list[Message]], LLMResponse], messages: 
             last_error = validation_message(exc)
             if attempt == max_repairs:
                 break
-            on_event("repair_attempt", {"schema": model_cls.__name__, "attempt": attempt + 1, "error": last_error})
+            on_event("repair_attempt", {"schema": model_cls.__name__, "attempt": attempt + 1, "error": last_error,
+                                        "cut_off": resp.truncated})
+            problem = ("Your previous output was cut off at the output limit. Reply again, more briefly, "
+                       if resp.truncated else f"Your previous output failed validation: {last_error}. Reply ")
             convo = convo + [
                 {"role": "assistant", "content": resp.content},
-                {"role": "user", "content": f"Your previous output failed validation: {last_error}. "
-                                            f"Reply with only a JSON object that matches the {model_cls.__name__} schema."},
+                {"role": "user", "content": f"{problem}with only a JSON object that matches the {model_cls.__name__} schema."},
             ]
     raise RepairFailed(f"{model_cls.__name__} still invalid after {max_repairs} repairs: {last_error}", max_repairs)
