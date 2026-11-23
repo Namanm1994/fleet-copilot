@@ -30,9 +30,12 @@ def _digest(entry: dict[str, Any]) -> str:
     return hashlib.sha256(_canonical(entry).encode("utf-8")).hexdigest()
 
 
+STALE_LOCK_S = 30.0  # a lock older than this was left by a process that died mid-write
+
+
 @contextlib.contextmanager
 def file_lock(path: Path, timeout_s: float = 5.0) -> Iterator[None]:
-    """Cross-platform lock via an exclusive lock file."""
+    """Cross-platform lock via an exclusive lock file. A stale lock is removed, not waited on forever."""
     lock = path.with_suffix(path.suffix + ".lock")
     deadline = time.monotonic() + timeout_s
     while True:
@@ -41,6 +44,12 @@ def file_lock(path: Path, timeout_s: float = 5.0) -> Iterator[None]:
             os.close(fd)
             break
         except FileExistsError:
+            try:
+                if time.time() - os.path.getmtime(lock) > STALE_LOCK_S:
+                    os.unlink(lock)
+                    continue
+            except FileNotFoundError:
+                continue
             if time.monotonic() > deadline:
                 raise TimeoutError(f"Could not lock {path}") from None
             time.sleep(0.02)

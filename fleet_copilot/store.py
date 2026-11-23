@@ -37,6 +37,14 @@ CREATE TABLE IF NOT EXISTS proposals (
     error TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_prop_tenant ON proposals(tenant_id, status);
+CREATE TABLE IF NOT EXISTS usage (
+    day TEXT NOT NULL,
+    tenant_id TEXT NOT NULL,
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
+    turns INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (day, tenant_id)
+);
 CREATE TABLE IF NOT EXISTS acknowledgements (
     tenant_id TEXT NOT NULL,
     insight_id TEXT NOT NULL,
@@ -67,7 +75,7 @@ def seq_of(proposal_id: str) -> int | None:
 class AppStore:
     def __init__(self, path: Path, tenant_id: str):
         touch_private(path)
-        self._conn = sqlite3.connect(path, check_same_thread=False)
+        self._conn = sqlite3.connect(path, check_same_thread=False, timeout=10)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(SCHEMA)
         self.tenant_id = tenant_id
@@ -142,3 +150,17 @@ class AppStore:
     def acknowledgements(self) -> dict[str, dict[str, Any]]:
         rows = self._conn.execute("SELECT * FROM acknowledgements WHERE tenant_id = ?", (self.tenant_id,)).fetchall()
         return {r["insight_id"]: {k: r[k] for k in r.keys()} for r in rows}
+
+    # ---- usage ledger (daily cap) ----------------------------------------------------------------
+    def add_usage(self, day: str, input_tokens: int, output_tokens: int) -> None:
+        with self._conn:
+            self._conn.execute(
+                "INSERT INTO usage (day, tenant_id, input_tokens, output_tokens, turns) VALUES (?,?,?,?,1) "
+                "ON CONFLICT(day, tenant_id) DO UPDATE SET input_tokens = input_tokens + excluded.input_tokens, "
+                "output_tokens = output_tokens + excluded.output_tokens, turns = turns + 1",
+                (day, self.tenant_id, int(input_tokens), int(output_tokens)))
+
+    def usage(self, day: str) -> dict[str, int]:
+        row = self._conn.execute("SELECT input_tokens, output_tokens, turns FROM usage WHERE day = ? AND tenant_id = ?",
+                                 (day, self.tenant_id)).fetchone()
+        return {"input_tokens": row[0], "output_tokens": row[1], "turns": row[2]} if row else {"input_tokens": 0, "output_tokens": 0, "turns": 0}

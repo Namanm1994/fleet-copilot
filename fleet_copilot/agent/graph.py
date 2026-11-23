@@ -58,7 +58,7 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
     def stop(state: TurnState, exc: Exception, node: str) -> TurnState:
         kind = getattr(exc, "kind", "error")
         trace(node, "budget_stop" if isinstance(exc, BudgetExceeded) else "error", {"error": str(exc), "kind": kind})
-        note = (f"I stopped before finishing: {exc} Here is what I could establish; try a narrower question."
+        note = (f"I stopped before finishing: {exc} No verified answer was produced. Try a narrower question."
                 if isinstance(exc, BudgetExceeded) else f"I couldn't complete this request ({exc}).")
         return {"status": "partial", "note": note}
 
@@ -68,6 +68,11 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
         if len(q) > policy.input_max_chars:
             trace("input_guard", "guard_result", {"ok": False, "reason": "too_long", "chars": len(q)})
             return {"status": "refused", "note": f"Your message is {len(q)} characters; the limit is {policy.input_max_chars}. Please shorten it."}
+        cap = sess.usage_cap_message()
+        if cap:
+            trace("input_guard", "guard_result", {"ok": False, "reason": "usage_cap"})
+            tk.audit_event("budget_refused", detail={"reason": cap})
+            return {"status": "refused", "note": cap}
         trace("input_guard", "guard_result", {"ok": True})
         return {"status": "running", "tool_calls": 0, "revisions": 0, "repairs": 0, "proposals": [], "skipped": [],
                 "seen_calls": []}
@@ -131,7 +136,7 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
                                       "message": f"Tool-call limit of {policy.max_tool_calls_per_turn} per turn reached. Call submit_answer now with what you have."}})
                 trace("tools", "tool_call_refused", {"tool": name, "reason": "tool_call_cap"})
             elif key in seen:
-                content = json.dumps({"ok": False, "error": {"code": "INVALID_ARGUMENT",
+                content = json.dumps({"ok": False, "error": {"code": "DUPLICATE_CALL",
                                       "message": "Duplicate call: the same tool with the same arguments already ran this turn. Use the earlier result."}})
                 trace("tools", "tool_call_refused", {"tool": name, "reason": "duplicate_call"})
             else:
@@ -145,14 +150,14 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
                 if res.ok and isinstance(res.data, dict) and str(res.data.get("proposal_id", "")).startswith("PRP-"):
                     proposals.append(res.data | {"device_id": args.get("device_id")})
                     trace("tools", "proposal", {"proposal_id": res.data["proposal_id"], "origin": "requested"})
-                content = res.to_llm()
+                content = res.to_llm(MAX_TOOL_OUTPUT_CHARS)
+                if '"Output shortened to fit' in content or '"Result too large to show' in content:
+                    trace("tools", "tool_output_shortened", {"tool": name, "chars": len(content), "limit": MAX_TOOL_OUTPUT_CHARS})
                 if res.ok:  # what stays in context if this result is condensed later
                     stub = {"condensed": True, "tool": name, "receipt_id": res.receipt_id, "total_count": res.total_count,
                             "evidence_ids": res.evidence_ids[:20], "more_evidence_ids": max(0, len(res.evidence_ids) - 20),
                             "note": "Condensed to save context. The evidence IDs stay valid. Call the tool again if you need the values."}
                     extra = {"stub": f"<tool_data>{json.dumps(stub, ensure_ascii=False)}</tool_data>", "call_key": key}
-                if len(content) > MAX_TOOL_OUTPUT_CHARS:
-                    content = content[:MAX_TOOL_OUTPUT_CHARS] + "\n[truncated: ask for a narrower query]</tool_data>"
             messages.append({"role": "tool", "tool_call_id": tc["id"], "name": name, "content": content} | extra)
         return {"messages": messages, "tool_calls": count, "seen_calls": seen, "proposals": proposals}
 
