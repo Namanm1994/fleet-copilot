@@ -138,7 +138,7 @@ Every case also checks that the outbox contains exactly the approved-and-execute
 
 **Recorded mode.** Cassettes in `evals/cassettes/` store model responses, redacted and keyed by a request digest, with the model name and the settings they were recorded under. They never store prompts or keys. A changed prompt, tool output or dataset makes the affected cases report "cassette out of date" rather than a false pass or fail. CI (`.github/workflows/ci.yml`) runs ruff, pytest and the recorded evals on pinned dependencies.
 
-> **Current state.** The 272 unit tests pass. All 55 eval cases have been run once against a live model (`nvidia/nemotron-3-ultra-550b-a55b:free` on OpenRouter, one run per case): 50 passed on the first full run, with factual 15 of 15, insight 10 of 10, action 3 of 3, guardrail 20 of 24 and scan 2 of 3. Of the five failures, one was the agent: it stated "not trending down" from three snapshots, and the verifier now rejects a trend drawn from too few snapshots. The other four were eval cases. One assumed a battery result that is true of the small sample but not of the full data; one checked a proposal on the wrong turn; two looked for refusal phrases the correct answers did not use, and those two phrase lists were extended. Replaying the recording with these fixes, 53 cases pass and 2 must be recorded again (G-TC21, whose answer path changed, and F02, whose recording was misnumbered by a recorder bug that is now fixed). The fixed trend case has not been re-run live. Earlier failures, on nine cases in three rounds, all traced to our own code and were fixed at the source. Still open: three runs per case, a run on the pinned default model, and limits in `config/llm.yaml` and `config/policy.yaml` set from measurements. No cassettes are committed yet, so `make eval` skips the LLM cases until they are.
+> **Current state.** The 292 unit tests pass. All 55 eval cases have been run once against a live model (`nvidia/nemotron-3-ultra-550b-a55b:free` on OpenRouter, one run per case): 50 passed on the first full run, with factual 15 of 15, insight 10 of 10, action 3 of 3, guardrail 20 of 24 and scan 2 of 3. Of the five failures, one was the agent: it stated "not trending down" from three snapshots, and the verifier now rejects a trend drawn from too few snapshots. The other four were eval cases. One assumed a battery result that is true of the small sample but not of the full data; one checked a proposal on the wrong turn; two looked for refusal phrases the correct answers did not use, and those two phrase lists were extended. Replaying the recording with these fixes, 53 cases pass and 2 must be recorded again (G-TC21, whose answer path changed, and F02, whose recording was misnumbered by a recorder bug that is now fixed). The fixed trend case has not been re-run live. Earlier failures, on nine cases in three rounds, all traced to our own code and were fixed at the source. Still open: three runs per case, a run on the pinned default model, and limits in `config/llm.yaml` and `config/policy.yaml` set from measurements. No cassettes are committed yet, so `make eval` skips the LLM cases until they are.
 
 ## Architecture
 
@@ -345,12 +345,12 @@ Employee notifications and acknowledgements are never proposed unprompted, and n
 
      | Label | Example | Must match |
      |---|---|---|
-     | Date | `2026-05-22`, "May 2026" | A date in a tool result |
+     | Date | `2026-05-22`, "May 2026", "June 10-12", "June 10, 11 and 12" | A date in a tool result; every day written is checked |
      | Measurement | 16 GB, 2.6%, 30 days | A tool value or a threshold |
      | Count | "5 devices" | A whole number in the evidence that claim cites |
      | Plain value | cycle count 993 | A tool value or a threshold |
 
-     A count is checked against the claim's own evidence, not against every number seen in the session
+     A count is checked against the claim's own evidence, not against every number seen in the session. A digit inside a model name or hostname that a tool returned is part of the name ("Dell XPS 15 laptop" is one laptop). A period the user asked about may be named back ("no data for April 2026") even though no tool result holds it
    - numbers are compared by size, because direction is said in words: "falling 0.51% a day" matches a slope of −0.51, and 0.61 does not
    - every threshold the cited results used is stated
    - every factual claim has evidence, and "no matches" cites a query that returned zero rows
