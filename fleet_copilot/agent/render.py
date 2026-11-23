@@ -45,6 +45,21 @@ def label_devices(text: str, names: dict[str, str] | None) -> str:
     return text
 
 
+MAX_DETAILS = 25
+
+
+def claim_details(claim: dict[str, Any], shown: str = "") -> list[str]:
+    """Lines a claim lists in its values and does not already say: "five devices drifted" plus the five.
+
+    Only lists of text are shown, and only items the answer has not already printed. The verifier checks
+    exactly these lines, so nothing reaches the admin unchecked."""
+    out: list[str] = []
+    for value in (claim.get("values") or {}).values():
+        if isinstance(value, list):
+            out += [v.strip() for v in value if isinstance(v, str) and v.strip() and v.strip() not in shown and v.strip() not in out]
+    return out[:MAX_DETAILS]
+
+
 def _ids(ids: list[str], n: int = 3) -> str:
     if not ids:
         return ""
@@ -62,9 +77,11 @@ def render_turn(*, tenant_name: str, as_of: str, status: str, answer: dict[str, 
         lines.append(label_devices(answer["summary"], names))
         if answer.get("claims"):
             lines.append("")
+            shown = " ".join([answer["summary"], *(c["text"] for c in answer["claims"])])
             for c in answer["claims"]:
                 ev = _ids(c.get("evidence_ids", []))
                 lines.append(f"• {label_devices(c['text'], names)}" + (f"  [evidence: {ev}]" if ev else ""))
+                lines += [f"    - {label_devices(item, names)}" for item in claim_details(c, shown)]
         defs = [d for d in answer.get("definitions_used", []) if d in thresholds.names()]
         if defs:
             lines += ["", "Definitions:"] + [f"  {d}: {thresholds.describe(d)}" for d in defs]

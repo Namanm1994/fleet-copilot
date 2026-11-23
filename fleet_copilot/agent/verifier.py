@@ -30,6 +30,7 @@ from datetime import date
 from typing import TYPE_CHECKING, Any
 
 from fleet_copilot.agent.models import FinalAnswer
+from fleet_copilot.agent.render import claim_details
 from fleet_copilot.session import whole_numbers
 
 if TYPE_CHECKING:
@@ -332,7 +333,13 @@ class Verifier:
             if window and needle in (window[0].isoformat(), window[1].isoformat()):   # the window itself may always be stated
                 return True
             month_and_year = re.fullmatch(r"(\d{4})-(\d{2})-", needle)   # "April 2026" for a question about "April"
-            return bool(month_and_year and int(month_and_year.group(2)) in asked_months and f"{month_and_year.group(1)}-" in corpus)
+            if not month_and_year or int(month_and_year.group(2)) not in asked_months:
+                return False
+            # the year must be one the data could mean: a year of the window or the one before it ("December"
+            # asked in January). This cannot depend on a tool having run: a question about a period outside
+            # the data is planned with no lookups.
+            years = {window[0].year, window[1].year, window[1].year - 1} if window else set()
+            return int(month_and_year.group(1)) in years or f"{month_and_year.group(1)}-" in corpus
 
         def ids_ok(text: str, where: str, idx: int | None) -> None:
             for token in set(DEVICE_RE.findall(EVID_RE.sub(" ", text))) | set(EMP_RE.findall(text)):
@@ -366,6 +373,7 @@ class Verifier:
                     failed.add(idx)
 
         cited_defs: set[str] = set()
+        shown_text = " ".join([ans.summary, *(c.text for c in ans.claims)])
         for i, claim in enumerate(ans.claims):
             where = f"claim {i + 1}"
             missing = [e for e in claim.evidence_ids if not ev.has(e)]
@@ -400,6 +408,8 @@ class Verifier:
             values_text = " ".join(f"{k} {v}" for k, v in claim.values.items())
             ids_ok(claim.text + " " + values_text, where, i)
             nums_ok(claim.text, where, i, extra, count_ok)
+            for item in claim_details(claim.model_dump(), shown_text):      # the lines the renderer prints under the claim
+                nums_ok(item, f"{where}, listed item \"{item[:40]}\"", i, extra, count_ok)
             for k, v in claim.values.items():
                 for item in v if isinstance(v, list) else [v]:
                     if isinstance(item, (int, float)) and not isinstance(item, bool):
@@ -413,6 +423,16 @@ class Verifier:
                 if not r:
                     continue
                 listed = {ev.get(x).device_id for x in r["evidence_ids"] if ev.get(x) and ev.get(x).device_id}
+                # A result may list devices for several checks. A claim that names one check is complete when it
+                # names every device the result lists for that check ("only 3 devices fail screen_lock: ...").
+                by_check: dict[str, set[str]] = {}
+                for x in r["evidence_ids"]:
+                    if "#" in x and ev.get(x) and ev.get(x).device_id:
+                        by_check.setdefault(x.rsplit("#", 1)[1], set()).add(ev.get(x).device_id)
+                low = claim.text.lower()
+                named_checks = [c for c in by_check if c.lower() in low or c.replace("_", " ").lower() in low]
+                if named_checks and len(by_check) > 1:
+                    listed = set().union(*(by_check[c] for c in named_checks))
                 max_listed = int(self.tk.config.thresholds.get("max_devices_per_answer", "count"))
                 states_count = any(isinstance(v, (int, float)) and float(v) == float(r["result_count"])
                                    for v in claim.values.values()) or str(r["result_count"]) in claim.text

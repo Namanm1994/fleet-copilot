@@ -55,6 +55,22 @@ class TurnState(TypedDict, total=False):
     results: list[dict]
 
 
+def ambiguous_refs(resolved: Any) -> list[dict[str, Any]]:
+    """References that match several devices. A reference that is an employee ID is not one: it means all
+    of that person's devices."""
+    return [r for r in resolved or [] if isinstance(r, dict) and r.get("status") == "ambiguous"
+            and not r.get("employee_ids") and len(r.get("matches") or []) > 1]
+
+
+def clarification_text(ambiguous: list[dict[str, Any]]) -> str:
+    lines = []
+    for a in ambiguous:
+        lines.append(f"\"{a['ref']}\" matches {len(a['matches'])} devices. Which one do you mean?")
+        lines += [f"  - {m['device_id']}: {m.get('label') or m['device_id']}" for m in a["matches"]]
+    lines.append("Name the device ID, or ask about all of them (for example \"all Dell devices\").")
+    return "\n".join(lines)
+
+
 def build_graph(sess: CopilotSession, checkpointer: Any):
     tk = sess.tk
     policy = tk.config.policy
@@ -142,6 +158,7 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
         count = state.get("tool_calls", 0)
         seen = list(state.get("seen_calls", []))
         proposals = list(state.get("proposals", []))
+        ambiguous: list[dict[str, Any]] = []
         for tc in last.get("tool_calls", []):
             name, args = tc["name"], tc.get("args") or {}
             key = f"{name}:{json.dumps(args, sort_keys=True)}"
@@ -162,6 +179,8 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
                 trace("tools", "tool_result", {"tool": name, "ok": res.ok, "evidence_ids": res.evidence_ids[:50],
                                                "receipt_id": res.receipt_id, "total_count": res.total_count,
                                                "error": res.error.model_dump() if res.error else None})
+                if name == "resolve_entities" and res.ok:
+                    ambiguous += ambiguous_refs(res.data)
                 if res.ok and isinstance(res.data, dict) and str(res.data.get("proposal_id", "")).startswith("PRP-"):
                     proposals.append(res.data | {"device_id": args.get("device_id")})
                     trace("tools", "proposal", {"proposal_id": res.data["proposal_id"], "origin": "requested"})
@@ -174,6 +193,13 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
                             "note": "Condensed to save context. The evidence IDs stay valid. Call the tool again if you need the values."}
                     extra = {"stub": f"<tool_data>{json.dumps(stub, ensure_ascii=False)}</tool_data>", "call_key": key}
             messages.append({"role": "tool", "tool_call_id": tc["id"], "name": name, "content": content} | extra)
+        if ambiguous:
+            # Which device the admin means is theirs to say. The turn ends here with the question, written in
+            # code from the tool's own matches, so no device is read or acted on by guesswork (G11).
+            trace("tools", "clarification", {"refs": [a["ref"] for a in ambiguous],
+                                             "matches": [m["device_id"] for a in ambiguous for m in a["matches"]]})
+            return {"messages": messages, "tool_calls": count, "seen_calls": seen, "proposals": proposals,
+                    "status": "clarify", "note": clarification_text(ambiguous)}
         return {"messages": messages, "tool_calls": count, "seen_calls": seen, "proposals": proposals}
 
     def finalize(state: TurnState) -> TurnState:
@@ -281,7 +307,7 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
     g.add_conditional_edges("input_guard", after_guard, ["planner", "respond"])
     g.add_conditional_edges("planner", after_planner, ["agent", "respond"])
     g.add_conditional_edges("agent", after_agent, ["tools", "finalize", "agent", "respond"])
-    g.add_edge("tools", "agent")
+    g.add_conditional_edges("tools", lambda s: "agent" if s.get("status") == "running" else "respond", ["agent", "respond"])
     g.add_conditional_edges("finalize", after_finalize, ["propose", "agent", "respond"])
     g.add_edge("propose", "respond")
     g.add_conditional_edges("respond", after_respond, ["approval", END])
