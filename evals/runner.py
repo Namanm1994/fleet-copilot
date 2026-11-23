@@ -12,9 +12,11 @@ built from data/raw/*.ndjson (if present) plus the committed fixture.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import statistics
+import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -83,9 +85,12 @@ class EvalEnv:
         self.work = work or project.var / "eval" / "work"  # scratch only; reports and history live one level up
         self.raw_files = sorted(project.raw_data.parent.glob("*.ndjson"))
         self.has_real = bool(self.raw_files)
-        self.base = Paths(self.work / "base")
         if self.work.exists():
-            shutil.rmtree(self.work)
+            try:
+                shutil.rmtree(self.work)
+            except OSError:  # Windows: a file here is still open in another process; use a fresh scratch folder
+                self.work = self.work.with_name(f"{self.work.name}-{os.getpid()}-{time.time_ns()}")
+        self.base = Paths(self.work / "base")
         shutil.copytree(project.config, self.base.config)
         self.config = load_app_config(self.base.config, POLICY)
         self.report = load(self.raw_files + [FIXTURE], self.base.telemetry_db, self.config.policy.tenants.keys())
@@ -275,6 +280,17 @@ def _decisions(spec: Any, proposals: list[dict]) -> dict[str, Any]:
 
 
 def run_case(env: EvalEnv, case: Case, run: int, model_factory: ModelFactory | None, clock_factory: Callable[[], Clock]) -> RunResult:
+    """Run one case and always release its database files afterwards (Windows cannot delete open files)."""
+    opened: list = []
+    try:
+        return _run_case(env, case, run, model_factory, clock_factory, opened)
+    finally:
+        for tk in opened:
+            tk.close()
+
+
+def _run_case(env: EvalEnv, case: Case, run: int, model_factory: ModelFactory | None, clock_factory: Callable[[], Clock],
+              opened: list) -> RunResult:
     from fleet_copilot.agent.session import CopilotSession
     from fleet_copilot.scan import run_scan
     from fleet_copilot.session import SessionContext
@@ -290,6 +306,7 @@ def run_case(env: EvalEnv, case: Case, run: int, model_factory: ModelFactory | N
         return rr
     home = env.fresh_home(case.id, run)
     tk = Toolkit(SessionContext.new(tenant.tenant_id, tenant.name, "eval", env.as_of), env.config, home)
+    opened.append(tk)
     chk = Checker(env, tenant.tenant_id)
 
     if case.kind == "scan":

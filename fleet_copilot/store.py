@@ -151,6 +151,9 @@ class AppStore:
         rows = self._conn.execute("SELECT * FROM acknowledgements WHERE tenant_id = ?", (self.tenant_id,)).fetchall()
         return {r["insight_id"]: {k: r[k] for k in r.keys()} for r in rows}
 
+    def close(self) -> None:
+        self._conn.close()
+
     # ---- usage ledger (daily cap) ----------------------------------------------------------------
     def add_usage(self, day: str, input_tokens: int, output_tokens: int) -> None:
         with self._conn:

@@ -99,3 +99,43 @@ def test_compare_ignores_skipped_cases_and_flags_mode_change():
     c = compare_runs(prev, cur)
     assert c["comparable"] is False and c["now_failing"] == ["A"] and c["newly_run"] == ["B"] and c["now_passing"] == []
     assert c["deltas"]["tokens_in"] == {"previous": 100, "current": 80}
+
+
+# ---- files are released (matters on Windows, where an open file cannot be deleted) -----------------
+def test_toolkit_close_releases_its_databases(home):
+    import sqlite3
+
+    from tests.test_tools import make_tk
+
+    tk = make_tk(home)
+    tk.call("get_device", {"device_id": "FX-DELL-01"})
+    tk.close()
+    with pytest.raises(sqlite3.ProgrammingError):
+        tk.store.list()
+    with pytest.raises(sqlite3.ProgrammingError):
+        tk.repo.devices()
+    tk.close()  # closing twice is harmless
+
+
+def test_eval_runner_closes_every_case(project, monkeypatch):
+    from fleet_copilot.toolkit import Toolkit
+
+    closed = []
+    real_close = Toolkit.close
+    monkeypatch.setattr(Toolkit, "close", lambda self: (closed.append(self.ctx.session_id), real_close(self))[1])
+    run_eval(project, only=["F08", "S03"], model_factory=lambda c, n: ScriptedModel(list(GOOD)))
+    assert len(closed) == 2 and len(set(closed)) == 2
+
+
+def test_eval_runner_survives_a_locked_scratch_folder(project, monkeypatch):
+    run_eval(project, only=["S03"])
+    real_rmtree = shutil.rmtree
+
+    def locked(path, *a, **k):
+        if str(path).endswith("work"):
+            raise PermissionError("[WinError 32] file is being used by another process")
+        return real_rmtree(path, *a, **k)
+
+    monkeypatch.setattr(shutil, "rmtree", locked)
+    out = run_eval(project, only=["S03"])
+    assert out["results"][0]["passed"]

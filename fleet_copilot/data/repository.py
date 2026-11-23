@@ -55,6 +55,9 @@ class Repository:
         self.as_of = as_of
 
     # ---- internals -------------------------------------------------------------------------
+    def close(self) -> None:
+        self._conn.close()
+
     def _query(self, sql: str, params: tuple = ()) -> list[dict[str, Any]]:
         if "tenant_id = ?" not in sql:
             raise TenantViolation("Repository query without tenant filter")

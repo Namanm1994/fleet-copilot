@@ -60,6 +60,15 @@ class Toolkit:
         self.tool_corpus: list[str] = []
         self.strict_contract = os.environ.get("FLEET_STRICT_CONTRACT") == "1"
 
+    def close(self) -> None:
+        """Release the database files. On Windows an open file cannot be deleted or replaced,
+        so anything that creates a toolkit for a short job (the eval runner) closes it afterwards."""
+        for resource in (self.store, self.repo):
+            try:
+                resource.close()
+            except Exception:  # closing twice, or a test double without close(), is not an error
+                pass
+
     # ---- bookkeeping ---------------------------------------------------------------------------
     def new_turn(self) -> int:
         self.turn_counters = {"auto": 0}
