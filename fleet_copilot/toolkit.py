@@ -6,6 +6,7 @@ policy.yaml are never exposed.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from pydantic import ValidationError
@@ -57,6 +58,7 @@ class Toolkit:
         self.executor = Executor(self)
         self.turn_counters: dict[str, int] = {"auto": 0}
         self.tool_corpus: list[str] = []
+        self.strict_contract = os.environ.get("FLEET_STRICT_CONTRACT") == "1"
 
     # ---- bookkeeping ---------------------------------------------------------------------------
     def new_turn(self) -> int:
@@ -66,6 +68,22 @@ class Toolkit:
     def audit_event(self, event: str, **fields: Any) -> None:
         self.audit.append(event, tenant=self.ctx.tenant_id, session_id=self.ctx.session_id,
                           operator=self.ctx.operator, **fields)
+
+    def check_output(self, tool: str, data: Any) -> None:
+        """Validate a tool's `data` against its declared output model (tools/outputs.py).
+        Strict mode (tests) raises; otherwise the mismatch is audited and the result still returned."""
+        from pydantic import ValidationError
+
+        from fleet_copilot.tools.outputs import output_model
+
+        try:
+            output_model(tool).model_validate(data)
+        except ValidationError as exc:
+            if self.strict_contract:
+                raise AssertionError(f"{tool} output does not match its declared contract: {exc}") from exc
+            first = exc.errors()[0]
+            self.audit_event("contract_violation", detail={"tool": tool, "field": ".".join(str(x) for x in first["loc"]),
+                                                            "problem": first["msg"]})
 
     # ---- exposure ------------------------------------------------------------------------------
     def tool_names(self) -> list[str]:
@@ -135,6 +153,7 @@ class Toolkit:
         data = {"proposal_id": proposal["proposal_id"], "status": "proposed", "origin": origin, "action": action,
                 "preview": preview, "reason": pre.reason, "warnings": pre.warnings,
                 "note": "Awaiting human approval. Nothing has been executed."}
+        self.check_output(action, data)
         return ToolResult(data=data, evidence_ids=[proposal["proposal_id"]], as_of=self.repo.as_of)
 
     def _preview(self, action: str, a: dict[str, Any]) -> str:

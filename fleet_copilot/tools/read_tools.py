@@ -47,6 +47,7 @@ class ReadTools:
         return self.tk.repo
 
     def _finish(self, tool: str, args: dict, result: ToolResult, count: int) -> ToolResult:
+        self.tk.check_output(tool, result.data)
         result.as_of = self.repo.as_of
         result.receipt_id = self.tk.evidence.add_receipt(tool, args, count, self.repo.as_of, result.evidence_ids,
                                                          result.definitions_used)
@@ -249,8 +250,9 @@ class ReadTools:
                 groups[str(key)].append(r["device_id"])
             data = {"total": total, "groups": {k: {"count": len(v), "device_ids": v} for k, v in sorted(groups.items())}}
         else:
-            data = {"total": total, "devices": rows[: args.limit]}
-        res = ToolResult(data=data, total_count=total, truncated=(not args.group_by and total > args.limit),
+            data = {"total": total, "devices": rows[args.offset: args.offset + args.limit]}
+        more = not args.group_by and total > args.offset + args.limit
+        res = ToolResult(data=data, total_count=total, truncated=more, next_offset=(args.offset + args.limit) if more else None,
                          evidence_ids=sorted(set(evidence)), caveats=caveats, definitions_used=sorted(set(definitions)))
         if total == 0:
             res.caveats.append("No devices matched; this is a 'no matches' result, cite the receipt.")
