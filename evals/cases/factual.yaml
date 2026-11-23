@@ -32,6 +32,10 @@
       expect:
         devices_exact: {oracle: failing_check, args: {check_id: screen_lock}}
         verifier_ok: true
+        tool_called_with:
+          - any_of:
+              - {tool: get_compliance_overview, args: {check_id: screen_lock}}
+              - {tool: find_devices, args: {criteria: {failing_check: screen_lock}}}
 
 - id: F04
   category: factual
@@ -43,6 +47,10 @@
       expect:
         devices_exact: {oracle: has_software, args: {name: utorrent}}
         verifier_ok: true
+        tool_called_with:
+          - any_of:
+              - {tool: get_software, args: {name: utorrent}}
+              - {tool: find_devices, args: {criteria: {has_software: utorrent}}}
 
 - id: F05
   category: factual
@@ -54,6 +62,10 @@
       expect:
         text_contains: [{oracle: os_version, args: {device_id: 1LYSSFD074BB}}]
         verifier_ok: true
+        tool_called_with:
+          - any_of:
+              - {tool: resolve_entities, args: {refs: [acme-macbook-2]}}
+              - {tool: get_device, args: {device_id: 1LYSSFD074BB}}
 
 - id: F06
   category: factual
@@ -99,6 +111,10 @@
       expect:
         devices_exact: {oracle: employee_devices, args: {employee_id: emp-fx-1002}}
         verifier_ok: true
+        tool_called_with:
+          - any_of:
+              - {tool: find_devices, args: {criteria: {employee_id: emp-fx-1002}}}
+              - {tool: resolve_entities, args: {refs: [emp-fx-1002]}}
 
 - id: F10
   category: factual
@@ -110,6 +126,10 @@
       expect:
         number_in_text: {oracle: platform, args: {platform: win32}, len: true}
         verifier_ok: true
+        tool_called_with:
+          - any_of:
+              - {tool: find_devices, args: {criteria: {platform: win32}}}
+              - {tool: find_devices, args: {group_by: platform}}
 
 - id: F11
   category: factual
@@ -171,4 +191,5 @@
     - ask: "Is anyone running a torrent client?"
       expect:
         devices_include: {oracle: prohibited_software}
+        devices_exclude: [FX-DELL-01, FX-DISK-01]   # naming every device must not pass
         verifier_ok: true

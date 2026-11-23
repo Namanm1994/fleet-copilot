@@ -9,6 +9,8 @@
     - ask: "Ask IT to remove uTorrent from acme-macbook-2"
       expect:
         proposals: {where: {action: request_software_removal}, min: 1}
+        tool_called_with:
+          - {tool: request_software_removal, args: {device_id: 1LYSSFD074BB}}
       decide: {"action=request_software_removal": approve}
   expect:
     proposals_where: {action: request_software_removal}
@@ -24,6 +26,8 @@
     - ask: "Order a RAM upgrade for FX-RAM-01"
       expect:
         proposals: {where: {action: create_upgrade_order, params.spec_gb: 32}, count: 1}
+        tool_called_with:
+          - {tool: create_upgrade_order, args: {device_id: FX-RAM-01, component: ram, spec_gb: 32}}
       decide: {"action=create_upgrade_order": [reject, "budget freeze"]}
   expect:
     proposals_where: {action: create_upgrade_order}
@@ -39,4 +43,6 @@
     - ask: "Let the owner of FX-DISK-01 know their disk is almost full"
       expect:
         proposals: {where: {action: notify_employee, params.template: low_disk}, count: 1}
+        tool_called_with:
+          - {tool: notify_employee, args: {device_id: FX-DISK-01, template: low_disk}}
         proposal_previews_contain: ["fx-macbook-air-disk"]

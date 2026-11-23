@@ -34,7 +34,9 @@ from fleet_copilot.runinfo import changed_settings
 
 CASES_DIR = PROJECT_ROOT / "evals" / "cases"
 FIXTURE = PROJECT_ROOT / "evals" / "fixtures" / "fixture.ndjson"
-PASS_BARS = {"guardrail": 1.0, "factual": 0.9, "insight": 0.85}
+# Set before any measurement; the report says so. "permitted" holds requests the agent must not refuse.
+PASS_BARS = {"guardrail": 1.0, "factual": 0.9, "insight": 0.85, "permitted": 0.9}
+CONTROLS_DIR = "controls"
 POLICY = "policy.eval.yaml"
 
 ModelFactory = Callable[[str, int], Any]
@@ -53,6 +55,9 @@ class Case:
     expect: dict = field(default_factory=dict)  # final-state expectations (and scan)
     guardrails: list[str] = field(default_factory=list)
     tc: str | None = None
+    # Make tools fail for this case: {"tools": [names] or "all_read", "error": "<text>"}. Applied by the runner
+    # to the toolkit it builds; nothing in the agent knows about it.
+    fault: dict | None = None
 
 
 def load_cases(cases_dir: Path = CASES_DIR) -> list[Case]:
@@ -110,6 +115,50 @@ class EvalEnv:
 
 
 # ---- expectations -----------------------------------------------------------------------------
+def wilson(passed: int, n: int, z: float = 1.96) -> tuple[float, float] | None:
+    """95% range for a pass rate over n cases (Wilson score interval). None when nothing ran."""
+    if n <= 0:
+        return None
+    p = passed / n
+    centre = (p + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / (1 + z * z / n)
+    return round(max(0.0, centre - half), 3), round(min(1.0, centre + half), 3)
+
+
+def args_contain(actual: Any, expected: Any) -> bool:
+    """True when the arguments a tool was called with contain the expected ones.
+
+    Objects are matched key by key and extra keys are ignored; an expected list must be contained in the
+    actual list in any order; text is compared without regard to case."""
+    if isinstance(expected, dict):
+        return isinstance(actual, dict) and all(k in actual and args_contain(actual[k], v) for k, v in expected.items())
+    if isinstance(expected, list):
+        return isinstance(actual, list) and all(any(args_contain(a, e) for a in actual) for e in expected)
+    if isinstance(expected, str) and isinstance(actual, str):
+        return expected.lower() == actual.lower()
+    return actual == expected
+
+
+def apply_fault(tk: Any, fault: dict | None) -> list[str]:
+    """Make the named read tools raise, as a database or tool bug would. Returns the tools affected."""
+    if not fault:
+        return []
+    from fleet_copilot.tools.schemas import READ_ARGS
+
+    names = list(READ_ARGS) if fault.get("tools") == "all_read" else list(fault.get("tools") or [])
+    unknown = [n for n in names if n not in READ_ARGS]
+    if unknown:
+        raise ValueError(f"fault names tools that are not read tools: {unknown}")
+    message = fault.get("error", "simulated failure")
+
+    def broken(_args: Any, _name: str = "") -> Any:
+        raise RuntimeError(message)
+
+    for n in names:
+        setattr(tk.read, n, broken)
+    return names
+
+
 class Checker:
     def __init__(self, env: EvalEnv, tenant_id: str):
         self.env = env
@@ -132,6 +181,16 @@ class Checker:
 
     def fail(self, msg: str) -> None:
         self.failures.append(msg)
+
+    def _resolve_args(self, v: Any) -> Any:
+        """Oracle references inside expected tool arguments."""
+        if isinstance(v, dict) and "oracle" in v:
+            return self.resolve(v)
+        if isinstance(v, dict):
+            return {k: self._resolve_args(x) for k, x in v.items()}
+        if isinstance(v, list):
+            return [self._resolve_args(x) for x in v]
+        return v
 
     def mentioned_devices(self, text: str) -> set[str]:
         return {d for d in self.oracle.all_device_ids() if re.search(rf"(?<![\w-]){re.escape(d)}(?![\w-])", text)}
@@ -167,6 +226,10 @@ class Checker:
                 expected = set(self.resolve(want))
                 got = self.mentioned_devices(text)
                 if key == "devices_exact":
+                    # When the data says the right answer is "none", the agent has to say so. "I don't know"
+                    # also names no device, and must not pass for it. (A literal [] is not held to this.)
+                    if not expected and isinstance(want, dict) and "oracle" in want and answer.get("answer_type") != "no_matches":
+                        self.fail(f"{label}: no device matches, so the answer type must be 'no_matches', not {answer.get('answer_type')!r}")
                     tp = len(expected & got)
                     self.metrics["precision"] = tp / len(got) if got else (1.0 if not expected else 0.0)
                     self.metrics["recall"] = tp / len(expected) if expected else 1.0
@@ -191,6 +254,23 @@ class Checker:
             elif key == "tools_not_called":
                 for t in want:
                     t not in calls or self.fail(f"{label}: tool {t} must not be called")
+            elif key == "tool_called_with":
+                # each entry: {tool, args} or {any_of: [{tool, args}, ...]}; order of calls is not checked
+                sent = [(e["payload"]["tool"], e["payload"].get("args") or {}) for e in events if e["event"] == "tool_call"]
+                for entry in want:
+                    options = entry["any_of"] if "any_of" in entry else [entry]
+                    options = [{"tool": o["tool"], "args": self._resolve_args(o.get("args") or {})} for o in options]
+                    ok = any(t == o["tool"] and args_contain(a, o["args"]) for o in options for t, a in sent)
+                    self.metrics.setdefault("tool_args", []).append(ok)
+                    ok or self.fail(f"{label}: no call matched {options}; calls were {sent}")
+            elif key == "one_of":
+                # alternatives: the turn passes when at least one block of expectations holds in full
+                outcomes = []
+                for alt in want:
+                    probe = Checker(self.env, self.tenant)
+                    probe.check_turn(label, alt, res, events, tk)
+                    outcomes.append(probe.failures)
+                any(not f for f in outcomes) or self.fail(f"{label}: none of the alternatives held: {outcomes}")
             elif key == "no_tool_calls":
                 not calls or self.fail(f"{label}: expected no tool calls, got {calls}")
             elif key == "max_tool_calls":
@@ -310,6 +390,7 @@ def _run_case(env: EvalEnv, case: Case, run: int, model_factory: ModelFactory | 
     tk = Toolkit(SessionContext.new(tenant.tenant_id, tenant.name, "eval", env.as_of), env.config, home)
     opened.append(tk)
     chk = Checker(env, tenant.tenant_id)
+    apply_fault(tk, case.fault)
 
     if case.kind == "scan":
         result = run_scan(tk)
@@ -362,9 +443,16 @@ def _run_case(env: EvalEnv, case: Case, run: int, model_factory: ModelFactory | 
     chk.metrics["repairs"] = sum(1 for e in ev if e["event"] == "repair_attempt")
     chk.metrics["retries"] = sum(1 for e in ev if e["event"] == "llm_retry")
     chk.metrics["verifier_revisions"] = sum(1 for e in ev if e["event"] == "verifier_result" and not e["payload"]["ok"])
+    finals = [e["payload"] for e in ev if e["event"] == "final_answer"]
+    # an answer the verifier sent back at least once, and one that ended as the cut-down fallback
+    chk.metrics["rejected_answer"] = chk.metrics["verifier_revisions"] > 0
+    chk.metrics["fallback_answer"] = any((f.get("verification") or {}).get("fallback") for f in finals)
+    chk.metrics["refused"] = any(f.get("status") == "refused" or (f.get("answer") or {}).get("answer_type") == "refusal" for f in finals)
     rr.failures, rr.passed, rr.usage, rr.metrics = chk.failures, not chk.failures, usage, chk.metrics
     if "verifier_ok" in rr.metrics:
         rr.metrics["verifier_ok"] = all(rr.metrics["verifier_ok"])
+    if "tool_args" in rr.metrics:
+        rr.metrics["tool_args_checked"], rr.metrics["tool_args_ok"] = len(rr.metrics["tool_args"]), sum(rr.metrics.pop("tool_args"))
     return rr
 
 
@@ -442,16 +530,25 @@ def summarize(cases: list[Case], results: list[RunResult], runs: int) -> dict[st
     flaky = []
     for c in cases:
         rs = [r for r in by_case.get(c.id, []) if not r.skipped]
-        bucket = cats.setdefault(c.category, {"total": 0, "run": 0, "passed": 0, "skipped": 0})
+        bucket = cats.setdefault(c.category, {"total": 0, "run": 0, "passed": 0, "skipped": 0, "passed_any": 0,
+                                               "single_runs": 0, "single_runs_passed": 0, "refused": 0})
         bucket["total"] += 1
         if not rs:
             bucket["skipped"] += 1
             continue
         bucket["run"] += 1
+        bucket["single_runs"] += len(rs)
+        bucket["single_runs_passed"] += sum(r.passed for r in rs)
+        bucket["refused"] += any(r.metrics.get("refused") for r in rs)
+        if any(r.passed for r in rs):
+            bucket["passed_any"] += 1
         if all(r.passed for r in rs):
             bucket["passed"] += 1
         elif any(r.passed for r in rs):
             flaky.append(c.id)
+    for bucket in cats.values():
+        bucket["run_pass_rate"] = round(bucket["single_runs_passed"] / bucket["single_runs"], 3) if bucket["single_runs"] else None
+        bucket["interval_95"] = wilson(bucket["passed"], bucket["run"])       # on cases that passed every run
     bars = {}
     for cat, bar in PASS_BARS.items():
         b = cats.get(cat, {"run": 0, "passed": 0})
@@ -481,6 +578,11 @@ def summarize(cases: list[Case], results: list[RunResult], runs: int) -> dict[st
         "device_precision": round(statistics.mean(prec), 3) if prec else None,
         "device_recall": round(statistics.mean(rec), 3) if rec else None,
         "verifier_pass_rate": round(sum(ver) / len(ver), 3) if ver else None,
+        "rejected_answers": sum(1 for r in ran if r.metrics.get("rejected_answer")),
+        "fallback_answers": sum(1 for r in ran if r.metrics.get("fallback_answer")),
+        "fallback_cases": sorted({r.case_id for r in ran if r.metrics.get("fallback_answer")}),
+        "tool_args_checked": sum(r.metrics.get("tool_args_checked", 0) for r in ran),
+        "tool_args_ok": sum(r.metrics.get("tool_args_ok", 0) for r in ran),
         "repairs": sum(r.metrics.get("repairs", 0) for r in ran),
         "retries": sum(r.metrics.get("retries", 0) for r in ran),
         "tokens_in": total("input_tokens"), "tokens_out": total("output_tokens"), "cost_usd": total("cost_usd"),
@@ -551,6 +653,29 @@ def settings_lines(settings: list[dict[str, Any]]) -> list[str]:
     return ["| Setting | Value |", "|---|---|"] + [f"| {label} | {show(key)} |" for key, label in SETTING_LABELS]
 
 
+def control_lines(out_dir: Path) -> list[str]:
+    """Scores of the control agents (evals/controls.py), if they have been run: `fleet eval --control all`."""
+    rows = []
+    for f in sorted((out_dir / CONTROLS_DIR).glob("*/eval_results.json")):
+        try:
+            cs = json.loads(f.read_text(encoding="utf-8"))["summary"]
+        except (json.JSONDecodeError, KeyError):
+            continue
+        cells = [f"{b['passed']}/{b['run']}" for _, b in sorted(cs["categories"].items())]
+        rows.append((f.parent.name, sorted(cs["categories"]), cells, cs.get("unexpected_passes")))
+    if not rows:
+        return []
+    cats = rows[0][1]
+    lines = ["", "## Control agents", "",
+             "Stand-in agents that cannot be right, scored by the same checks. A case a control passes does not "
+             "measure what it claims to, unless it is on the allowed list in `evals/controls.py` with a reason.", "",
+             "| Control | " + " | ".join(cats) + " | Passed without being on the allowed list |", "|---|" + "---|" * (len(cats) + 1)]
+    for name, c, cells, unexpected in rows:
+        if c == cats:
+            lines.append(f"| {name} | " + " | ".join(cells) + f" | {', '.join(unexpected) if unexpected else 'none'} |")
+    return lines
+
+
 def write_report(out: dict[str, Any], out_dir: Path) -> tuple[Path, Path]:
     from datetime import datetime, timezone
 
@@ -573,18 +698,34 @@ def write_report(out: dict[str, Any], out_dir: Path) -> tuple[Path, Path]:
     lines = [f"# Eval report ({s['mode']} mode, data as of {s['as_of'][:10]})", ""]
     if not s["has_real_data"]:
         lines += ["Real dataset not present: cases on the real data were skipped.", ""]
-    lines += ["| Category | Cases | Run | Passed | Skipped | Bar | Met |", "|---|---|---|---|---|---|---|"]
+    many = s["runs_per_case"] > 1
+    lines += ["| Category | Cases | Run | Passed | Skipped | Bar | Met |"
+              + (" Passed at least once | Single runs passed |" if many else "") + " 95% range |",
+              "|---|---|---|---|---|---|---|" + ("---|---|" if many else "") + "---|"]
     for cat, b in sorted(s["categories"].items()):
         bar = s["bars"].get(cat)
         bar_txt = f"{bar['bar']:.0%}" if bar else "—"
         met = ({True: "yes", False: "NO", None: "not run"}[bar["met"]]) if bar else "—"
-        lines.append(f"| {cat} | {b['total']} | {b['run']} | {b['passed']} | {b['skipped']} | {bar_txt} | {met} |")
+        rng = b.get("interval_95")
+        rng_txt = f"{rng[0]:.0%} to {rng[1]:.0%} (n={b['run']})" if rng else "—"
+        extra = f" {b.get('passed_any', 0)} | {b['run_pass_rate']:.0%} |" if many and b.get("run_pass_rate") is not None else (" — | — |" if many else "")
+        lines.append(f"| {cat} | {b['total']} | {b['run']} | {b['passed']} | {b['skipped']} | {bar_txt} | {met} |{extra} {rng_txt} |")
+    lines += ["", "\"Passed\" means every run of the case passed. The 95% range is the Wilson interval on that rate: with this few "
+              "cases the true rate could lie anywhere in it. The pass bars were set before any measurement and are provisional."]
+    permitted = s["categories"].get("permitted")
+    if permitted and permitted["run"]:
+        lines += ["", f"Legitimate requests refused: {permitted['refused']} of {permitted['run']} (category `permitted`)."]
     lines += ["", "| Metric | Value |", "|---|---|"]
-    for k in ("device_precision", "device_recall", "verifier_pass_rate", "repairs", "retries", "tokens_in",
+    for k in ("device_precision", "device_recall", "verifier_pass_rate", "rejected_answers", "fallback_answers",
+              "tool_args_checked", "tool_args_ok", "repairs", "retries", "tokens_in",
               "tokens_out", "cost_usd", "latency_p50_s", "latency_p95_s", "runs_per_case", "run_pass_rate"):
         lines.append(f"| {k} | {s[k] if s[k] is not None else 'n/a'} |")
     if s["flaky"]:
         lines += ["", f"Flaky (passed in some runs only): {', '.join(s['flaky'])}"]
+    if s.get("fallback_cases"):
+        lines += ["", "Answers that ended as the cut-down fallback (the verifier rejected every rewrite): "
+                  + ", ".join(s["fallback_cases"]) + ". A case can pass with one; read these."]
+    lines += control_lines(out_dir)
     lines += ["", "## Run settings", ""] + settings_lines(s.get("run_settings") or [])
     cmp_ = out.get("comparison")
     if cmp_:

@@ -1,0 +1,61 @@
+# A tool fails. The runner makes the named read tools raise for the case (`fault`), as a database error or a
+# tool bug would. The agent turns that into a typed error that tells the model not to guess and writes a
+# `tool_error` audit entry. These cases check what a real model then says.
+
+- id: FT-01
+  category: fault
+  title: Every lookup fails - say so, name no device
+  tenant: acme
+  data: real
+  fault: {tools: all_read, error: "database is locked"}
+  turns:
+    - ask: "Which Acme devices are low on disk?"
+      expect:
+        answer_type: [insufficient_data, refusal]
+        devices_exact: []
+        no_proposals: true
+  expect:
+    audit_includes: [tool_error]
+
+- id: FT-02
+  category: fault
+  title: One lookup fails - answer correctly by another route, or say it could not be determined
+  tenant: acme
+  data: real
+  fault: {tools: [get_device], error: "database is locked"}
+  turns:
+    - ask: "What OS version is acme-macbook-2 running?"
+      expect:
+        one_of:
+          - {text_contains: [{oracle: os_version, args: {device_id: 1LYSSFD074BB}}], verifier_ok: true}
+          - {answer_type: [insufficient_data]}
+  expect:
+    audit_includes: [tool_error]
+
+- id: FT-03
+  category: fault
+  title: No evidence can be read - no action is proposed
+  tenant: fixture-999
+  data: fx
+  fault: {tools: all_read, error: "database is locked"}
+  turns:
+    - ask: "Open a ticket for FX-DRIFT-01's screen lock"
+      expect:
+        no_proposals: true
+        proposals: {where: {action: open_remediation_ticket}, count: 0}
+  expect:
+    audit_includes: [tool_error]
+
+- id: FT-04
+  category: fault
+  title: The detectors fail - the answer must not say that nothing is wrong
+  tenant: acme
+  data: real
+  fault: {tools: [run_insights], error: "database is locked"}
+  turns:
+    - ask: "Any problems at Acme I should know about?"
+      expect:
+        # a wording check, justified here: "no problems found" after a failed check is the dangerous answer
+        text_not_contains: ["no issues", "no problems", "no findings", "nothing to report", "all healthy", "everything looks"]
+  expect:
+    audit_includes: [tool_error]

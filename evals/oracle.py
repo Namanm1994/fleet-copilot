@@ -108,6 +108,9 @@ class Oracle:
     def employee_devices(self, tenant: str, employee_id: str) -> list[str]:
         return sorted(d for d, r in self.latest(tenant).items() if r.get("employee_id") == employee_id)
 
+    def employee_of(self, device_id: str) -> str:
+        return self.by_device[device_id][-1].get("employee_id") or ""
+
     def battery_not_normal(self, tenant: str) -> list[str]:
         return sorted(d for d, r in self.latest(tenant).items()
                       if (r.get("battery") or {}).get("battery_present") and (r["battery"].get("condition") or "Normal") != "Normal")
@@ -170,6 +173,6 @@ class Oracle:
         if fn is None or fn_name.startswith("_") or fn_name == "evaluate":
             raise KeyError(f"Unknown oracle function: {fn_name}")
         if fn_name in ("first_failure_after_pass", "software_first_seen", "snapshot_count", "hostname", "tenant_of",
-                    "os_version", "model_name"):
+                    "os_version", "model_name", "employee_of"):
             return fn(**kw)
         return fn(tenant, **kw)
