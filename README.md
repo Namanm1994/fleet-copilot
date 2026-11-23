@@ -58,6 +58,7 @@ fleet proposals reject  PRP-3 --tenant acme --reason "known issue"
 fleet proposals retry   PRP-3 --tenant acme # after a failed delivery; idempotent
 fleet audit verify                          # check the audit hash chain
 fleet trace show <session_id> --tenant acme # plan, tool calls, verifier results, tokens and cost per turn
+fleet stats --tenant acme [--days 7]        # across sessions: tokens, cost, latency, verifier rejections, errors
 ```
 
 **In chat:** type `exit`, type `quit` or press Ctrl+D to leave. Ctrl+C cancels the current turn, and pressing it twice exits. Proposals appear under the answer with `[y] approve  [n] reject  [l] later`. Similar proposals (same action and check) are decided together. Each turn ends with a usage line showing LLM calls, tool calls, tokens, latency and cost. Cost is shown only when the model has a price in `config/pricing.yaml`.
@@ -124,13 +125,15 @@ The output is `var/eval/eval_report.md` plus `var/eval/eval_results.json`.
 
 With more than one run per case, the report lists the cases that passed in only some runs and gives the overall run pass rate.
 
+**Comparing runs.** Each report compares itself with the run it replaces: which cases now fail, which now pass, and how tokens, cost, latency and pass rates moved. `fleet eval` prints the cases that now fail. Every run is also kept under `var/eval/history/`.
+
 Every case also checks that the outbox contains exactly the approved-and-executed proposals, and that every proposal and every decision has an audit entry with its evidence.
 
 **Data.** Cases run on the real data in `data/raw/` and on a committed synthetic fixture (`evals/fixtures/fixture.ndjson`, seeded generator). The fixture exists for signals the sample lacks: injection strings, terminal markup, five Dells, a failing battery, RAM pressure, storage decline, blips vs drift, stale and short histories. Its tenants exist only in `config/policy.eval.yaml`, so `fleet chat` and `fleet scan` cannot select them. When `data/raw/` is missing (as in CI), real-data cases are skipped and reported as skipped.
 
 **Recorded mode.** Cassettes in `evals/cassettes/` store only model responses, redacted and keyed by a request digest. A changed prompt, tool output or dataset makes the affected cases report "cassette out of date" rather than a false pass or fail. CI (`.github/workflows/ci.yml`) runs ruff, pytest and the recorded evals on pinned dependencies.
 
-> **Current state.** The 148 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 52 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
+> **Current state.** The 163 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 52 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
 
 ## Architecture
 
@@ -184,7 +187,7 @@ The rule behind the split: fixed steps run as code, and unpredictable questions 
 - a cap per session (500k input tokens) and per company per day (2M input tokens); once reached, the next question is refused before any LLM call. Both are starting values in `policy.yaml`, not measured ones
 - up to 2 repair retries when structured output is invalid
 
-**Context management.** The prompt stays bounded however long a session runs:
+**Context management.** The prompt stays bounded however long a session runs. The limits below are settings under `context:` in `policy.yaml`:
 
 - Each turn starts a fresh message list. Earlier turns are not replayed.
 - The last 3 turns are carried as question plus answer summary, with a focus state taken from the verified answer: the devices its claims were about, the evidence it cited, the queries that were run, and any proposals. A follow-up such as "those" resolves to what was answered, not to every device the tools touched.
@@ -192,6 +195,12 @@ The rule behind the split: fixed steps run as code, and unpredictable questions 
 - Older turns are condensed in code, with no LLM call, to one line each inside a 1,500-character digest. The oldest lines drop off first.
 - A tool result over 12,000 characters is shortened by dropping list items, never by cutting text, so the model always gets valid JSON, with a note saying how many items were left out.
 - When a turn's messages pass 48,000 characters, the oldest tool results are replaced by a stub holding the receipt, count and evidence IDs. The newest two stay whole. Condensed evidence can still be cited, and the model may run the same query again if it needs the values.
+
+**Observability.** There are three levels, all local files:
+
+- One trace per session (`fleet trace show`): plan, tool calls, verifier results, tokens, latency.
+- A view across sessions (`fleet stats`): sessions, turns, tokens and cost, latency p50 and p95, how often the verifier rejected an answer, repairs, retries, tool errors by code, and a per-day breakdown. It reads one company's traces only.
+- The eval report, with its comparison against the previous run.
 
 **Reliability outside the LLM path.**
 
@@ -208,13 +217,13 @@ Providers are wrapped in one small `ChatModel` interface. The same graph runs on
 fleet_copilot/
   data/       loader, schema, sanitize, versions, repository (tenant-scoped), profile
   insights/   detectors
-  tools/      envelope, schemas (strict Pydantic args), read tools
+  tools/      envelope, schemas (typed inputs), outputs (typed outputs), read tools
   agent/      graph, session, models (Plan, FinalAnswer), verifier, proposals, render
   llm/        provider adapters, retry/budget, cassettes, scripted model, structured-output repair
   policy.py   the nine proposal checks       executor.py  approval → outbox
   audit.py    hash-chained log               store.py     proposals and acknowledgements
   scan.py     scan workflow                  cli.py       commands
-  tracing.py  per-session JSONL traces
+  tracing.py  per-session JSONL traces       stats.py     view across sessions
 config/       policy.yaml, policy.eval.yaml, thresholds.yaml, blocklist.yaml, llm.yaml, pricing.yaml
 prompts/      planner.md, agent.md, scan_summary.md (hashed into a prompt version in every trace)
 evals/        oracle.py, runner.py, cases/, fixtures/, cassettes/
@@ -223,10 +232,11 @@ docs/         PHILOSOPHY.md, SECURITY.md
 
 ## Tool catalog
 
-Every tool has strict typed arguments (unknown fields are rejected) and returns the same envelope:
+Every tool has strict typed arguments (unknown fields are rejected), a typed output, and the same envelope:
 
 - `ok` and `data`
-- `total_count` and `truncated` (lists are capped at 25 devices; an oversized result is shortened to valid JSON)
+- `total_count` and `truncated` (an oversized result is shortened to valid JSON)
+- `next_offset`: `find_devices` returns 25 devices at a time; passing this value as `offset` fetches the next page
 - `evidence_ids` and a query receipt `Q-<turn>-<n>`
 - `as_of`
 - `definitions_used`, the thresholds applied
@@ -234,6 +244,8 @@ Every tool has strict typed arguments (unknown fields are rejected) and returns 
 - `error`, with a code, a message and a hint
 
 The tenant is never an argument: it comes from the session.
+
+**The contract is pinned.** `fleet_copilot/tools/outputs.py` declares the shape of every tool's `data`, and `tests/test_tool_contract.py` compares all input fields, output fields, envelope fields and error codes with a committed snapshot. Renaming or removing a field fails that test until the contract version is bumped and the snapshot is regenerated on purpose. Every unit test also checks real tool output against the declared shape. At runtime a mismatch is written to the audit log and the result is still returned, so a contract bug cannot take the agent down.
 
 **Read tools**
 
@@ -414,7 +426,7 @@ The reasoning behind the principles is in [docs/PHILOSOPHY.md](docs/PHILOSOPHY.m
 - A maximum session age or a refresh command. Each session pins its as-of time at startup so answers stay consistent, which means a long session answers from older data.
 - A fleet-wide `find_devices` at past dates (today it filters latest snapshots; history is per device)
 - Resuming an interrupted session from its checkpoint. The graph already writes checkpoints to SQLite, but the session's history and evidence are held in memory, so today a crashed session is restarted, not resumed
-- Paging for long tool results, typed tool outputs, and a test that pins the tool definitions so a renamed field cannot slip through
+- Paging for the other long lists. Today only `find_devices` pages; other tools shorten an oversized result and say so
 - Reads in the audit log and a retention period for traces (see docs/SECURITY.md)
 
 ## License
