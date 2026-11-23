@@ -142,7 +142,7 @@ class SoftwareItem(Out):
     prohibited: bool
     evidence_id: str
     device_id: str | None = None      # present when searching by name
-    first_seen: str | None = None     # present when searching by name
+    first_seen: str | None = None     # first day in the window this software was seen on the device
 
 
 class GetSoftwareOut(Out):

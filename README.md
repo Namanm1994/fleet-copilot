@@ -263,7 +263,7 @@ The tenant is never an argument: it comes from the session.
 | `get_device` | Latest-snapshot summary of one device, including compliance and open proposals |
 | `get_device_history` | Time series over the window: disk, RAM, battery, OS version, or `compliance:<check_id>` |
 | `get_compliance_overview` | Pass/fail counts per check, with failing devices |
-| `get_software` | Devices with a given software, or the software on one device. Names match on whole words ("chrome" finds Google Chrome, "go" does not); part of a word counts only from 5 characters ("torrent" finds uTorrent) |
+| `get_software` | Devices with a given software, or the software on one device, each entry with the first day it was seen in the window. Names match on whole words ("chrome" finds Google Chrome, "go" does not); part of a word counts only from 5 characters ("torrent" finds uTorrent) |
 | `run_insights` | Run detectors: `battery_eol`, `ram_constrained`, `low_storage`, `compliance_drift`, `prohibited_software` |
 | `get_definitions` | Thresholds in use, so answers can state them |
 | `list_proposals` | This tenant's proposals and their status |
@@ -341,13 +341,24 @@ Employee notifications and acknowledgements are never proposed unprompted, and n
 3. **Deterministic verifier.** Before rendering, the verifier checks that:
    - every cited ID came from a tool this session
    - every device and employee ID in the summary, claims and values appears in a tool result
-   - every number matches a tool value or a threshold, and every count matches what its cited evidence can count
+   - every number passes the rule for what it is. One function labels each number in the answer once:
+
+     | Label | Example | Must match |
+     |---|---|---|
+     | Date | `2026-05-22`, "May 2026" | A date in a tool result |
+     | Measurement | 16 GB, 2.6%, 30 days | A tool value or a threshold |
+     | Count | "5 devices" | A whole number in the evidence that claim cites |
+     | Plain value | cycle count 993 | A tool value or a threshold |
+
+     A count is checked against the claim's own evidence, not against every number seen in the session
    - every threshold the cited results used is stated
    - every factual claim has evidence, and "no matches" cites a query that returned zero rows
    - an answer that lists some devices from a result lists all of them or states the total
-4. **Definitions are data.** "Low disk", "stale" and "persistent RAM" are defined in `thresholds.yaml`. The tools report which definitions they applied, and the answer prints them.
-5. **Saying "I don't know" is part of grounding.** "No matches" (the query ran and found nothing) is distinct from "insufficient data" (too few snapshots, or a period outside the window). Trend detectors need at least 7 snapshots. Weak signals carry caveats, for example that RAM is one reading per day and that battery capacity is relative to the window.
-6. **Telemetry is the only source.** IPs, MACs and hardware UUIDs are never loaded. Battery charge level is not used as a health signal.
+   The verifier checks IDs, numbers, dates and counts. It cannot check a statement about what the data lacks, such as "the telemetry has no history for this". The tools are built to return what a question needs so that the model has no reason to say so.
+4. **One way to show a device.** Where an answer names a device by hostname, the renderer adds its device ID once: `acme-macbook-2 (1LYSSFD074BB)`. Code does this after verification, only for devices a tool returned in this session, so the model may use either name and the admin always sees both.
+5. **Definitions are data.** "Low disk", "stale" and "persistent RAM" are defined in `thresholds.yaml`. The tools report which definitions they applied, and the answer prints them.
+6. **Saying "I don't know" is part of grounding.** "No matches" (the query ran and found nothing) is distinct from "insufficient data" (too few snapshots, or a period outside the window). Trend detectors need at least 7 snapshots. Weak signals carry caveats, for example that RAM is one reading per day and that battery capacity is relative to the window.
+7. **Telemetry is the only source.** IPs, MACs and hardware UUIDs are never loaded. Battery charge level is not used as a health signal.
 
 ## Guardrails
 

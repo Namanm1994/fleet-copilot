@@ -33,6 +33,21 @@ class EvidenceRecord:
     turn: int
 
 
+def whole_numbers(obj: Any) -> set[int]:
+    """Every whole number in a tool result, at any depth. Booleans are not numbers here."""
+    if isinstance(obj, bool):
+        return set()
+    if isinstance(obj, int):
+        return {obj}
+    if isinstance(obj, float) and obj.is_integer():
+        return {int(obj)}
+    if isinstance(obj, dict):
+        return set().union(*(whole_numbers(v) for v in obj.values())) if obj else set()
+    if isinstance(obj, (list, tuple)):
+        return set().union(*(whole_numbers(v) for v in obj)) if obj else set()
+    return set()
+
+
 @dataclass
 class SessionEvidence:
     """Everything read tools returned in this session. Actions may only cite these IDs."""
@@ -62,12 +77,16 @@ class SessionEvidence:
         return [r for r in self.records.values() if r.turn == self.turn]
 
     def add_receipt(self, tool: str, args: dict[str, Any], result_count: int, as_of: str,
-                    evidence_ids: list[str], definitions_used: list[str] | None = None) -> str:
+                    evidence_ids: list[str], definitions_used: list[str] | None = None,
+                    numbers: set[int] | None = None) -> str:
         self._receipt_seq += 1
         rid = f"Q-{self.turn}-{self._receipt_seq}"
         self.receipts[rid] = {"receipt_id": rid, "tool": tool, "args": args, "result_count": result_count,
                               "as_of": as_of, "evidence_ids": evidence_ids, "turn": self.turn,
-                              "definitions_used": list(definitions_used or [])}
+                              "definitions_used": list(definitions_used or []),
+                              # whole numbers the result itself reported (for example devices_checked), so a
+                              # count in an answer can be checked against the result it cites
+                              "numbers": sorted(numbers or ())}
         return rid
 
     def new_turn(self) -> int:
