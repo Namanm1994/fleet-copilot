@@ -232,3 +232,46 @@ def test_cancel_mid_turn_keeps_proposal_pending(home):  # TC-45
     props = sess.tk.store.list()
     assert len(props) == 1 and props[0]["status"] == "proposed"
     assert not sess.tk.paths.outbox.exists()
+
+
+def test_old_tool_results_condensed_when_context_is_large(home):  # F-07, in-turn
+    steps = [plan()] + [call("get_device", {"device_id": d}, call_id=f"c{i}") for i, d in
+                        enumerate(["FX-DELL-01", "FX-DELL-02", "FX-RAM-01", "FX-DISK-01"])]
+    steps.append(submit({"summary": "FX-DELL-01 passes disk encryption.", "claims": [
+        {"text": "FX-DELL-01 passes disk_encryption.", "evidence_ids": ["FX-DELL-01@2026-06-12#disk_encryption"], "values": {}}],
+        "definitions_used": [], "caveats": [], "answer_type": "answer"}))
+    sess, model = session(home, steps)
+    sess.context_max_chars = 3500
+    res = sess.ask("Compare these four devices")
+    assert res.status == "answered" and res.verification["ok"], res.text  # condensed evidence is still citable
+    tool_msgs = [m for m in model.seen[-1] if m["role"] == "tool"]
+    assert '"condensed": true' in tool_msgs[0]["content"] and "FX-DELL-01@2026-06-12" in tool_msgs[0]["content"]
+    assert all('"condensed"' not in m["content"] for m in tool_msgs[-2:])  # newest two stay whole
+    ev = [e for e in sess.tracer.events if e["event"] == "context_compacted"]
+    assert ev and ev[0]["payload"]["chars_after"] < ev[0]["payload"]["chars_before"]
+
+
+def test_condensed_result_can_be_fetched_again(home):  # duplicate-call guard released on condensing
+    steps = [plan()] + [call("get_device", {"device_id": d}, call_id=f"c{i}") for i, d in
+                        enumerate(["FX-DELL-01", "FX-DELL-02", "FX-RAM-01", "FX-DISK-01"])]
+    steps += [call("get_device", {"device_id": "FX-DELL-01"}, call_id="again"),
+              submit({"summary": "FX-DELL-01 passes disk encryption.", "claims": [
+                  {"text": "FX-DELL-01 passes disk_encryption.", "evidence_ids": ["FX-DELL-01@2026-06-12#disk_encryption"], "values": {}}],
+                  "definitions_used": [], "caveats": [], "answer_type": "answer"})]
+    sess, model = session(home, steps)
+    sess.context_max_chars = 3500
+    res = sess.ask("Compare these four devices")
+    assert res.usage["tool_calls"] == 5
+    assert not any("Duplicate call" in m["content"] for m in model.seen[-1] if m["role"] == "tool")
+
+
+def test_older_turns_are_condensed_into_a_bounded_digest(home):  # F-07, across turns
+    sess, _ = session(home, [])
+    for n in range(1, 41):
+        sess.history.append({"turn": n, "question": f"question number {n} " + "x" * 200, "summary": f"answer {n} " + "y" * 300,
+                             "devices": ["FX-DELL-01"], "proposals": []})
+    text = sess.history_text()
+    assert "Older turns (condensed):" in text and "turn 37:" in text and "earlier turn(s) omitted" in text
+    assert "question number 40" in text and "turn 1:" not in text
+    assert len(text) < 4500  # bounded however long the session runs
+    assert len(sess.history_messages()) == 6  # planner sees only the last three turns

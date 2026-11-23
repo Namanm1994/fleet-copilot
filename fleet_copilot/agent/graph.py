@@ -96,23 +96,25 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
                 "messages": [{"role": "system", "content": system}, {"role": "user", "content": state["question"]}]}
 
     def agent(state: TurnState) -> TurnState:
+        context, freed = sess.compact(state["messages"])
+        seen = [k for k in state.get("seen_calls", []) if k not in freed]
         try:
-            resp = sess.llm(state["messages"], sess.tool_specs())
+            resp = sess.llm(context, sess.tool_specs())
         except (BudgetExceeded, LLMCallError) as exc:
-            return stop(state, exc, "agent")
+            return stop(state, exc, "agent") | {"messages": context, "seen_calls": seen}
         msg = resp.to_message()
-        messages = state["messages"] + [msg]
+        messages = context + [msg]
         if resp.content and resp.tool_calls:
             trace("agent", "deviation_reason", {"text": resp.content[:500]})
         if not resp.tool_calls:
             repairs = state.get("repairs", 0) + 1
             trace("agent", "repair_attempt", {"reason": "no submit_answer call", "attempt": repairs})
             if repairs > sess.settings.repair_retries:
-                return {"messages": messages, "status": "partial",
+                return {"messages": messages, "seen_calls": seen, "status": "partial",
                         "note": "I couldn't produce a verifiable answer. Please rephrase the question."}
             messages.append({"role": "user", "content": "Call submit_answer with the structured answer (do not reply in plain text)."})
-            return {"messages": messages, "repairs": repairs}
-        return {"messages": messages}
+            return {"messages": messages, "seen_calls": seen, "repairs": repairs}
+        return {"messages": messages, "seen_calls": seen}
 
     def tools(state: TurnState) -> TurnState:
         messages = list(state["messages"])
@@ -123,6 +125,7 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
         for tc in last.get("tool_calls", []):
             name, args = tc["name"], tc.get("args") or {}
             key = f"{name}:{json.dumps(args, sort_keys=True)}"
+            extra: dict[str, Any] = {}
             if count >= policy.max_tool_calls_per_turn:
                 content = json.dumps({"ok": False, "error": {"code": "BUDGET_EXCEEDED",
                                       "message": f"Tool-call limit of {policy.max_tool_calls_per_turn} per turn reached. Call submit_answer now with what you have."}})
@@ -143,9 +146,14 @@ def build_graph(sess: CopilotSession, checkpointer: Any):
                     proposals.append(res.data | {"device_id": args.get("device_id")})
                     trace("tools", "proposal", {"proposal_id": res.data["proposal_id"], "origin": "requested"})
                 content = res.to_llm()
+                if res.ok:  # what stays in context if this result is condensed later
+                    stub = {"condensed": True, "tool": name, "receipt_id": res.receipt_id, "total_count": res.total_count,
+                            "evidence_ids": res.evidence_ids[:20], "more_evidence_ids": max(0, len(res.evidence_ids) - 20),
+                            "note": "Condensed to save context. The evidence IDs stay valid. Call the tool again if you need the values."}
+                    extra = {"stub": f"<tool_data>{json.dumps(stub, ensure_ascii=False)}</tool_data>", "call_key": key}
                 if len(content) > MAX_TOOL_OUTPUT_CHARS:
                     content = content[:MAX_TOOL_OUTPUT_CHARS] + "\n[truncated: ask for a narrower query]</tool_data>"
-            messages.append({"role": "tool", "tool_call_id": tc["id"], "name": name, "content": content})
+            messages.append({"role": "tool", "tool_call_id": tc["id"], "name": name, "content": content} | extra)
         return {"messages": messages, "tool_calls": count, "seen_calls": seen, "proposals": proposals}
 
     def finalize(state: TurnState) -> TurnState:

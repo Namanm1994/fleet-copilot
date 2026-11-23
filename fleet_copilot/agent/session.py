@@ -18,7 +18,15 @@ from fleet_copilot.llm.retry import RetryingModel
 from fleet_copilot.toolkit import Toolkit
 from fleet_copilot.tracing import Tracer
 
-HISTORY_TURNS = 3
+HISTORY_TURNS = 3  # most recent turns kept as question + answer summary
+DIGEST_MAX_CHARS = 1500  # older turns are condensed to one line each, newest first, within this cap
+CONTEXT_MAX_CHARS = 48_000  # in-turn message size (about 12k tokens) above which old tool results are condensed
+KEEP_RECENT_TOOL_RESULTS = 2  # the newest tool results are never condensed
+
+
+def _clip(text: str, n: int) -> str:
+    text = " ".join(text.split())
+    return text if len(text) <= n else text[: n - 1] + "…"
 
 
 def sqlite_checkpointer(path: Path) -> Any:
@@ -64,6 +72,8 @@ class CopilotSession:
         self.model = RetryingModel(model, settings, self.clock, on_event=lambda e, d: self.tracer.emit("llm", e, d))
         self.interactive = interactive
         self.history: list[dict[str, Any]] = []
+        self.context_max_chars = CONTEXT_MAX_CHARS
+        self.keep_recent_tool_results = KEEP_RECENT_TOOL_RESULTS
         self.budget: TurnBudget | None = None
         self.graph = build_graph(self, checkpointer or InMemorySaver())
         self._thread: dict[str, Any] | None = None
@@ -81,10 +91,56 @@ class CopilotSession:
         return self.prompts["agent"].format(tenant_name=self.tk.ctx.tenant_name, as_of=self.tk.repo.as_of[:10],
                                             plan=json.dumps(plan, ensure_ascii=False), history=self.history_text())
 
+    def history_digest(self) -> list[str]:
+        """Turns older than the recent window, one line each (built in code, no LLM call)."""
+        older = self.history[:-HISTORY_TURNS]
+        lines: list[str] = []
+        used = 0
+        for h in reversed(older):  # newest of the old turns first; the oldest fall off the cap
+            line = f"turn {h['turn']}: asked \"{_clip(h['question'], 90)}\" -> {_clip(h['summary'], 140)}"
+            if h.get("devices"):
+                line += f" [devices: {', '.join(h['devices'][:5])}]"
+            if h.get("proposals"):
+                line += f" [proposals: {', '.join(h['proposals'])}]"
+            if used + len(line) > DIGEST_MAX_CHARS:
+                lines.append(f"({len(older) - len(lines)} earlier turn(s) omitted)")
+                break
+            lines.append(line)
+            used += len(line)
+        return list(reversed(lines))
+
+    def compact(self, messages: list[Message]) -> tuple[list[Message], list[str]]:
+        """In-turn context management: when the message list is too large, replace the oldest tool
+        results with a short stub (receipt, count, evidence IDs). Returns the new list and the call
+        keys of condensed results, so the same query may be run again if its values are needed."""
+        size = sum(len(m.get("content") or "") for m in messages)
+        if size <= self.context_max_chars:
+            return messages, []
+        tool_idx = [i for i, m in enumerate(messages) if m["role"] == "tool" and m.get("stub") and not m.get("compacted")]
+        candidates = tool_idx[:-self.keep_recent_tool_results] if self.keep_recent_tool_results else tool_idx
+        out = list(messages)
+        freed: list[str] = []
+        before = size
+        for i in candidates:
+            if size <= self.context_max_chars:
+                break
+            m = out[i]
+            size -= len(m["content"]) - len(m["stub"])
+            out[i] = {**m, "content": m["stub"], "compacted": True}
+            if m.get("call_key"):
+                freed.append(m["call_key"])
+        if freed or size != before:
+            self.tracer.emit("agent", "context_compacted", {"results_condensed": len(freed), "chars_before": before,
+                                                             "chars_after": size, "limit": self.context_max_chars})
+        return out, freed
+
     def history_text(self) -> str:
         if not self.history:
             return "(nothing yet)"
         lines = []
+        digest = self.history_digest()
+        if digest:
+            lines += ["Older turns (condensed):"] + [f"  {d}" for d in digest] + ["Recent turns:"]
         for h in self.history[-HISTORY_TURNS:]:
             lines.append(f"Q: {h['question']}\nA: {h['summary']}")
             if h.get("devices"):
@@ -141,7 +197,8 @@ class CopilotSession:
         answer = state.get("answer")
         summary = answer["summary"] if answer else (state.get("note") or "")
         devices = sorted({e.device_id for e in self.tk.evidence.this_turn() if e.device_id})
-        self.history.append({"question": state.get("question", ""), "summary": summary, "devices": devices,
+        self.history.append({"turn": turn, "question": _clip(state.get("question", ""), 300), "summary": _clip(summary, 400),
+                             "devices": devices,
                              "proposals": [p["proposal_id"] for p in state.get("proposals", [])]})
         snapshot = self.graph.get_state(self._thread)
         pending = bool(snapshot.next)
