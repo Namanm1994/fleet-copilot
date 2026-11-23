@@ -269,9 +269,49 @@ def test_older_turns_are_condensed_into_a_bounded_digest(home):  # F-07, across 
     sess, _ = session(home, [])
     for n in range(1, 41):
         sess.history.append({"turn": n, "question": f"question number {n} " + "x" * 200, "summary": f"answer {n} " + "y" * 300,
-                             "devices": ["FX-DELL-01"], "proposals": []})
+                             "focus": ["FX-DELL-01"], "proposals": []})
     text = sess.history_text()
     assert "Older turns (condensed):" in text and "turn 37:" in text and "earlier turn(s) omitted" in text
     assert "question number 40" in text and "turn 1:" not in text
     assert len(text) < 4500  # bounded however long the session runs
     assert len(sess.history_messages()) == 6  # planner sees only the last three turns
+
+
+def test_focus_state_comes_from_verified_claims_only(home):  # follow-ups: "those" = what was answered
+    steps = [plan()] + [call("get_device", {"device_id": d}, call_id=f"c{i}") for i, d in
+                        enumerate(["FX-DELL-01", "FX-DELL-02", "FX-RAM-01"])]
+    steps.append(submit({"summary": "FX-DELL-02 fails os_up_to_date.", "claims": [
+        {"text": "FX-DELL-02 fails os_up_to_date.", "evidence_ids": ["FX-DELL-02@2026-06-12#os_up_to_date"], "values": {}}],
+        "definitions_used": [], "caveats": [], "answer_type": "answer"}))
+    sess, _ = session(home, steps)
+    res = sess.ask("Which of these three fails a check?")
+    assert res.status == "answered", res.text
+    h = sess.history[-1]
+    assert h["focus"] == ["FX-DELL-02"]  # the tools touched three devices; the answer was about one
+    assert h["evidence"] == ["FX-DELL-02@2026-06-12#os_up_to_date"]
+    assert len(h["queries"]) == 3 and h["queries"][0].startswith('get_device {"device_id": "FX-DELL-01"} (Q-1-1')
+    text = sess.history_text()
+    assert "in focus: FX-DELL-02" in text and "query run: get_device" in text
+    assert "FX-RAM-01" not in text.split("in focus:")[1].split("\n")[0]
+
+
+def test_focus_includes_devices_behind_a_cited_receipt(home):
+    sess, model = session(home, [plan(), call("find_devices", {"criteria": {"low_disk": True}}), submit(LOW_DISK_ANSWER),
+                                 plan(in_scope=False, refusal_reason="Out of scope.")])
+    sess.ask("Which devices are low on disk?")
+    assert sess.history[-1]["focus"] == ["FX-DISK-01"]
+    sess.ask("What's the weather?")
+    assert sess.history[-1]["focus"] == [] and sess.history[-1]["queries"] == []  # refusals carry nothing forward
+    planner_msgs = model.seen[-1]
+    assert any(m["role"] == "assistant" and "[in focus: FX-DISK-01]" in m["content"] for m in planner_msgs)
+
+
+def test_prompts_tell_the_agent_history_is_a_pointer(home):
+    sess, _ = session(home, [])
+    for n in range(1, 6):
+        sess.history.append({"turn": n, "question": f"q{n}", "summary": f"a{n}", "focus": ["FX-DELL-01"], "proposals": []})
+    agent_prompt = sess.agent_prompt({"steps": []})
+    assert "treat it as a pointer to what was discussed" in agent_prompt
+    assert "Before stating any fact, fetch it with a tool, even if it appears in the history." in agent_prompt
+    planner_prompt = sess.planner_prompt()
+    assert 'turn 2: asked "q2"' in planner_prompt and "turn 3:" not in planner_prompt  # planner sees the older digest too

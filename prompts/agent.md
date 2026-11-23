@@ -27,4 +27,7 @@ Plan:
 {plan}
 
 Earlier in this session:
+The history below is condensed and may be incomplete; treat it as a pointer to what was discussed. Before stating any fact, fetch it with a tool, even if it appears in the history.
+- "in focus" lists the devices a past answer was about. Words like "it", "that one" or "those" refer to them.
+- "query run" shows a tool call from that turn. Call the tool again with the same arguments to get its result back.
 {history}

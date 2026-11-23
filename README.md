@@ -128,7 +128,7 @@ Every case also checks that the outbox contains exactly the approved-and-execute
 
 **Recorded mode.** Cassettes in `evals/cassettes/` store only model responses, redacted and keyed by a request digest. A changed prompt, tool output or dataset makes the affected cases report "cassette out of date" rather than a false pass or fail. CI (`.github/workflows/ci.yml`) runs ruff, pytest and the recorded evals on pinned dependencies.
 
-> **Current state.** The 120 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 52 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
+> **Current state.** The 123 unit tests and the 3 scan cases pass. No cassettes are committed yet: the 52 LLM cases need one `make eval-live` run with an API key before `make eval` can replay them offline.
 
 ## Architecture
 
@@ -184,7 +184,8 @@ The rule behind the split: fixed steps run as code, and unpredictable questions 
 **Context management.** The prompt stays bounded however long a session runs:
 
 - Each turn starts a fresh message list. Earlier turns are not replayed.
-- The last 3 turns are carried as question plus answer summary, with the devices and proposals they involved.
+- The last 3 turns are carried as question plus answer summary, with a focus state taken from the verified answer: the devices its claims were about, the evidence it cited, the queries that were run, and any proposals. A follow-up such as "those" resolves to what was answered, not to every device the tools touched.
+- The history is a pointer, not a source of facts. The prompt tells the agent to fetch any fact with a tool before stating it, and the saved queries let it re-run the same lookup. The verifier enforces this: a claim must cite evidence a tool returned.
 - Older turns are condensed in code, with no LLM call, to one line each inside a 1,500-character digest. The oldest lines drop off first.
 - Within a turn, tool output over 12,000 characters is cut with a note to narrow the query.
 - When a turn's messages pass 48,000 characters, the oldest tool results are replaced by a stub holding the receipt, count and evidence IDs. The newest two stay whole. Condensed evidence can still be cited, and the model may run the same query again if it needs the values.
