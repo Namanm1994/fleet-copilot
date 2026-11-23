@@ -6,7 +6,7 @@ import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
-from fleet_copilot.data.sanitize import normalize_name
+from fleet_copilot.data.sanitize import normalize_name, software_matches
 from fleet_copilot.data.versions import normalize_platform, parse_version
 from fleet_copilot.evidence import check_eid, software_eid
 from fleet_copilot.insights.detectors import Detectors, failing_check_actions, sort_insights
@@ -195,8 +195,7 @@ class ReadTools:
                 matched["failing_checks"] = [{"check_id": r["check_id"], "severity": r["severity"]} for r in failing]
                 ev += [self._register_check(r) for r in failing]
             if c.has_software:
-                q = normalize_name(c.has_software)
-                hits = [r for r in software[dev_id] if q and q in r["name_norm"]]
+                hits = [r for r in software[dev_id] if software_matches(c.has_software, r["name"])]
                 if not hits:
                     continue
                 matched["software"] = [f"{r['name']} {r['version'] or ''}".strip() for r in hits]
@@ -342,8 +341,7 @@ class ReadTools:
             self._require_device(args.device_id)
             rows = self.repo.software_latest(args.device_id)
             if args.name:
-                q = normalize_name(args.name)
-                rows = [r for r in rows if q in r["name_norm"]]
+                rows = [r for r in rows if software_matches(args.name, r["name"])]
             items = []
             for r in rows:
                 eid = software_eid(r["snapshot_id"], r["name_norm"])
@@ -355,8 +353,9 @@ class ReadTools:
             count = len(items)
         else:
             q = normalize_name(args.name or "")
-            hist = self.repo.software_history(q)
-            latest = {(r["device_id"], r["name_norm"]): r for r in self.repo.software_latest() if q in r["name_norm"]}
+            hist = [r for r in self.repo.software_history(q) if software_matches(args.name or "", r["name"])]
+            latest = {(r["device_id"], r["name_norm"]): r for r in self.repo.software_latest()
+                      if software_matches(args.name or "", r["name"])}
             first_seen: dict[tuple, str] = {}
             for r in hist:
                 first_seen.setdefault((r["device_id"], r["name_norm"]), r["collected_at"][:10])
