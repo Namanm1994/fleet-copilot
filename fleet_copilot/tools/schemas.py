@@ -197,7 +197,7 @@ DESCRIPTIONS = {
     "resolve_entities": "Map the admin's words for devices or employees ('the Dell', a hostname, a serial, an employee ID) to IDs. Returns 'ambiguous' with candidates when several match.",
     "find_devices": "Main query tool. Filter devices on their latest snapshot (platform, OS older than, low disk, RAM, failing checks, software, battery, stale) and optionally group or count. Returns matched values and evidence IDs. Lists come 25 at a time: when the result has next_offset, call again with that offset for the next page.",
     "get_device": "Latest-snapshot summary of one device: OS, RAM, disk, battery condition, compliance, last seen, open proposals.",
-    "get_device_history": "Time series of one device's metrics over the telemetry window (disk, RAM, battery, OS version, or compliance:<check_id>).",
+    "get_device_history": "Time series of one device's metrics over the telemetry window (disk, RAM, battery, OS version, or compliance:<check_id>). Each series comes with a summary (number of points, pass and fail counts, first and last fail, min and max, when the current value began): state those figures, do not count rows yourself.",
     "get_compliance_overview": "Pass/fail counts per compliance check on latest snapshots, with the failing devices.",
     "get_software": "Find which devices have a piece of software (by name), or list the software on one device.",
     "run_insights": "Run pattern detectors across the telemetry window: battery_eol, ram_constrained, low_storage, compliance_drift, prohibited_software. Omit device_ids to check the whole fleet; pass device_ids for a question about particular devices, which also names any of them with too little history for a trend.",

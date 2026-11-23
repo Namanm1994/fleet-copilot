@@ -109,10 +109,27 @@ class HistoryPoint(Out):
     evidence_id: str
 
 
+class SeriesSummary(Out):
+    """Counts and turning points of one series, computed by the tool so the model does not count rows."""
+    points: int
+    changes: int | None = None            # how many times the value changed from one snapshot to the next
+    current: Any = None
+    current_since: str | None = None      # first date of the current run of the same value
+    pass_count: int | None = None         # compliance series only
+    fail_count: int | None = None
+    first_fail: str | None = None
+    last_fail: str | None = None
+    min: float | None = None              # numeric series only
+    max: float | None = None
+    first: float | None = None
+    last: float | None = None
+
+
 class GetDeviceHistoryOut(Out):
     device_id: str
     window: list[str | None]
     series: dict[str, list[HistoryPoint]]
+    summary: dict[str, SeriesSummary]
 
 
 # ---- get_compliance_overview --------------------------------------------------------------------

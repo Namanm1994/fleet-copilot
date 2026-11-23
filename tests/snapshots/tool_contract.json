@@ -502,6 +502,47 @@
           },
           "required": true
         },
+        "summary": {
+          "fields": {
+            "changes": {
+              "required": false
+            },
+            "current": {
+              "required": false
+            },
+            "current_since": {
+              "required": false
+            },
+            "fail_count": {
+              "required": false
+            },
+            "first": {
+              "required": false
+            },
+            "first_fail": {
+              "required": false
+            },
+            "last": {
+              "required": false
+            },
+            "last_fail": {
+              "required": false
+            },
+            "max": {
+              "required": false
+            },
+            "min": {
+              "required": false
+            },
+            "pass_count": {
+              "required": false
+            },
+            "points": {
+              "required": true
+            }
+          },
+          "required": true
+        },
         "window": {
           "required": true
         }
