@@ -8,6 +8,9 @@ tenants:
   initech-003:
     name: Initech
     aliases: [initech]
+  globex-002:
+    name: Globex
+    aliases: [globex]
   # Add the remaining tenant(s) from the full dataset here. `fleet load` reports
   # any company_id present in the data but missing from this registry.
 
