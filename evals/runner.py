@@ -80,7 +80,7 @@ class RunResult:
 class EvalEnv:
     def __init__(self, project: Paths, work: Path | None = None):
         self.project = project
-        self.work = work or project.var / "eval"
+        self.work = work or project.var / "eval" / "work"  # scratch only; reports and history live one level up
         self.raw_files = sorted(project.raw_data.parent.glob("*.ndjson"))
         self.has_real = bool(self.raw_files)
         self.base = Paths(self.work / "base")

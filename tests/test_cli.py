@@ -196,3 +196,12 @@ def test_eval_command_recorded_offline(run, home):
     assert "scan" in r.output and "1/1 passed, 2 skipped" in r.output
     assert (home.var / "eval" / "eval_report.md").exists()
     assert run("eval", "--record").exit_code == 2  # --record needs live mode
+
+
+def test_eval_command_keeps_history_and_compares_runs(run, home):
+    first = run("eval", "--case", "scan")
+    assert first.exit_code == 0 and "Since the previous run" not in first.output
+    second = run("eval", "--case", "scan")
+    assert "Since the previous run: 0 case(s) now fail, 0 now pass." in second.output
+    assert len(list((home.var / "eval" / "history").glob("eval_results-*.json"))) == 2
+    assert "## Changes since the previous run" in (home.var / "eval" / "eval_report.md").read_text()
