@@ -31,7 +31,7 @@ Runs on Linux, macOS and Windows with Python 3.10 or later. The commands are the
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 python -m pip install -e ".[all,dev]"      # or: make setup
-cp .env.example .env                        # then set FLEET_LLM_PROVIDER and the matching API key
+cp .env.example .env                        # then set OPENROUTER_API_KEY in .env (see Model below)
 ```
 
 **Windows (PowerShell)**
@@ -40,12 +40,14 @@ cp .env.example .env                        # then set FLEET_LLM_PROVIDER and th
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install -e ".[all,dev]"
-Copy-Item .env.example .env                 # then set FLEET_LLM_PROVIDER and the matching API key
+Copy-Item .env.example .env                 # then set OPENROUTER_API_KEY in .env (see Model below)
 ```
 
 If PowerShell refuses to run the activation script, allow scripts for the current window first: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned`. In the classic Command Prompt, activate with `.venv\Scripts\activate.bat` and copy with `copy .env.example .env`.
 
 After activation the `fleet` command is available in that terminal. `.env` is read from the project folder on every run; a variable already set in the environment takes precedence over the file. Never commit `.env`.
+
+**Model.** Set this before the first `fleet chat` or `fleet ask`. The default is OpenRouter with `nvidia/nemotron-3-ultra-550b-a55b:free`, set in `config/llm.yaml`; it needs `OPENROUTER_API_KEY` in `.env`, and the two `FLEET_LLM_` lines there can stay empty. This is the model the eval results below were run on. To use another provider, set `FLEET_LLM_PROVIDER` (`anthropic`, `openai` or `openrouter`), its API key, and `FLEET_LLM_MODEL`. Anthropic has a pinned model, so the model line is optional there; OpenAI has none. Without a key, the commands that need an LLM stop with a configuration error before doing anything. `fleet load`, `fleet scan` (without `--summary`), `fleet proposals`, `fleet audit verify`, the unit tests and `fleet eval --mode recorded` need no key.
 
 For the exact dependency versions CI uses: `pip install -r requirements.lock`, then `pip install -e . --no-deps`. The lock file was resolved on Linux with Python 3.12; on another system or Python version, use the install command above.
 
@@ -62,7 +64,7 @@ For the exact dependency versions CI uses: `pip install -r requirements.lock`, t
 | `make lint` | `ruff check fleet_copilot evals tests` |
 | `make fixture` | `python -m evals.fixtures.generate` |
 
-**Data.** Put the telemetry NDJSON at `data/raw/telemetry.ndjson` (on Windows, `data\raw\telemetry.ndjson`). It is gitignored and never committed. Then:
+**Data.** The sample telemetry (750 snapshots, three companies, 25 devices) is in the repository at `data/raw/telemetry.ndjson`. To use other telemetry, put more `.ndjson` files in `data/raw/`; those stay out of git. Then:
 
 ```bash
 fleet load       # loads data/raw/*.ndjson into var/telemetry.db; writes var/data_quality.json
@@ -75,20 +77,20 @@ fleet profile    # value distributions used to set the thresholds in config/thre
 
 `fleet load` also lists any company present in the data but missing from `config/policy.yaml`. Those companies stay inaccessible until they are registered.
 
-**Model.** `config/llm.yaml` pins the model for each provider. `FLEET_LLM_PROVIDER` and `FLEET_LLM_MODEL` override it. For OpenAI and OpenRouter, set `FLEET_LLM_MODEL` because no default is pinned. Without a key, the commands that need an LLM stop with a configuration error before doing anything. `fleet load`, `fleet scan` (without `--summary`), `fleet proposals`, `fleet audit verify`, the unit tests and `fleet eval --mode recorded` need no key.
-
 **Reasoning models.** Some models reason before they answer, and those hidden tokens count as output. `reasoning_effort` in `config/llm.yaml` asks for low effort on the planning step, which only classifies the question and lists the tools to use. The tool-calling steps keep the model's default. The setting is sent to OpenRouter and OpenAI; set it to `""` for a model that rejects it.
 
 **Where files go.** Everything the program writes (database, proposals, audit log, outbox, traces, eval reports) is under `var/` in the project folder, which is gitignored. Set `FLEET_HOME` to use a different folder as the project root. On Linux and macOS these files are created readable by their owner only. Windows does not apply those permissions, so restrict access to the folder with its own access controls.
 
-**Check the install.** These need no API key and no telemetry:
+**Check the install.** These need no API key and no telemetry. Most of the tests and evals run without a key; [Evals](#evals) lists which.
 
 ```bash
 fleet --help
-python -m pytest          # 322 unit tests, no model, no network
+python -m pytest          # 324 unit tests, no model, no network
 ```
 
 ## Run
+
+`fleet chat`, `fleet ask`, `fleet scan --summary` and `fleet eval --mode live` call the model and need the API key from [Install](#install). Without it they stop with a configuration error.
 
 Every command that touches company data needs `--tenant`. There is no default, and an unknown tenant fails before the database is opened. The commands below are the same in bash, PowerShell and the Command Prompt.
 
@@ -151,7 +153,7 @@ A chat turn prints the same kind of output: a header with the tenant and as-of d
 ## Evals
 
 ```bash
-python -m pytest                              # 322 unit tests: no model, no network
+python -m pytest                              # 324 unit tests: no model, no network
 fleet eval --mode recorded                    # replay saved model replies, offline and repeatable
 fleet eval --mode live --record --runs 3      # call the real model, 3 runs per case, save the replies
 fleet eval --case guardrail                   # one category, or one case: --case G-TC17
@@ -159,6 +161,17 @@ fleet eval --control all                      # score stand-in agents that canno
 ```
 
 Results are written to `var/eval/eval_report.md` and `var/eval/eval_results.json`.
+
+**What needs an API key.** Only a live run. Everything else runs offline with no key.
+
+| Command | API key | What it runs |
+|---|---|---|
+| `python -m pytest` | No | All 324 unit tests, with a scripted model |
+| `fleet eval --mode recorded --runs 3` | No | All 67 cases, replayed from the committed model replies |
+| `fleet eval --control all` | No | The stand-in agents |
+| `fleet eval --mode live` | Yes | All 67 cases against the real model |
+
+The saved replies of the final run are committed in `evals/cassettes/`, three runs per case. `fleet eval --mode recorded --runs 3` replays that run from a clone and gives the results below. The tools read the sample dataset, which is also committed; only the model is replayed. After a change to a prompt, a tool or the data, the affected cases report "out of date" until a live run records them again.
 
 **The 67 cases** (`evals/cases/`). Each sends one or more questions through the whole agent.
 
@@ -215,10 +228,10 @@ Other measures from the same run: 36 of 36 tool-argument checks passed; no legit
 
 **What these results do not show**
 
-- **Only one model.** Every run used a free model. The default model in the configuration has not been run.
+- **Only one model.** Every run used one free model, which is also the default. No paid model has been run.
 - **Small numbers.** The ranges above are wide. 24 of 24 is consistent with a true pass rate anywhere from 86% to 100%.
 - **Two cases that passed here failed one run in three in the previous run** (F15 and I04). Nothing was changed between the runs, so they should be treated as passing most of the time, not always.
-- **Recordings are not committed yet**, so `fleet eval --mode recorded` skips the model cases on a fresh clone.
+- **CI will fail on the eval step.** It replays the final run, and the permitted category misses its bar.
 - **Limits are starting values.** The budgets and timeouts in `config/` were not set from measurements.
 
 Detail: [docs/REFERENCE.md](docs/REFERENCE.md#evals).
@@ -470,6 +483,28 @@ I built this project with Claude (Anthropic) working as a coding agent. Every co
 
 ## Future work
 
+### Before production use
+
+- Choose a paid model before production use and run the evals on it. The default is a free-tier model: OpenRouter limits it to 20 requests a minute and 1,000 a day, can withdraw it, and its terms for free models may allow prompts to be logged. The pinned Anthropic model has never been run.
+- Meet the pass bar for permitted requests (6 of 8 today; the bar is 0.9). PM-06 fails every run because the agent picks its own cut-offs for "outdated OS"; the definition belongs in a tool. PM-02 fails two runs in three: once over the input budget, once on a clarifying question it did not need.
+- I06 fails one run in three: the model works out a percentage itself and the verifier removes the claim. F15 and I04 have each failed once with no code change in between.
+- Measure the limits. The token, time and tool-call caps are starting values that were never checked against real use.
+- Report a rate-limited eval run as "not run". Today it is scored as a failed case.
+- Retry connection errors. One run failed on a connection error with no retry logged.
+- Install from a fresh clone, add a remote and CI, run the full unit suite on Windows (last confirmed at 181 of 322 tests) and test on macOS.
+
+### Evals
+
+- An evidence check in the eval runner that does not rely on the agent's own verifier.
+- More fields and goals for instructions hidden in device data, scored as attacks that succeeded and answers still correct.
+- Approval edge cases end to end: a precondition that changes before approval, a claimed authority, another company's proposal number.
+- Chat cases for the third company, attempts to list other companies, and attempts to read the agent's hidden context.
+- One long conversation that forces the context to be condensed.
+- Decide whether a fallback answer fails a case. Today it is counted but the case can still pass.
+- Keep customer telemetry out of git. The sample dataset and recordings made from it are committed; with real data, record only against the generated fixture.
+
+### Product
+
 - Authentication (SSO/OIDC), roles, and administrators across several tenants
 - Placeholders for identifiers and telemetry text before they reach the LLM provider
 - Scheduled scans with alert deduplication
@@ -479,11 +514,19 @@ I built this project with Claude (Anthropic) working as a coding agent. Every co
 - A maximum session age or a refresh command. Each session pins its as-of time at startup so answers stay consistent, which means a long session answers from older data.
 - A fleet-wide `find_devices` at past dates (today it filters latest snapshots; history is per device)
 - Resuming an interrupted session from its checkpoint. The graph already writes checkpoints to SQLite, but the session's history and evidence are held in memory, so today a crashed session is restarted, not resumed
-- Eval work still open: an evidence check in the eval runner that does not rely on the agent's own verifier; more fields and goals for instructions hidden in device data, scored as attacks that succeeded and answers still correct; approval edge cases end to end (a precondition that changes before approval, a claimed authority, another company's proposal number); chat cases for the third company; one long conversation that forces the context to be condensed
 - A structured "inconclusive" part of every answer. Today an answer as a whole can be marked `insufficient_data`, and partial gaps are written as free-text caveats or reported as a count. The next step is a field of its own that lists, for each device, check or period that could not be settled, what was asked, what could not be determined and why (too few snapshots, outside the telemetry window, lookup failed, result cut short). It would be rendered apart from the findings, checked by the verifier against the tools' own reports, and read separately by the evals, so "not low on disk" and "could not tell" are never mixed
 - Code-written findings for broad questions: the model chooses which findings to report and code prints the detectors' own sentences. A 12-finding answer costs about 2,000 output tokens when the model writes it out
 - Paging for the other long lists. Today only `find_devices` pages; other tools shorten an oversized result and say so
 - Reads in the audit log and a retention period for traces (see docs/SECURITY.md)
+
+### Documents and open decisions
+
+- `docs/architecture.md` and `agent-playbook.md` still say 55 eval cases in places; there are 67.
+- The eval inventory document still lists the original 55 cases.
+- "How I used AI" above is still written for a reviewer of a take-home.
+- Two rows in the Risks table of `docs/planning.md` have no phase to point to.
+- Decide whether to keep `docs/REFERENCE.md` and the Makefile.
+- Confirm how the raw dataset may be handled, verify the OWASP IDs in `docs/SECURITY.md`, and set a real git identity.
 
 ## License
 

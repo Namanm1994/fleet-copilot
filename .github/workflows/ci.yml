@@ -27,9 +27,9 @@ jobs:
       - name: Unit tests (no LLM, no network)
         run: pytest
       - name: Evals (recorded mode, offline)
-        # Replays committed cassettes. Cases on the real dataset are skipped in CI because
-        # data/raw/ is not committed; scan cases and fixture cases with cassettes run.
-        run: fleet eval --mode recorded
+        # Replays the committed recordings of the final run on the committed sample dataset.
+        # The step fails while any category misses its pass bar.
+        run: fleet eval --mode recorded --runs 3
       - name: Upload eval report
         if: always()
         uses: actions/upload-artifact@v4
