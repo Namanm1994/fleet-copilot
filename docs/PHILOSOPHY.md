@@ -2,7 +2,7 @@
 
 This document explains the principles behind Fleet Copilot's design and the concrete decisions each one leads to. A principle that doesn't change a decision is decoration, so every principle below names the decision it caused.
 
-## Principles for the Fleet Copilot specifically
+## Principles for the Fleet Copilot
 
 ### 1. Telemetry is the only source of truth
 The copilot answers from the telemetry and nothing else. Every claim points to the snapshots it came from, and when the data can't support an answer, the agent says so.

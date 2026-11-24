@@ -463,11 +463,11 @@ I built this project with Claude (Anthropic) working as a coding agent. Every co
 
 **What I decided.**
 
-- defined what each means system design, tool contract, reliability, security, evaluation and observability for the agent.
+- What system design, tool contract, reliability, security, evaluation and observability each mean for this agent.
 - The definitions the answers rest on: low disk as one percentage of the system volume, and battery end-of-life as the device's own reported condition.
 - To design for a production data source, not for the static 30-day file. This is why `fleet load` appends and why context limits are configurable.
 - How conversation context is carried: verified summaries and a focus state, with tools called again when older data is needed.
-- Re-iterated evals, test cases, reliability and security with 5 test runs and one 3 run live Eval
+- Five rounds of live test runs and one final three-run eval, with fixes to the evals, tests, reliability and security after each.
 
 ## Future work
 
