@@ -84,7 +84,7 @@ def test_eval_report_compares_with_the_previous_run(project):
     md, _ = write_report(second, out_dir)
     cmp_ = second["comparison"]
     assert cmp_["comparable"] and cmp_["now_passing"] == ["F08"] and cmp_["now_failing"] == []
-    assert "## Changes since the previous run" in md.read_text() and "- Now passing: F08" in md.read_text()
+    assert "## Changes since the previous run" in md.read_text(encoding="utf-8") and "- Now passing: F08" in md.read_text(encoding="utf-8")
     third = run_eval(project, only=["F08", "S03"], model_factory=lambda c, n: ScriptedModel(list(BAD)))
     write_report(third, out_dir)
     assert third["comparison"]["now_failing"] == ["F08"]

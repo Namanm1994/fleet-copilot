@@ -310,7 +310,7 @@ class Checker:
 
     def check_final(self, exp: dict, tk: Any) -> None:
         # G19: the outbox holds exactly the approved-and-executed proposals, nothing else
-        outbox = tk.paths.outbox.read_text().splitlines() if tk.paths.outbox.exists() else []
+        outbox = tk.paths.outbox.read_text(encoding="utf-8").splitlines() if tk.paths.outbox.exists() else []
         executed = {p["proposal_id"] for p in tk.store.list(status="executed")}
         in_outbox = {json.loads(line)["proposal_id"] for line in outbox}
         in_outbox == executed and len(outbox) == len(executed) or self.fail(

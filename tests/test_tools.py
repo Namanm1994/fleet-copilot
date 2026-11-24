@@ -250,7 +250,7 @@ def test_approve_executes_into_outbox(tk, home):
     assert not home.outbox.exists()  # TC-30: nothing before approval
     done = tk.executor.approve(pid, "tester")
     assert done["status"] == "executed"
-    rec = json.loads(home.outbox.read_text().splitlines()[0])
+    rec = json.loads(home.outbox.read_text(encoding="utf-8").splitlines()[0])
     assert rec["proposal_id"] == pid and rec["tenant"] == "fixture-999" and rec["approved_by"] == "tester"
 
 
@@ -271,7 +271,7 @@ def test_failed_delivery_and_idempotent_retry(tk, home):  # TC-41
     assert tk.executor.approve(pid, "tester")["status"] == "failed"
     assert tk.executor.retry(pid, "tester")["status"] == "executed"
     assert tk.executor.retry(pid, "tester")["status"] == "executed"
-    assert len(home.outbox.read_text().splitlines()) == 1
+    assert len(home.outbox.read_text(encoding="utf-8").splitlines()) == 1
 
 
 def test_other_tenant_proposals_invisible(home):  # F-19
@@ -298,14 +298,14 @@ def test_audit_tamper_detection(tmp_path):  # TC-51
     log = AuditLog(path)
     for i in range(5):
         log.append("proposed", tenant="t", proposal_id=f"PRP-{i}")
-    lines = path.read_text().splitlines()
+    lines = path.read_text(encoding="utf-8").splitlines()
 
-    path.write_text("\n".join(lines[:2] + lines[3:]) + "\n")
+    path.write_text("\n".join(lines[:2] + lines[3:]) + "\n", encoding="utf-8")
     assert verify(path) == (False, 2, "line 3: prev mismatch (an entry before it was deleted, inserted or reordered)")
     edited = json.loads(lines[1]) | {"proposal_id": "PRP-99"}
-    path.write_text("\n".join([lines[0], json.dumps(edited)] + lines[2:]) + "\n")
+    path.write_text("\n".join([lines[0], json.dumps(edited)] + lines[2:]) + "\n", encoding="utf-8")
     assert verify(path)[2].startswith("line 2: hash mismatch")
-    path.write_text("\n".join([lines[0], lines[2], lines[1]] + lines[3:]) + "\n")
+    path.write_text("\n".join([lines[0], lines[2], lines[1]] + lines[3:]) + "\n", encoding="utf-8")
     assert verify(path)[0] is False
 
 

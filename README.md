@@ -85,7 +85,7 @@ fleet profile    # value distributions used to set the thresholds in config/thre
 
 ```bash
 fleet --help
-python -m pytest          # 324 unit tests, no model, no network
+python -m pytest          # 326 unit tests, no model, no network
 ```
 
 ## Run
@@ -153,7 +153,7 @@ A chat turn prints the same kind of output: a header with the tenant and as-of d
 ## Evals
 
 ```bash
-python -m pytest                              # 324 unit tests: no model, no network
+python -m pytest                              # 326 unit tests: no model, no network
 fleet eval --mode recorded                    # replay saved model replies, offline and repeatable
 fleet eval --mode live --record --runs 3      # call the real model, 3 runs per case, save the replies
 fleet eval --case guardrail                   # one category, or one case: --case G-TC17
@@ -166,7 +166,7 @@ Results are written to `var/eval/eval_report.md` and `var/eval/eval_results.json
 
 | Command | API key | What it runs |
 |---|---|---|
-| `python -m pytest` | No | All 324 unit tests, with a scripted model |
+| `python -m pytest` | No | All 326 unit tests, with a scripted model |
 | `fleet eval --mode recorded --runs 3` | No | All 67 cases, replayed from the committed model replies |
 | `fleet eval --control all` | No | The stand-in agents |
 | `fleet eval --mode live` | Yes | All 67 cases against the real model |

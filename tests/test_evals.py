@@ -33,7 +33,7 @@ def test_case_inventory():
 
 
 def test_oracle_is_independent_and_matches_fixture():
-    src = (PROJECT_ROOT / "evals" / "oracle.py").read_text()
+    src = (PROJECT_ROOT / "evals" / "oracle.py").read_text(encoding="utf-8")
     assert "fleet_copilot" not in src.split('"""', 2)[2]  # no imports from the agent
     o = Oracle([FIXTURE])
     assert o.low_disk("fixture-999") == ["FX-DISK-01"]
@@ -51,8 +51,8 @@ def test_scan_cases_pass_and_real_cases_skip(project):
     assert res["S03"]["passed"], res["S03"]["failures"]
     assert res["S01"]["skipped"] and res["S02"]["skipped"]
     md, js = write_report(out, project.var / "eval")
-    assert "| scan | 3 | 1 | 1 | 2 | — | — | 21% to 100% (n=1) |" in md.read_text()
-    assert json.loads(js.read_text())["summary"]["has_real_data"] is False
+    assert "| scan | 3 | 1 | 1 | 2 | — | — | 21% to 100% (n=1) |" in md.read_text(encoding="utf-8")
+    assert json.loads(js.read_text(encoding="utf-8"))["summary"]["has_real_data"] is False
 
 
 def _factory(steps_by_case):

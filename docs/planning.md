@@ -46,7 +46,7 @@ Design came first, as a set of written documents (specification, decision log, t
 | 6. Live runs | Run cases against a real model, diagnose each failure, fix at the source | Done |
 | 7. Eval Results | Record eval results for 3 live runs of all 67 cases | Done: 64 of 67 cases passed all three runs |
 
-Each feature was built on its own branch and merged into `main`, so the history shows one merge per feature. The project has 324 unit tests, which need no model and no network.
+Each feature was built on its own branch and merged into `main`, so the history shows one merge per feature. The project has 326 unit tests, which need no model and no network.
 
 ## 5. What the live runs changed
 
