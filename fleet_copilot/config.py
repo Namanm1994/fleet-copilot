@@ -286,7 +286,7 @@ def load_llm_settings(config_dir: Path) -> LLMSettings:
     data = _load_yaml(config_dir / "llm.yaml")
     pricing_path = config_dir / "pricing.yaml"
     pricing = (_load_yaml(pricing_path).get("models") or {}) if pricing_path.exists() else {}
-    provider = os.environ.get("FLEET_LLM_PROVIDER") or data.get("provider", "anthropic")
+    provider = os.environ.get("FLEET_LLM_PROVIDER") or data.get("provider", "openrouter")
     if provider not in SUPPORTED_PROVIDERS:
         raise ConfigError(f"Unsupported LLM provider '{provider}'. Use one of {SUPPORTED_PROVIDERS}.")
     model = os.environ.get("FLEET_LLM_MODEL") or (data.get("models") or {}).get(provider, "")
