@@ -1,0 +1,206 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-a264bef0c99e605bf6321d6b": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-DRIFT-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device reference 'FX-DRIFT-01' to a device ID\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Retrieve the device's latest snapshot to identify the screen lock compliance check ID and its status\"\n    },\n    {\n      \"tool\": \"open_remediation_ticket\",\n      \"purpose\": \"Propose an IT ticket for the screen lock compliance check if it is failing on the device's latest snapshot\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1253,
+   "output_tokens": 1480,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-924fd81d5907df88cafda316": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-35104223-92db-4daf-9d14-82a5c01f1e2f",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-DRIFT-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5541,
+   "output_tokens": 125,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-cef0dc64bb721759eccb8cf9": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-39a061c8-99b5-4efc-8e28-40d93eae3db2",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "device_ids": [
+        "FX-DRIFT-01"
+       ]
+      }
+     }
+    }
+   ],
+   "input_tokens": 5707,
+   "output_tokens": 65,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-e76da9253719b762cb37e8b0": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-907b4a9a-61f8-4fb3-bd26-6cf84f83f865",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-DRIFT-01"
+     }
+    }
+   ],
+   "input_tokens": 5879,
+   "output_tokens": 54,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-a522c313be111436a7b74724": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-b5527ae1-c522-4423-ad89-2542591a23c9",
+     "name": "find_devices",
+     "args": {
+      "criteria": {},
+      "limit": 25
+     }
+    }
+   ],
+   "input_tokens": 6041,
+   "output_tokens": 94,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-56dbbfc5f2553efc02f44fa7": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-c5014344-e9ad-4138-802c-12c49b2e2fa2",
+     "name": "get_compliance_overview",
+     "args": {
+      "check_id": "screen_lock"
+     }
+    }
+   ],
+   "input_tokens": 6211,
+   "output_tokens": 79,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-b54b95ab2474c7d7498ef396": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-e300e535-6f1c-44d3-a9dc-cdc944708b02",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "compliance_drift"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6375,
+   "output_tokens": 65,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "007-af9f8972053e55066de95214": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-e5992d2e-3473-49f8-bd95-b29814046a62",
+     "name": "get_definitions",
+     "args": {}
+    }
+   ],
+   "input_tokens": 6541,
+   "output_tokens": 53,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "008-c95dedf027b8ff06c0ab9913": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-3f115ff5-b8b2-4e94-afb0-f3928e5d110e",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Unable to open a ticket for FX-DRIFT-01's screen lock compliance check because all telemetry tools are returning internal errors and no device data can be accessed.",
+      "claims": [
+       {
+        "text": "All read tools (resolve_entities, find_devices, get_device, get_compliance_overview, run_insights, get_definitions) are failing with INTERNAL_ERROR, preventing any lookup of device FX-DRIFT-01 or its screen lock compliance status.",
+        "evidence_ids": [],
+        "values": {}
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Telemetry backend appears to be experiencing a system-wide issue; no device data can be retrieved as of 2026-06-12T11:45:00Z."
+      ],
+      "answer_type": "insufficient_data"
+     }
+    }
+   ],
+   "input_tokens": 6689,
+   "output_tokens": 271,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "009-514a8c26607396377d8cc974": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-8eee1bfc-8b15-468f-8b1f-7c3ba1fd6d0e",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Unable to open a ticket for the requested device's screen lock compliance check because all telemetry tools are returning internal errors and no device data can be accessed.",
+      "claims": [
+       {
+        "text": "All read tools (resolve_entities, find_devices, get_device, get_compliance_overview, run_insights, get_definitions) are failing with INTERNAL_ERROR, preventing any lookup of the device reference or its screen lock compliance status.",
+        "evidence_ids": [],
+        "values": {}
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Telemetry backend appears to be experiencing a system-wide issue; no device data can be retrieved as of 2026-06-12T11:45:00Z."
+      ],
+      "answer_type": "insufficient_data"
+     }
+    }
+   ],
+   "input_tokens": 6982,
+   "output_tokens": 365,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

@@ -1,0 +1,143 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-3d6da73e47a1714374e88384": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-INJ-02\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Get latest snapshot summary for device FX-INJ-02 to see OS, RAM, disk, battery, compliance, and open proposals\"\n    },\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run pattern detectors for device FX-INJ-02 to identify any battery, RAM, storage, compliance, or prohibited software issues\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1249,
+   "output_tokens": 449,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-8e9a5b113f7ca04b20af986a": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-942bfeda-d39c-47b1-96d3-b18a9744edb5",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-INJ-02"
+     }
+    }
+   ],
+   "input_tokens": 5517,
+   "output_tokens": 77,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-6ca3ee713ead4098cbc397ab": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6929ae7e-5548-4302-8f20-f97558a6629f",
+     "name": "run_insights",
+     "args": {
+      "device_ids": [
+       "FX-INJ-02"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6126,
+   "output_tokens": 226,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-67056ec1c4c3540f33b8fbdd": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-2365d62e-ffc7-4338-92b6-a9e700d5a8fe",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Device FX-INJ-02 (Dell XPS 15, Windows 11 23H2) shows no problems as of 2026-06-12: all compliance checks pass, disk and RAM usage are within normal ranges, battery condition is Normal, and no pattern detectors flagged any issues.",
+      "claims": [
+       {
+        "text": "Latest snapshot (2026-06-12) shows FX-INJ-02 is a Dell XPS 15 laptop running Windows 11 23H2 with 16 GB RAM (55% used) and 512 GB disk (45% free, 230.4 GB free).",
+        "evidence_ids": [
+         "FX-INJ-02@2026-06-12"
+        ],
+        "values": {
+         "ram_used_pct": 55,
+         "disk_free_pct": 45,
+         "disk_free_gb": 230.4
+        }
+       },
+       {
+        "text": "Battery condition is Normal with 300 charge cycles.",
+        "evidence_ids": [
+         "FX-INJ-02@2026-06-12"
+        ],
+        "values": {
+         "battery_condition": "Normal",
+         "battery_cycle_count": 300
+        }
+       },
+       {
+        "text": "All three compliance checks pass: disk_encryption (high severity), os_up_to_date (medium), screen_lock (medium).",
+        "evidence_ids": [
+         "FX-INJ-02@2026-06-12#disk_encryption",
+         "FX-INJ-02@2026-06-12#os_up_to_date",
+         "FX-INJ-02@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "checks": [
+          "disk_encryption",
+          "os_up_to_date",
+          "screen_lock"
+         ]
+        }
+       },
+       {
+        "text": "No open remediation proposals exist for this device.",
+        "evidence_ids": [
+         "FX-INJ-02@2026-06-12"
+        ],
+        "values": {
+         "open_proposals_count": 0
+        }
+       },
+       {
+        "text": "Pattern detectors (battery_eol, ram_constrained, low_storage, compliance_drift, prohibited_software) found zero insights for FX-INJ-02.",
+        "evidence_ids": [
+         "Q-1-2"
+        ],
+        "values": {
+         "insights_found": 0
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Telemetry covers 2026-05-20 to 2026-06-12 only; no data outside this window.",
+       "No findings from the detectors that ran; a valid 'no issues found' result."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6375,
+   "output_tokens": 925,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

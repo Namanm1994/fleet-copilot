@@ -1,0 +1,179 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-f2afb6a0c17051bd41ca3cb0": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-DISK-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device identifier FX-DISK-01 to a device ID\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Check the device's latest snapshot for disk usage and any low-storage finding\"\n    },\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run the low_storage detector for this device to confirm a current finding and get an insight ID\"\n    },\n    {\n      \"tool\": \"notify_employee\",\n      \"purpose\": \"Propose a notification to the device's employee using the fixed template for the low-storage finding\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1256,
+   "output_tokens": 1001,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-50e0abbaca2b2e383f2046ee": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-ac0f1944-64c3-4634-bdd2-d2f814493584",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-DISK-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5565,
+   "output_tokens": 151,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-f8efcb88f727cbff6bce903e": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-8732f887-39bc-4ad6-887b-8d36a851700f",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-DISK-01"
+     }
+    }
+   ],
+   "input_tokens": 5782,
+   "output_tokens": 91,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-b61739a183f7e2ab35603954": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-ecd0eef2-8c77-42ea-9daa-03e95fe7aa16",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "low_storage"
+      ],
+      "device_ids": [
+       "FX-DISK-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6392,
+   "output_tokens": 123,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-58435a8eb6a1b200888995f1": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-688e783b-dc9a-4699-8d36-4ac8ddd37599",
+     "name": "notify_employee",
+     "args": {
+      "evidence_ids": [
+       "INS-low_storage-FX-DISK-01-4a98f1",
+       "FX-DISK-01@2026-06-12"
+      ],
+      "employee_id": "emp-fx-1005",
+      "device_id": "FX-DISK-01",
+      "template": "low_disk"
+     }
+    }
+   ],
+   "input_tokens": 6960,
+   "output_tokens": 233,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-32bb3b3448f2c92c64408453": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-a6a496aa-96ed-49e1-9c33-e143b646aad8",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Created a notification proposal (PRP-1) for the owner of FX-DISK-01 (employee emp-fx-1005) about critically low disk space. The device fx-macbook-air-disk has 7.6% free (19.5 GB of 256 GB) and the low_storage detector confirms a persistent finding across 10 of 14 recent snapshots.",
+      "claims": [
+       {
+        "text": "Device FX-DISK-01 (fx-macbook-air-disk) is assigned to employee emp-fx-1005",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "FX-DISK-01",
+         "employee_id": "emp-fx-1005"
+        }
+       },
+       {
+        "text": "Latest snapshot shows 7.6% free disk space (19.5 GB of 256 GB)",
+        "evidence_ids": [
+         "FX-DISK-01@2026-06-12"
+        ],
+        "values": {
+         "disk_free_pct": 7.6,
+         "disk_free_gb": 19.5,
+         "disk_total_gb": 256
+        }
+       },
+       {
+        "text": "Low storage detector found persistent low disk finding (low in 10 of 14 snapshots)",
+        "evidence_ids": [
+         "INS-low_storage-FX-DISK-01-4a98f1"
+        ],
+        "values": {
+         "insight_id": "INS-low_storage-FX-DISK-01-4a98f1",
+         "free_pct": 7.6,
+         "persistent": true,
+         "snapshots_low": 10,
+         "total_snapshots": 14
+        }
+       },
+       {
+        "text": "Notification proposal PRP-1 created using low_disk template for employee emp-fx-1005",
+        "evidence_ids": [
+         "PRP-1"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "status": "proposed",
+         "template": "low_disk"
+        }
+       }
+      ],
+      "definitions_used": [
+       "low_disk",
+       "low_disk_persistent"
+      ],
+      "caveats": [
+       "Proposal PRP-1 is awaiting human approval; no notification has been sent yet."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 7273,
+   "output_tokens": 676,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

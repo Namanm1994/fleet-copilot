@@ -1,0 +1,109 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-fba48f6cd8d3d0c564a5e36e": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Find all devices with low disk space using the low_disk filter\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1246,
+   "output_tokens": 192,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-5082afd75c909e9520257e18": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f4ea130f-660e-4aac-9155-294b3c780745",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "low_disk": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 5454,
+   "output_tokens": 81,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-7a6ec4f30598a37147add498": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-27763ccb-a81c-415a-8476-c5235fd116f2",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Two Acme devices are currently low on disk space: acme-thinkpad-8 (Windows) with 2.59% free (26.5 GB) and acme-macbook-4 (macOS) with 2.0% free (10.2 GB).",
+      "claims": [
+       {
+        "text": "Device acme-thinkpad-8 (device_id 8NM23J95R5I6) has 2.59% disk free (26.5 GB free of 1024 GB total) as of 2026-06-12.",
+        "evidence_ids": [
+         "8NM23J95R5I6@2026-06-12"
+        ],
+        "values": {
+         "device_id": "8NM23J95R5I6",
+         "hostname": "acme-thinkpad-8",
+         "disk_free_pct": 2.59,
+         "disk_free_gb": 26.5,
+         "disk_total_gb": 1024,
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "Device acme-macbook-4 (device_id MT7PJB7N5LRE) has 2.0% disk free (10.2 GB free of 512 GB total) as of 2026-06-12.",
+        "evidence_ids": [
+         "MT7PJB7N5LRE@2026-06-12"
+        ],
+        "values": {
+         "device_id": "MT7PJB7N5LRE",
+         "hostname": "acme-macbook-4",
+         "disk_free_pct": 2.0,
+         "disk_free_gb": 10.2,
+         "disk_total_gb": 512,
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "Total of 2 devices matched the low_disk threshold.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "count": 2
+        }
+       }
+      ],
+      "definitions_used": [
+       "low_disk"
+      ],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 5905,
+   "output_tokens": 627,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

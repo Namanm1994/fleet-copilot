@@ -1,0 +1,174 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-e49ee1b46d53477d12cefc59": {
+   "content": "{\n  \"intent_class\": \"broad\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run all insight detectors across the fleet to identify any problems\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1247,
+   "output_tokens": 352,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-70fe7ffa5d82fa9c829ef10d": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-20411ec1-a4a3-4fac-9b4f-0fdddebebee3",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "battery_eol",
+       "ram_constrained",
+       "low_storage",
+       "compliance_drift",
+       "prohibited_software"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5455,
+   "output_tokens": 109,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-92ebdbf9af88df4fde350f5e": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-945635b0-e29f-4914-869c-3e502ee08af6",
+     "name": "find_devices",
+     "args": {
+      "criteria": {},
+      "group_by": "platform"
+     }
+    }
+   ],
+   "input_tokens": 5643,
+   "output_tokens": 107,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-bfd252761f9b8298a988ad5b": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-1df5b75f-11b4-4ac4-bf2b-44b59e261cbf",
+     "name": "get_compliance_overview",
+     "args": {}
+    }
+   ],
+   "input_tokens": 6156,
+   "output_tokens": 29,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-6f4a8b8a32e89cf99cb9113c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-d3ca9bd2-2c28-4d64-bcd4-4d0632eae8ec",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "low_disk": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 7584,
+   "output_tokens": 48,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-9de95e36b1f6d4cb2c0f0d8a": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f8d9b478-3d74-46e5-bd22-1a948d847376",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "battery_not_normal": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 8035,
+   "output_tokens": 45,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-9631ca1c2f3e4d7e36d7e24b": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-3273f567-b0dd-4162-84cb-44b7f7558915",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "ram_used_pct_gte": 90
+      }
+     }
+    }
+   ],
+   "input_tokens": 8563,
+   "output_tokens": 59,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "007-c15ae614fd0fd7e70c45df2f": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6acf8a2e-fe68-470d-9900-82acdea611f5",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "stale": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 8854,
+   "output_tokens": 56,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "008-9871082f3a2290fdd6764625": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-703775e9-2040-41f1-add0-e42c905f53b3",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "has_prohibited_software": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 9020,
+   "output_tokens": 247,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

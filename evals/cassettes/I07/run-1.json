@@ -1,0 +1,182 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-d76becd1512d3820e0dfbd5d": {
+   "content": "{\n  \"intent_class\": \"compliance\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-BLIP-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device name FX-BLIP-01 to a device ID\"\n    },\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run compliance_drift detector on the resolved device to see if screen lock compliance is drifting\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1255,
+   "output_tokens": 667,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-3ae3bdeab97c5fb7b509bc69": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-8e1a016d-84eb-4fed-a1e0-322bb2863779",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-BLIP-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5505,
+   "output_tokens": 100,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-9fe2da00aa839b689fbc92ba": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-3d08f4c3-a2be-47ef-baad-f858441cbbf4",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "compliance_drift"
+      ],
+      "device_ids": [
+       "FX-BLIP-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5721,
+   "output_tokens": 120,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-c861371bb64be01746f10f0a": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-4a81487b-2380-4d76-847b-a5e2d643e640",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-BLIP-01"
+     }
+    }
+   ],
+   "input_tokens": 5929,
+   "output_tokens": 146,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-0b7b53d56580f76e3844d9ce": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-0c5908f2-43fe-4774-9ca1-0662f8928b74",
+     "name": "get_device_history",
+     "args": {
+      "device_id": "FX-BLIP-01",
+      "metrics": [
+       "compliance:screen_lock"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6540,
+   "output_tokens": 124,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-d683cc68b3144088682bb007": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-cac0374c-297a-4444-8db4-d793eda86167",
+     "name": "submit_answer",
+     "args": {
+      "summary": "FX-BLIP-01 is not currently drifting out of compliance on screen lock. The compliance_drift detector found no drift pattern, and the latest snapshot shows the screen_lock check passing. Historically, there was a single failure on 2026-06-05, but the check has passed consistently since 2026-06-06.",
+      "claims": [
+       {
+        "text": "Device FX-BLIP-01 (fx-macbook-blip, MacBook Pro) resolves to device_id FX-BLIP-01, assigned to employee emp-fx-1010.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "FX-BLIP-01",
+         "employee_id": "emp-fx-1010"
+        }
+       },
+       {
+        "text": "The compliance_drift detector ran on FX-BLIP-01 and produced no findings, indicating no drift pattern detected.",
+        "evidence_ids": [
+         "Q-1-2"
+        ],
+        "values": {
+         "detectors_run": [
+          "compliance_drift"
+         ],
+         "insights_count": 0
+        }
+       },
+       {
+        "text": "On the latest snapshot (2026-06-12), the screen_lock compliance check is passing (severity medium).",
+        "evidence_ids": [
+         "FX-BLIP-01@2026-06-12#screen_lock",
+         "Q-1-3"
+        ],
+        "values": {
+         "check_id": "screen_lock",
+         "status": "pass",
+         "severity": "medium",
+         "date": "2026-06-12"
+        }
+       },
+       {
+        "text": "Over the telemetry window (2026-05-30 to 2026-06-12), screen_lock passed on 13 of 14 days, with a single failure on 2026-06-05. The current passing streak began 2026-06-06.",
+        "evidence_ids": [
+         "Q-1-4",
+         "FX-BLIP-01@2026-06-05#screen_lock",
+         "FX-BLIP-01@2026-06-06#screen_lock",
+         "FX-BLIP-01@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "points": 14,
+         "pass_count": 13,
+         "fail_count": 1,
+         "first_fail": "2026-06-05",
+         "last_fail": "2026-06-05",
+         "current_since": "2026-06-06"
+        }
+       }
+      ],
+      "definitions_used": [
+       "min_points_for_trend"
+      ],
+      "caveats": [
+       "Telemetry covers 2026-05-20 to 2026-06-12; device first seen 2026-05-30. The compliance_drift detector requires sufficient history to assess trends; a single transient failure may not trigger a drift finding."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 7841,
+   "output_tokens": 1094,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

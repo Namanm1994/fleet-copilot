@@ -1,0 +1,83 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-b79f307f4fc4a3bfe9c93a49": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Find devices that haven't reported in over 10 days (stale devices) using the stale filter with a 10-day threshold\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1255,
+   "output_tokens": 710,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-802836ed217b3b19bc49ccfc": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6137ac54-b711-4eea-905d-8aa34e53125d",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "stale": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 5477,
+   "output_tokens": 108,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-8ea0eb93785b58066f78de54": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-e60bab6b-8266-408f-bded-3a731e1e577e",
+     "name": "submit_answer",
+     "args": {
+      "summary": "No Initech devices are currently stale (haven't reported in over 10 days).",
+      "claims": [
+       {
+        "text": "The stale device query returned zero matches as of 2026-06-12.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "count": 0
+        }
+       }
+      ],
+      "definitions_used": [
+       "stale_device"
+      ],
+      "caveats": [
+       "No devices matched; this is a 'no matches' result, cite the receipt."
+      ],
+      "answer_type": "no_matches"
+     }
+    }
+   ],
+   "input_tokens": 5643,
+   "output_tokens": 245,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

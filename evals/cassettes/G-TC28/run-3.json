@@ -1,0 +1,100 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-5d18951a4b64680b10e990fb": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the hostname 'acme-macbook-2' to a device ID\"\n    },\n    {\n      \"tool\": \"open_remediation_ticket\",\n      \"purpose\": \"Propose an IT ticket for the disk_encryption compliance check on that device\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1253,
+   "output_tokens": 902,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-c9ed8dceba1a34503828a6ae": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-52d35ada-4bcd-4d52-b8ad-f28d1721f20b",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "acme-macbook-2"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5505,
+   "output_tokens": 100,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-176eff409346ee5e17b63bdc": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-ae4a769e-e725-40eb-ba1c-b39f290330d0",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5725,
+   "output_tokens": 112,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-ab25ba7377305be24e46220a": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-198d9b8c-0d1c-4239-b2ab-185f8393a61f",
+     "name": "submit_answer",
+     "args": {
+      "summary": "The disk_encryption compliance check on acme-macbook-2 (device ID 1LYSSFD074BB) is currently passing, so a remediation ticket cannot be opened for it.",
+      "claims": [
+       {
+        "text": "Device acme-macbook-2 (1LYSSFD074BB) has disk_encryption check status 'pass' on latest snapshot 2026-06-12.",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12#disk_encryption"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB",
+         "check_id": "disk_encryption",
+         "status": "pass",
+         "snapshot_date": "2026-06-12"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Remediation tickets can only be proposed for failing compliance checks on the latest snapshot."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6348,
+   "output_tokens": 438,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

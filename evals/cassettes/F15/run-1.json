@@ -1,0 +1,221 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-8cf7e2df08796228757e35c0": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Search for devices with uTorrent installed\"\n    },\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Search for devices with BitTorrent installed\"\n    },\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Search for devices with qBittorrent installed\"\n    },\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Search for devices with Transmission installed\"\n    },\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Search for devices with Deluge installed\"\n    },\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Search for devices with Vuze installed\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1246,
+   "output_tokens": 916,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-b498d062c481bf32bb3433af": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-0e23eb17-c392-455e-a4e8-4a6fdd8c2a38",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "has_software": "uTorrent"
+      }
+     }
+    }
+   ],
+   "input_tokens": 5556,
+   "output_tokens": 111,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-a26d22070cd1d91edcd16ea0": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-2acf4d3f-38fc-4a53-9633-7d3ba6cabac1",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "has_software": "BitTorrent"
+      }
+     }
+    }
+   ],
+   "input_tokens": 5851,
+   "output_tokens": 87,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-5a21b550ebb71b760129adbf": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f412af66-d09d-4100-a241-c185e1ea0f76",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "has_software": "qBittorrent"
+      }
+     }
+    }
+   ],
+   "input_tokens": 6017,
+   "output_tokens": 99,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-babc79c1daf712b17037a5fb": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-c394e85f-b6b4-450f-9443-e94ffc6256a0",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "has_software": "Transmission"
+      }
+     }
+    }
+   ],
+   "input_tokens": 6185,
+   "output_tokens": 111,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-71b430377b4b00e50ed89315": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-d47c9f41-2a9f-43ae-8f90-68ef2a16c92e",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "has_software": "Deluge"
+      }
+     }
+    }
+   ],
+   "input_tokens": 6350,
+   "output_tokens": 107,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-1759834bb5e72b606c83e209": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-92d9c085-c959-4578-b3e4-f9abf847e44d",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "has_software": "Vuze"
+      }
+     }
+    }
+   ],
+   "input_tokens": 6515,
+   "output_tokens": 110,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "007-6b6e3929b9f3cd8160cf8a7e": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-bc771a48-babe-4b01-8d5c-84e41d25a8a0",
+     "name": "submit_answer",
+     "args": {
+      "summary": "One device in the fleet is running a torrent client: device FX-UTOR-01 (hostname fx-dell-utorrent) has µTorrent 3.6 installed as of 2026-06-12. No other common torrent clients (BitTorrent, qBittorrent, Transmission, Deluge, Vuze) were found on any devices.",
+      "claims": [
+       {
+        "text": "Device FX-UTOR-01 (hostname fx-dell-utorrent, employee emp-fx-1013) has µTorrent 3.6 installed as of 2026-06-12.",
+        "evidence_ids": [
+         "FX-UTOR-01@2026-06-12",
+         "FX-UTOR-01@2026-06-12$utorrent"
+        ],
+        "values": {
+         "device_id": "FX-UTOR-01",
+         "hostname": "fx-dell-utorrent",
+         "employee_id": "emp-fx-1013",
+         "software": "µTorrent 3.6",
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "No devices have BitTorrent installed.",
+        "evidence_ids": [
+         "Q-1-2"
+        ],
+        "values": {
+         "count": 0
+        }
+       },
+       {
+        "text": "No devices have qBittorrent installed.",
+        "evidence_ids": [
+         "Q-1-3"
+        ],
+        "values": {
+         "count": 0
+        }
+       },
+       {
+        "text": "No devices have Transmission installed.",
+        "evidence_ids": [
+         "Q-1-4"
+        ],
+        "values": {
+         "count": 0
+        }
+       },
+       {
+        "text": "No devices have Deluge installed.",
+        "evidence_ids": [
+         "Q-1-5"
+        ],
+        "values": {
+         "count": 0
+        }
+       },
+       {
+        "text": "No devices have Vuze installed.",
+        "evidence_ids": [
+         "Q-1-6"
+        ],
+        "values": {
+         "count": 0
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Telemetry covers 2026-05-20 to 2026-06-12 only; software presence is based on latest snapshot per device."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6680,
+   "output_tokens": 670,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

@@ -1,0 +1,79 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-7bbad7d76390cbee8c2267be": {
+   "content": "{\n  \"intent_class\": \"aggregate\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Count total devices in Acme's fleet\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1245,
+   "output_tokens": 271,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-1e662a0ba2277b96979756a9": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-17dcc6a0-f7ba-42d1-9f40-4264a6fd53d8",
+     "name": "find_devices",
+     "args": {
+      "criteria": {}
+     }
+    }
+   ],
+   "input_tokens": 5448,
+   "output_tokens": 140,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-9b2c83930ec979d13bb9b115": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-083a0a46-40ed-4d5d-acf2-352d7c5f17f4",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Acme has 10 devices in its fleet as of 2026-06-12.",
+      "claims": [
+       {
+        "text": "Acme's fleet contains 10 devices total.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "count": 10
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Telemetry covers 2026-05-14 to 2026-06-12; counts reflect devices with a snapshot on the latest date (2026-06-12)."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6723,
+   "output_tokens": 221,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

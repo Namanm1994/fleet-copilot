@@ -1,0 +1,130 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-85be9f0c1cec5a99842fb636": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-SHORT-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Confirm FX-SHORT-01 maps to a single device ID\"\n    },\n    {\n      \"tool\": \"get_device_history\",\n      \"purpose\": \"Retrieve disk usage time series for FX-SHORT-01 over the telemetry window to assess trend\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1254,
+   "output_tokens": 346,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-14ccc01387485370985932e3": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-068eecc0-6291-4b3d-b351-e8b14565eb06",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-SHORT-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5506,
+   "output_tokens": 95,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-103be49b8db42a1130046894": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f7c1049d-4fd9-4c9c-9899-fc1a1eb5bc37",
+     "name": "get_device_history",
+     "args": {
+      "device_id": "FX-SHORT-01",
+      "metrics": [
+       "disk_free_pct"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5722,
+   "output_tokens": 163,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-192f1babc53045fe8b49bdc4": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-c33979f9-014d-4e00-89f8-931d0a8f8373",
+     "name": "submit_answer",
+     "args": {
+      "summary": "FX-SHORT-01's disk free space has been stable at 45% over the last three snapshots (2026-06-10 to 2026-06-12), but there are only 3 data points, which is below the minimum required (7) to assess a trend.",
+      "claims": [
+       {
+        "text": "Disk free percentage for FX-SHORT-01 was 45% on 2026-06-10, 2026-06-11, and 2026-06-12.",
+        "evidence_ids": [
+         "FX-SHORT-01@2026-06-10",
+         "FX-SHORT-01@2026-06-11",
+         "FX-SHORT-01@2026-06-12"
+        ],
+        "values": {
+         "dates": [
+          "2026-06-10",
+          "2026-06-11",
+          "2026-06-12"
+         ],
+         "disk_free_pct": 45
+        }
+       },
+       {
+        "text": "The time series shows zero changes and a constant value of 45% free across the three snapshots.",
+        "evidence_ids": [
+         "Q-1-2"
+        ],
+        "values": {
+         "points": 3,
+         "changes": 0,
+         "min": 45,
+         "max": 45
+        }
+       },
+       {
+        "text": "The system indicates fewer than 7 snapshots is insufficient data for a trend determination.",
+        "evidence_ids": [
+         "Q-1-2"
+        ],
+        "values": {
+         "min_points_for_trend": 7
+        }
+       }
+      ],
+      "definitions_used": [
+       "min_points_for_trend"
+      ],
+      "caveats": [
+       "Only 3 snapshots in range; fewer than 7 is insufficient data for a trend."
+      ],
+      "answer_type": "insufficient_data"
+     }
+    }
+   ],
+   "input_tokens": 6229,
+   "output_tokens": 803,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

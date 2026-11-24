@@ -1,0 +1,147 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-b3ee91b27aa9ec8afb27e9d4": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the hostname 'acme-macbook-2' to a device ID\"\n    },\n    {\n      \"tool\": \"get_device_history\",\n      \"purpose\": \"Retrieve the compliance history for the screen lock check on that device to find when it started failing\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1251,
+   "output_tokens": 297,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-55426f46148ee7ed315143db": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-61763ce5-71b6-4b60-9b19-c6b9ae3768ab",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "acme-macbook-2"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5503,
+   "output_tokens": 92,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-410e39d413fde0ce4a5c268c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-9993a6e7-1617-4521-b59f-f188c1dc62a9",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5723,
+   "output_tokens": 148,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-87e8b3877b928a4bbe2f0e8a": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-ae064777-a556-4182-9a00-b1c112605726",
+     "name": "get_device_history",
+     "args": {
+      "device_id": "1LYSSFD074BB",
+      "metrics": [
+       "compliance:screen_lock"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6346,
+   "output_tokens": 92,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-f6ff3348afc31d2e11d2e77a": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-d6542c6c-c86a-48dd-acdc-79ab65a509d5",
+     "name": "submit_answer",
+     "args": {
+      "summary": "acme-macbook-2 (device ID 1LYSSFD074BB) started failing the screen lock compliance check on 2026-05-22 and has continued failing through the latest snapshot on 2026-06-12.",
+      "claims": [
+       {
+        "text": "The device passed screen lock checks from 2026-05-14 through 2026-05-21.",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-05-14#screen_lock",
+         "1LYSSFD074BB@2026-05-15#screen_lock",
+         "1LYSSFD074BB@2026-05-16#screen_lock",
+         "1LYSSFD074BB@2026-05-17#screen_lock",
+         "1LYSSFD074BB@2026-05-18#screen_lock",
+         "1LYSSFD074BB@2026-05-19#screen_lock",
+         "1LYSSFD074BB@2026-05-20#screen_lock",
+         "1LYSSFD074BB@2026-05-21#screen_lock"
+        ],
+        "values": {
+         "pass_count": 8
+        }
+       },
+       {
+        "text": "The first failure occurred on 2026-05-22 and the device has failed every day since, including the latest snapshot on 2026-06-12.",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-05-22#screen_lock",
+         "1LYSSFD074BB@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "first_fail": "2026-05-22",
+         "fail_count": 22,
+         "current_since": "2026-05-22"
+        }
+       },
+       {
+        "text": "The compliance history summary confirms the screen lock check has been failing since 2026-05-22.",
+        "evidence_ids": [
+         "Q-1-3"
+        ],
+        "values": {
+         "summary_first_fail": "2026-05-22",
+         "summary_current_since": "2026-05-22"
+        }
+       }
+      ],
+      "definitions_used": [
+       "min_points_for_trend"
+      ],
+      "caveats": [
+       "Telemetry covers 2026-05-14 to 2026-06-12 only; no data exists before 2026-05-14."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 8861,
+   "output_tokens": 847,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

@@ -1,0 +1,158 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-fba48f6cd8d3d0c564a5e36e": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Find all devices with low disk space using the low_disk filter\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1246,
+   "output_tokens": 192,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-5082afd75c909e9520257e18": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-54b3f2cf-e109-4590-84c6-2a2eccbc912a",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "low_disk": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 5454,
+   "output_tokens": 81,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-b5485781d7868d4970648214": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-023446ca-f86f-49d4-bfce-922b307996be",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "low_disk": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 5619,
+   "output_tokens": 61,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-4153b449cc62302c6eec4307": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-501c88e3-3a34-4c53-bcfa-1d2a55d32569",
+     "name": "get_definitions",
+     "args": {
+      "names": [
+       "low_disk"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5710,
+   "output_tokens": 91,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-a918def6b95b7b36dd4990d8": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-08b1c8c2-d144-4698-aff0-5f8d1ae8ce3a",
+     "name": "find_devices",
+     "args": {
+      "criteria": {},
+      "limit": 5
+     }
+    }
+   ],
+   "input_tokens": 5871,
+   "output_tokens": 91,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-7c25859ee7bd95e215e58f45": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-e8fe7f7d-dc3b-4f9d-8459-ab28cbc2b6b4",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "low_storage"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6040,
+   "output_tokens": 74,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-76cee1f37a16bbbac18fdf0d": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-89829c8f-7e5e-4617-bc00-d398abe019aa",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Unable to retrieve low-disk devices due to internal tool errors.",
+      "claims": [
+       {
+        "text": "The find_devices tool with low_disk filter returned an internal error and no data.",
+        "evidence_ids": [],
+        "values": {}
+       },
+       {
+        "text": "The get_definitions tool for low_disk threshold also returned an internal error.",
+        "evidence_ids": [],
+        "values": {}
+       },
+       {
+        "text": "The run_insights tool with low_storage detector also returned an internal error.",
+        "evidence_ids": [],
+        "values": {}
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "All query tools failed with internal errors; no device data could be retrieved."
+      ],
+      "answer_type": "insufficient_data"
+     }
+    }
+   ],
+   "input_tokens": 6204,
+   "output_tokens": 220,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

@@ -1,0 +1,114 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-3886c80bda1b4fbee3d8af9d": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"emp-fx-1002\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map employee ID emp-fx-1002 to associated device IDs\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Get detailed information for each device belonging to emp-fx-1002\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1252,
+   "output_tokens": 851,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-e14047da4a6c08aa91a42739": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-e2da14bc-96c9-477a-b425-af59f915181f",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "emp-fx-1002"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5499,
+   "output_tokens": 85,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-0401ad33a51e40518d8fdb5a": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f48c2c16-b10c-45d3-80b0-e4503315ebc9",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-BATT-01"
+     }
+    }
+   ],
+   "input_tokens": 5724,
+   "output_tokens": 79,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-4d0351e4ebd201d23bff383e": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-341e6287-46a5-478f-b326-7dec72a3308e",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Employee emp-fx-1002 has one assigned device: FX-BATT-01 (fx-macbook-batt), a MacBook Pro running macOS 14.5.",
+      "claims": [
+       {
+        "text": "Employee emp-fx-1002 is associated with device FX-BATT-01.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "FX-BATT-01",
+         "employee_id": "emp-fx-1002"
+        }
+       },
+       {
+        "text": "Device FX-BATT-01 is a MacBook Pro (Apple) with hostname fx-macbook-batt, running macOS 14.5, 32 GB RAM, 512 GB disk (45% free), battery condition Service Recommended (993 cycles).",
+        "evidence_ids": [
+         "Q-1-2"
+        ],
+        "values": {
+         "device_id": "FX-BATT-01",
+         "hostname": "fx-macbook-batt",
+         "model": "MacBook Pro",
+         "manufacturer": "Apple",
+         "os": "macOS 14.5",
+         "ram_total_gb": 32,
+         "disk_total_gb": 512,
+         "disk_free_pct": 45,
+         "battery_condition": "Service Recommended",
+         "battery_cycle_count": 993
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6327,
+   "output_tokens": 543,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

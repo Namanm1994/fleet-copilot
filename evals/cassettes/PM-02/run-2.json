@@ -1,0 +1,31 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-53038e215cbc268842a7c45a": {
+   "content": "{\n  \"intent_class\": \"broad\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"laptops\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": true,\n  \"clarification_question\": \"The telemetry doesn't include device form factor (laptop vs desktop). Would you like me to consider all macOS and Windows devices as potential laptops, or do you have a specific list of device IDs or hostnames you consider laptops?\",\n  \"steps\": []\n}",
+   "tool_calls": [],
+   "input_tokens": 1262,
+   "output_tokens": 3503,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

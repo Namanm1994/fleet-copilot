@@ -1,0 +1,110 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-6420b89c014a14fe9c6afa11": {
+   "content": "{\n  \"intent_class\": \"compliance\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"get_compliance_overview\",\n      \"purpose\": \"Get pass/fail counts for all compliance checks to identify screen lock related checks and failing devices\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1248,
+   "output_tokens": 263,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-e3cc8f86ab02fa2d127032c6": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6eb4e112-7072-4a23-be4c-48cd3c5b5e92",
+     "name": "get_compliance_overview",
+     "args": {}
+    }
+   ],
+   "input_tokens": 5463,
+   "output_tokens": 67,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-4146c2b8850e1b54d3cb1687": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-9fe773dc-8ed7-49fc-8ff0-73ff982078f3",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Three devices are failing the screen_lock compliance check (screen lock switched off): FX-DRIFT-01 (fx-macbook-drift), FX-FLAP-01 (fx-macbook-flap), and FX-STALE-01 (fx-macbook-stale). The first two were last seen on 2026-06-12; FX-STALE-01's latest snapshot is from 2026-05-31 (stale).",
+      "claims": [
+       {
+        "text": "3 devices fail the screen_lock compliance check (screen lock off).",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "count": 3
+        }
+       },
+       {
+        "text": "FX-DRIFT-01 (fx-macbook-drift) fails screen_lock, latest snapshot 2026-06-12.",
+        "evidence_ids": [
+         "FX-DRIFT-01@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "device_id": "FX-DRIFT-01",
+         "hostname": "fx-macbook-drift",
+         "date": "2026-06-12"
+        }
+       },
+       {
+        "text": "FX-FLAP-01 (fx-macbook-flap) fails screen_lock, latest snapshot 2026-06-12.",
+        "evidence_ids": [
+         "FX-FLAP-01@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "device_id": "FX-FLAP-01",
+         "hostname": "fx-macbook-flap",
+         "date": "2026-06-12"
+        }
+       },
+       {
+        "text": "FX-STALE-01 (fx-macbook-stale) fails screen_lock, latest snapshot 2026-05-31 (stale device).",
+        "evidence_ids": [
+         "FX-STALE-01@2026-05-31#screen_lock"
+        ],
+        "values": {
+         "device_id": "FX-STALE-01",
+         "hostname": "fx-macbook-stale",
+         "date": "2026-05-31"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "FX-STALE-01's data is from 2026-05-31 and may not reflect current state; device is marked stale."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6905,
+   "output_tokens": 831,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

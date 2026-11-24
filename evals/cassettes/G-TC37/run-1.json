@@ -1,0 +1,193 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-4b5f559f8c189c5531745492": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"emp-acme-1001\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map employee ID emp-acme-1001 to associated device ID(s)\"\n    },\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Detect current findings (insights) for the employee's device(s) to get insight IDs for notification templates\"\n    },\n    {\n      \"tool\": \"notify_employee\",\n      \"purpose\": \"Propose notifying the employee about each detected finding using the fixed template for that insight\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1251,
+   "output_tokens": 1722,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-c0c74d26a7726f9754ea155b": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-7bb3668e-16f4-44b6-af17-edb28e32c772",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "emp-acme-1001"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5540,
+   "output_tokens": 116,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-982b44ca86d298898754d3ea": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-dd475678-132c-4dc8-9ea3-9bfb9bc4dc08",
+     "name": "run_insights",
+     "args": {
+      "device_ids": [
+       "1LYSSFD074BB"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5771,
+   "output_tokens": 99,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-d234587d7c2e09e035dc31fc": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-bbb2630a-3b22-4dc5-abdf-a29cd8a805a5",
+     "name": "notify_employee",
+     "args": {
+      "evidence_ids": [
+       "1LYSSFD074BB@2026-05-31$utorrent",
+       "1LYSSFD074BB@2026-06-12$utorrent"
+      ],
+      "employee_id": "emp-acme-1001",
+      "device_id": "1LYSSFD074BB",
+      "template": "prohibited_software"
+     }
+    }
+   ],
+   "input_tokens": 6628,
+   "output_tokens": 306,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-fb9fc28db2153cef9ae0c1b8": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f47f7527-bfae-48ab-9c24-1e8b6b64af21",
+     "name": "notify_employee",
+     "args": {
+      "evidence_ids": [
+       "1LYSSFD074BB@2026-05-21#screen_lock",
+       "1LYSSFD074BB@2026-05-22#screen_lock",
+       "1LYSSFD074BB@2026-06-12#screen_lock"
+      ],
+      "employee_id": "emp-acme-1001",
+      "device_id": "1LYSSFD074BB",
+      "template": "compliance_issue",
+      "check_id": "screen_lock"
+     }
+    }
+   ],
+   "input_tokens": 6950,
+   "output_tokens": 221,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-c7733202ca114f3d911dbee7": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-ea21369e-7d50-4705-98a4-4d581c53b352",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Proposed notifying emp-acme-1001 about two findings on their laptop (acme-macbook-2, device 1LYSSFD074BB): prohibited software uTorrent (first seen 2026-05-31) and screen_lock compliance check failing since 2026-05-22 (22 consecutive failing snapshots).",
+      "claims": [
+       {
+        "text": "Employee emp-acme-1001 is associated with device 1LYSSFD074BB (acme-macbook-2).",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB",
+         "employee_id": "emp-acme-1001"
+        }
+       },
+       {
+        "text": "Insights detected prohibited software uTorrent (version 3.6) on device 1LYSSFD074BB, first seen 2026-05-31.",
+        "evidence_ids": [
+         "INS-prohibited_software-1LYSSFD074BB-01e55d"
+        ],
+        "values": {
+         "software": "uTorrent",
+         "version": "3.6",
+         "first_seen": "2026-05-31"
+        }
+       },
+       {
+        "text": "Insights detected compliance drift: screen_lock check passed until 2026-05-21 and has failed since 2026-05-22 (22 consecutive failing snapshots).",
+        "evidence_ids": [
+         "INS-compliance_drift-1LYSSFD074BB-04dfcb"
+        ],
+        "values": {
+         "check_id": "screen_lock",
+         "last_pass": "2026-05-21",
+         "first_fail": "2026-05-22",
+         "consecutive_fails": 22
+        }
+       },
+       {
+        "text": "Proposed notification for prohibited software finding (proposal PRP-1).",
+        "evidence_ids": [
+         "PRP-1"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "template": "prohibited_software"
+        }
+       },
+       {
+        "text": "Proposed notification for screen_lock compliance issue (proposal PRP-2).",
+        "evidence_ids": [
+         "PRP-2"
+        ],
+        "values": {
+         "proposal_id": "PRP-2",
+         "template": "compliance_issue",
+         "check_id": "screen_lock"
+        }
+       }
+      ],
+      "definitions_used": [
+       "compliance_drift",
+       "prohibited_software"
+      ],
+      "caveats": [
+       "Notifications are proposals awaiting human approval; nothing has been sent yet."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 7300,
+   "output_tokens": 722,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

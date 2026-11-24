@@ -1,0 +1,287 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-4c20ff981ecf466e2b8257e5": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-DRIFT-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device identifier FX-DRIFT-01 to a device ID\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Get latest snapshot summary for the device (OS, RAM, disk, battery, compliance, last seen, open proposals)\"\n    },\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run pattern detectors for this specific device to identify any battery, RAM, storage, compliance, or prohibited software issues\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1250,
+   "output_tokens": 518,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-1694852fd28437d19aa8544d": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6e86fa64-38d7-4ec6-911d-dd68fb19589c",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-DRIFT-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5541,
+   "output_tokens": 89,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-98be7a0dc8145fbf300e236c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-c9f6e6a8-821a-4006-bfa6-0a55941d9f5d",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-DRIFT-01"
+     }
+    }
+   ],
+   "input_tokens": 5757,
+   "output_tokens": 96,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-11d8e6192fd98244b8ed8808": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-8ccd0f86-760a-4b81-9056-0ee6f9814bcb",
+     "name": "run_insights",
+     "args": {
+      "device_ids": [
+       "FX-DRIFT-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6368,
+   "output_tokens": 55,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-615d9f0d604cf5b52b4def92": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-cb08bedc-a386-4248-a8a1-8055256b3c67",
+     "name": "submit_answer",
+     "args": {
+      "summary": "FX-DRIFT-01 (fx-macbook-drift, MacBook Pro, emp-fx-1012) has two compliance failures on its latest snapshot (2026-06-12): os_up_to_date (medium) and screen_lock (medium). The screen_lock check has been failing consistently since 2026-06-07 (6 consecutive snapshots) after previously passing. No battery, RAM, storage, or prohibited software issues were detected.",
+      "claims": [
+       {
+        "text": "Device FX-DRIFT-01 is a MacBook Pro (fx-macbook-drift) assigned to employee emp-fx-1012, last seen 2026-06-12 running macOS 14.5 with 32 GB RAM (55% used), 512 GB disk (45% free), battery condition Normal (300 cycles).",
+        "evidence_ids": [
+         "FX-DRIFT-01@2026-06-12"
+        ],
+        "values": {
+         "device_id": "FX-DRIFT-01",
+         "hostname": "fx-macbook-drift",
+         "employee_id": "emp-fx-1012",
+         "os": "macOS 14.5",
+         "ram_total_gb": 32,
+         "ram_used_pct": 55,
+         "disk_total_gb": 512,
+         "disk_free_pct": 45,
+         "battery_condition": "Normal",
+         "battery_cycle_count": 300,
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "Compliance check disk_encryption passes (high severity).",
+        "evidence_ids": [
+         "FX-DRIFT-01@2026-06-12#disk_encryption"
+        ],
+        "values": {
+         "check_id": "disk_encryption",
+         "status": "pass",
+         "severity": "high"
+        }
+       },
+       {
+        "text": "Compliance check os_up_to_date fails (medium severity) on the latest snapshot.",
+        "evidence_ids": [
+         "FX-DRIFT-01@2026-06-12#os_up_to_date"
+        ],
+        "values": {
+         "check_id": "os_up_to_date",
+         "status": "fail",
+         "severity": "medium"
+        }
+       },
+       {
+        "text": "Compliance check screen_lock fails (medium severity) on the latest snapshot.",
+        "evidence_ids": [
+         "FX-DRIFT-01@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "check_id": "screen_lock",
+         "status": "fail",
+         "severity": "medium"
+        }
+       },
+       {
+        "text": "Insight: screen_lock passed until 2026-06-06 and has failed since 2026-06-07 (6 consecutive snapshots), indicating a compliance drift.",
+        "evidence_ids": [
+         "INS-compliance_drift-FX-DRIFT-01-e92543"
+        ],
+        "values": {
+         "insight_id": "INS-compliance_drift-FX-DRIFT-01-e92543",
+         "check_id": "screen_lock",
+         "last_pass": "2026-06-06",
+         "first_fail": "2026-06-07",
+         "consecutive_fails": 6
+        }
+       },
+       {
+        "text": "No battery end-of-life, RAM constrained, low storage, or prohibited software insights were found for this device.",
+        "evidence_ids": [
+         "Q-1-3"
+        ],
+        "values": {
+         "detectors_run": [
+          "battery_eol",
+          "ram_constrained",
+          "low_storage",
+          "compliance_drift",
+          "prohibited_software"
+         ],
+         "insights_found": 1
+        }
+       }
+      ],
+      "definitions_used": [
+       "compliance_drift"
+      ],
+      "caveats": [
+       "Telemetry window is 2026-05-20 to 2026-06-12; device first seen 2026-05-30."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6931,
+   "output_tokens": 1336,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-c3aafb459be44798507415e9": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-DRIFT-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"get_device_history\",\n      \"purpose\": \"Get the timeline of the screen_lock compliance check for FX-DRIFT-01 to confirm when failures began\"\n    },\n    {\n      \"tool\": \"get_device_history\",\n      \"purpose\": \"Get the timeline of the os_up_to_date compliance check for FX-DRIFT-01 to determine when it started failing\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1385,
+   "output_tokens": 522,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-0c75259bbece87a0619846fb": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-445e4cd0-c312-4a0f-87cf-35a97e09b8f5",
+     "name": "get_device_history",
+     "args": {
+      "device_id": "FX-DRIFT-01",
+      "metrics": [
+       "compliance:screen_lock"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5856,
+   "output_tokens": 184,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "007-ce3a500845a2be520c5c90b9": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-142255c2-f8f4-43c0-90e1-74d249ab7e93",
+     "name": "get_device_history",
+     "args": {
+      "device_id": "FX-DRIFT-01",
+      "metrics": [
+       "compliance:os_up_to_date"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 7156,
+   "output_tokens": 71,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "008-857db053c537bfda7533def1": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-5c74aea6-2924-454c-8516-73801472ba5d",
+     "name": "submit_answer",
+     "args": {
+      "summary": "The screen_lock failure on FX-DRIFT-01 started on 2026-06-07 (after passing from 2026-05-30 to 2026-06-06). The os_up_to_date failure has been failing since the first snapshot in the window on 2026-05-30.",
+      "claims": [
+       {
+        "text": "screen_lock compliance check on FX-DRIFT-01 started failing on 2026-06-07",
+        "evidence_ids": [
+         "FX-DRIFT-01@2026-06-07#screen_lock",
+         "FX-DRIFT-01@2026-06-06#screen_lock",
+         "Q-2-4"
+        ],
+        "values": {
+         "first_fail_date": "2026-06-07",
+         "current_since": "2026-06-07",
+         "pass_count_before": 8,
+         "fail_count_after": 6
+        }
+       },
+       {
+        "text": "os_up_to_date compliance check on FX-DRIFT-01 has been failing since the first available snapshot on 2026-05-30",
+        "evidence_ids": [
+         "FX-DRIFT-01@2026-05-30#os_up_to_date",
+         "Q-2-5"
+        ],
+        "values": {
+         "first_fail_date": "2026-05-30",
+         "current_since": "2026-05-30",
+         "fail_count": 14,
+         "pass_count": 0
+        }
+       }
+      ],
+      "definitions_used": [
+       "min_points_for_trend"
+      ],
+      "caveats": [
+       "Telemetry window is 2026-05-20 to 2026-06-12; os_up_to_date may have been failing before 2026-05-30 but earlier data is not available."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 8519,
+   "output_tokens": 704,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

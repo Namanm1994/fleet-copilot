@@ -1,0 +1,128 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-d76becd1512d3820e0dfbd5d": {
+   "content": "{\n  \"intent_class\": \"compliance\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-BLIP-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device name FX-BLIP-01 to a device ID\"\n    },\n    {\n      \"tool\": \"get_device_history\",\n      \"purpose\": \"Check the compliance trend for screen lock on this device over the telemetry window\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1255,
+   "output_tokens": 370,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-497effb0d316873c56d6fa18": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-83cfec31-5558-4792-84ea-9fbfdc2e85bc",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-BLIP-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5502,
+   "output_tokens": 101,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-432a1621a47db73f5306cf3b": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-da96f181-332e-478f-b470-c1597d714b1b",
+     "name": "get_device_history",
+     "args": {
+      "device_id": "FX-BLIP-01",
+      "metrics": [
+       "compliance:screen_lock"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5718,
+   "output_tokens": 183,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-7c26333781bbdbd06f68e0c6": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-123f0c8f-af1b-4db4-9b76-266c4b51c8db",
+     "name": "submit_answer",
+     "args": {
+      "summary": "FX-BLIP-01 had a single screen-lock compliance failure on 2026-06-05 but has passed every day since 2026-06-06; it is not currently drifting out of compliance.",
+      "claims": [
+       {
+        "text": "Screen-lock compliance was checked on 14 days between 2026-05-30 and 2026-06-12.",
+        "evidence_ids": [
+         "Q-1-2"
+        ],
+        "values": {
+         "points": 14
+        }
+       },
+       {
+        "text": "The device failed screen-lock compliance once, on 2026-06-05.",
+        "evidence_ids": [
+         "FX-BLIP-01@2026-06-05#screen_lock"
+        ],
+        "values": {
+         "fail_count": 1,
+         "first_fail": "2026-06-05",
+         "last_fail": "2026-06-05"
+        }
+       },
+       {
+        "text": "Since 2026-06-06 the device has passed screen-lock compliance continuously (7 consecutive passing days through 2026-06-12).",
+        "evidence_ids": [
+         "FX-BLIP-01@2026-06-06#screen_lock",
+         "FX-BLIP-01@2026-06-07#screen_lock",
+         "FX-BLIP-01@2026-06-08#screen_lock",
+         "FX-BLIP-01@2026-06-09#screen_lock",
+         "FX-BLIP-01@2026-06-10#screen_lock",
+         "FX-BLIP-01@2026-06-11#screen_lock",
+         "FX-BLIP-01@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "pass_count": 13,
+         "current": "pass",
+         "current_since": "2026-06-06"
+        }
+       }
+      ],
+      "definitions_used": [
+       "min_points_for_trend"
+      ],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 7019,
+   "output_tokens": 938,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

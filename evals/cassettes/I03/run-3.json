@@ -1,0 +1,157 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-e49ee1b46d53477d12cefc59": {
+   "content": "{\n  \"intent_class\": \"broad\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run all pattern detectors (battery_eol, ram_constrained, low_storage, compliance_drift, prohibited_software) across the entire fleet to identify any problems.\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1247,
+   "output_tokens": 567,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-7f52c1cb12371f194ac2473c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-3f906325-db81-4fd1-a473-646789a20e7f",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "battery_eol",
+       "ram_constrained",
+       "low_storage",
+       "compliance_drift",
+       "prohibited_software"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5477,
+   "output_tokens": 112,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-6a4f27f80487a14793aa8c4b": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-821c0c4a-952a-4d19-8923-c4ff94c71cc0",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Acme has 12 active findings across 7 devices: 3 batteries at end-of-life (Service Recommended), 2 devices with critically low disk space (2-3% free), 1 device with prohibited software (uTorrent), 5 devices with screen_lock compliance drift (failing for 12-22 consecutive days), and 1 device with persistent high RAM usage (95%+ on 16 GB).",
+      "claims": [
+       {
+        "text": "Three devices have batteries in 'Service Recommended' condition: acme-macbook-1 (cycle count 1049, since 2026-05-30), acme-thinkpad-8 (cycle count 1157, since 2026-05-23), and acme-dell-9 (cycle count 948, since 2026-05-24).",
+        "evidence_ids": [
+         "INS-battery_eol-7VP16KHV88LM-31702b",
+         "INS-battery_eol-8NM23J95R5I6-dc9f70",
+         "INS-battery_eol-M4XVHUV1MEPZ-1cee44"
+        ],
+        "values": {
+         "devices": [
+          "7VP16KHV88LM",
+          "8NM23J95R5I6",
+          "M4XVHUV1MEPZ"
+         ],
+         "count": 3
+        }
+       },
+       {
+        "text": "Two devices have critically low system volume free space: acme-thinkpad-8 at 2.6% free (26 GB of 1024 GB, low in 25 of 30 snapshots, trend -0.51%/day) and acme-macbook-4 at 2.0% free (10 GB of 512 GB, low in 30 of 30 snapshots, trend -0.20%/day).",
+        "evidence_ids": [
+         "INS-low_storage-8NM23J95R5I6-0b5037",
+         "INS-low_storage-MT7PJB7N5LRE-1cdb77"
+        ],
+        "values": {
+         "devices": [
+          "8NM23J95R5I6",
+          "MT7PJB7N5LRE"
+         ],
+         "count": 2
+        }
+       },
+       {
+        "text": "acme-macbook-2 has prohibited software uTorrent 3.6 installed, first seen 2026-05-31.",
+        "evidence_ids": [
+         "INS-prohibited_software-1LYSSFD074BB-01e55d"
+        ],
+        "values": {
+         "device": "1LYSSFD074BB",
+         "software": "uTorrent",
+         "version": "3.6"
+        }
+       },
+       {
+        "text": "Five devices show screen_lock compliance drift (medium severity): acme-macbook-2 failing since 2026-05-22 (22 consecutive fails), acme-thinkpad-8 since 2026-05-30 (14 fails), acme-mac-5 since 2026-06-01 (12 fails), acme-macbook-3 since 2026-06-01 (12 fails), and acme-macbook-4 since 2026-05-28 (16 fails).",
+        "evidence_ids": [
+         "INS-compliance_drift-1LYSSFD074BB-04dfcb",
+         "INS-compliance_drift-8NM23J95R5I6-04703d",
+         "INS-compliance_drift-DLT35MHGTH2D-5e6a20",
+         "INS-compliance_drift-DSYPSES7SKBB-e42f99",
+         "INS-compliance_drift-MT7PJB7N5LRE-c14b0c"
+        ],
+        "values": {
+         "devices": [
+          "1LYSSFD074BB",
+          "8NM23J95R5I6",
+          "DLT35MHGTH2D",
+          "DSYPSES7SKBB",
+          "MT7PJB7N5LRE"
+         ],
+         "count": 5
+        }
+       },
+       {
+        "text": "acme-dell-9 shows persistent RAM constraint: RAM at or above 95% in 15 of 30 snapshots on a 16 GB device.",
+        "evidence_ids": [
+         "INS-ram_constrained-M4XVHUV1MEPZ-d92a20"
+        ],
+        "values": {
+         "device": "M4XVHUV1MEPZ",
+         "ram_total_gb": 16,
+         "high_usage_snapshots": 15
+        }
+       }
+      ],
+      "definitions_used": [
+       "battery_eol",
+       "compliance_drift",
+       "low_disk",
+       "low_disk_persistent",
+       "prohibited_software",
+       "ram_persistent"
+      ],
+      "caveats": [
+       "Telemetry covers 2026-05-14 to 2026-06-12 only; no data outside this window.",
+       "RAM constrained finding based on one reading per day; high usage at that moment, not proof of sustained memory pressure.",
+       "acme-thinkpad-8 has both battery EOL and low storage; acme-dell-9 has both battery EOL and RAM constrained; acme-macbook-4 has both low storage and compliance drift; acme-macbook-2 has both prohibited software and compliance drift."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 9953,
+   "output_tokens": 2024,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

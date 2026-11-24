@@ -1,0 +1,168 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-25e0f482a2b69eb6d63f9cae": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-RAM-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device name FX-RAM-01 to a device ID\"\n    },\n    {\n      \"tool\": \"create_upgrade_order\",\n      \"purpose\": \"Propose a RAM upgrade order for the resolved device\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1250,
+   "output_tokens": 736,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-154774d6ffe9d9c94c62a15c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-5a910323-f366-4b25-bdfa-089ee216f7cf",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-RAM-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5490,
+   "output_tokens": 91,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-b409ec51228a734dc69903f7": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-a6b8b795-8e8e-44fd-9800-27ad78e9f02a",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-RAM-01"
+     }
+    }
+   ],
+   "input_tokens": 5708,
+   "output_tokens": 94,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-793163a11960f107c0f1ecc3": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-c202fe48-8180-4e07-8b46-cb0d8114c5eb",
+     "name": "run_insights",
+     "args": {
+      "device_ids": [
+       "FX-RAM-01"
+      ],
+      "detectors": [
+       "ram_constrained"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6318,
+   "output_tokens": 103,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-f8f0652c253534d521052c0d": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-5bc83950-4b32-4bd6-91c7-6743d9101297",
+     "name": "create_upgrade_order",
+     "args": {
+      "evidence_ids": [
+       "INS-ram_constrained-FX-RAM-01-1dd3af",
+       "FX-RAM-01@2026-06-12"
+      ],
+      "device_id": "FX-RAM-01",
+      "component": "ram",
+      "spec_gb": 32
+     }
+    }
+   ],
+   "input_tokens": 6925,
+   "output_tokens": 340,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-2717215d1cdafc8917f6a368": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-dd27e843-c93a-42e0-8620-c4ace01984ec",
+     "name": "submit_answer",
+     "args": {
+      "summary": "A RAM upgrade order for 32 GB has been proposed for device FX-RAM-01 (fx-latitude-ram, Dell Latitude 7440). The proposal (PRP-1) is awaiting human approval; nothing has been purchased.",
+      "claims": [
+       {
+        "text": "Device FX-RAM-01 (fx-latitude-ram, Dell Latitude 7440) has 16 GB RAM and shows persistent high memory usage.",
+        "evidence_ids": [
+         "FX-RAM-01@2026-06-12",
+         "INS-ram_constrained-FX-RAM-01-1dd3af"
+        ],
+        "values": {
+         "ram_total_gb": 16,
+         "ram_used_pct": 97.5,
+         "snapshots_at_or_above_95_pct": 10,
+         "total_snapshots": 14
+        }
+       },
+       {
+        "text": "The ram_constrained insight confirms RAM at or above 95% in 10 of 14 snapshots, making the device eligible for a RAM upgrade.",
+        "evidence_ids": [
+         "INS-ram_constrained-FX-RAM-01-1dd3af"
+        ],
+        "values": {
+         "insight_id": "INS-ram_constrained-FX-RAM-01-1dd3af",
+         "severity": "medium",
+         "level": "persistent"
+        }
+       },
+       {
+        "text": "A RAM upgrade order to 32 GB has been proposed (proposal PRP-1) and is awaiting human approval.",
+        "evidence_ids": [
+         "PRP-1"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "status": "proposed",
+         "target_ram_gb": 32
+        }
+       }
+      ],
+      "definitions_used": [
+       "ram_persistent"
+      ],
+      "caveats": [
+       "One RAM reading per day: high usage at that moment, not proof of sustained memory pressure."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 7221,
+   "output_tokens": 501,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

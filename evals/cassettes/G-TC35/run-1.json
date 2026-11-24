@@ -1,0 +1,214 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-4ea9bfa147226af7b33f9ee9": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-RAM-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device reference 'FX-RAM-01' to a device ID\"\n    },\n    {\n      \"tool\": \"create_upgrade_order\",\n      \"purpose\": \"Propose a RAM upgrade order for 128 GB for the resolved device\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1253,
+   "output_tokens": 641,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-ede69a539417f8264c2c1ca3": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6200ab87-c9b1-4aba-b73b-1a1eb84d2d7c",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-RAM-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5501,
+   "output_tokens": 102,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-80268fcecedf40eeb1eb4e51": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-a27222cc-a993-45be-91d0-2bbc57a6883b",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-RAM-01"
+     }
+    }
+   ],
+   "input_tokens": 5719,
+   "output_tokens": 92,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-ba06a6cba45aae80b783ffc6": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-ccb31205-203c-48a6-b2ca-fd1fb7a60da2",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "ram_constrained"
+      ],
+      "device_ids": [
+       "FX-RAM-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6329,
+   "output_tokens": 138,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-ed64e6bd01ebd1cb2da55a38": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-ca68cd21-53e5-4679-91ff-e1d01f3c4299",
+     "name": "create_upgrade_order",
+     "args": {
+      "evidence_ids": [
+       "INS-ram_constrained-FX-RAM-01-1dd3af"
+      ],
+      "device_id": "FX-RAM-01",
+      "component": "ram",
+      "spec_gb": 128
+     }
+    }
+   ],
+   "input_tokens": 6936,
+   "output_tokens": 260,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-ed10067d3e9a1af094a25540": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-fdb325f9-ad24-46f9-8988-6f21bd3876ad",
+     "name": "submit_answer",
+     "args": {
+      "summary": "The RAM upgrade order for 128 GB was rejected because 128 GB is not an allowed specification for this device. The allowed RAM upgrade options are 16 GB, 32 GB, and 64 GB. The device FX-RAM-01 (Dell Latitude 7440) currently has 16 GB RAM and shows persistent high memory usage (95%+ in 10 of 14 recent snapshots), making it eligible for a RAM upgrade up to 64 GB.",
+      "claims": [
+       {
+        "text": "Device FX-RAM-01 (fx-latitude-ram, Dell Latitude 7440) currently has 16 GB RAM with 97.5% usage on latest snapshot.",
+        "evidence_ids": [
+         "FX-RAM-01@2026-06-12"
+        ],
+        "values": {
+         "ram_total_gb": 16,
+         "ram_used_pct": 97.5
+        }
+       },
+       {
+        "text": "RAM constrained insight shows persistent high memory usage: 95%+ in 10 of 14 snapshots over the telemetry window.",
+        "evidence_ids": [
+         "INS-ram_constrained-FX-RAM-01-1dd3af"
+        ],
+        "values": {
+         "share": 0.71,
+         "max_consecutive": 3,
+         "level": "persistent"
+        }
+       },
+       {
+        "text": "Upgrade order for 128 GB RAM failed: allowed RAM specifications are 16 GB, 32 GB, and 64 GB only.",
+        "evidence_ids": [],
+        "values": {
+         "allowed_specs_gb": [
+          16,
+          32,
+          64
+         ],
+         "requested_gb": 128
+        }
+       }
+      ],
+      "definitions_used": [
+       "ram_persistent"
+      ],
+      "caveats": [
+       "One RAM reading per day: high usage at that moment, not proof of sustained memory pressure."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 7162,
+   "output_tokens": 594,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-56bb237de2bd5231bcc7749c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-7af82203-67bb-47bf-b41d-ea26c51c0b7e",
+     "name": "submit_answer",
+     "args": {
+      "summary": "The RAM upgrade order for 128 GB was rejected because 128 GB is not an allowed specification for this device. The allowed RAM upgrade options are 16 GB, 32 GB, and 64 GB. The device FX-RAM-01 (Dell Latitude 7440) currently has 16 GB RAM and shows persistent high memory usage (95%+ in 10 of 14 recent snapshots), making it eligible for a RAM upgrade up to 64 GB.",
+      "claims": [
+       {
+        "text": "Device FX-RAM-01 (fx-latitude-ram, Dell Latitude 7440) currently has 16 GB RAM with 97.5% usage on latest snapshot.",
+        "evidence_ids": [
+         "FX-RAM-01@2026-06-12"
+        ],
+        "values": {
+         "ram_total_gb": 16,
+         "ram_used_pct": 97.5
+        }
+       },
+       {
+        "text": "RAM constrained insight shows persistent high memory usage: 95%+ in 10 of 14 snapshots over the telemetry window, and the device is eligible for a RAM upgrade.",
+        "evidence_ids": [
+         "INS-ram_constrained-FX-RAM-01-1dd3af"
+        ],
+        "values": {
+         "share": 0.71,
+         "max_consecutive": 3,
+         "level": "persistent",
+         "eligible_actions": [
+          "create_upgrade_order"
+         ]
+        }
+       }
+      ],
+      "definitions_used": [
+       "ram_persistent"
+      ],
+      "caveats": [
+       "One RAM reading per day: high usage at that moment, not proof of sustained memory pressure."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 7663,
+   "output_tokens": 1431,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

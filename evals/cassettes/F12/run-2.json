@@ -1,0 +1,82 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-d5ebc332a2ee7a85a0a52c16": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"Lenovo laptops\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Find all devices with platform Lenovo to see if any Lenovo laptops exist in the fleet\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1248,
+   "output_tokens": 326,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-7c1f7b49a36e0ddb304a7934": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-530ce8f8-c7d7-4653-abe5-aa4123e5434a",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "manufacturer": "Lenovo",
+       "is_laptop": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 5466,
+   "output_tokens": 95,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-08371fd04cbb7e0391443c80": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-596246b4-e106-43be-8b56-70a9c4a92d3d",
+     "name": "submit_answer",
+     "args": {
+      "summary": "No Lenovo laptops are present in the fleet as of the latest telemetry snapshot.",
+      "claims": [
+       {
+        "text": "The fleet contains zero devices with manufacturer Lenovo that are laptops.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "count": 0
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Telemetry covers 2026-05-20 to 2026-06-12; devices outside this window are not represented."
+      ],
+      "answer_type": "no_matches"
+     }
+    }
+   ],
+   "input_tokens": 5637,
+   "output_tokens": 197,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

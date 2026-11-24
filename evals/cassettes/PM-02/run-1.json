@@ -1,0 +1,134 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-53038e215cbc268842a7c45a": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"laptops\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run all insight detectors (battery_eol, ram_constrained, low_storage, compliance_drift, prohibited_software) across the fleet to identify devices with any findings that could indicate wipe/reimage candidates.\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"For each device ID returned by the insights, retrieve its latest snapshot details (including platform) to confirm it is a laptop (macOS or Windows) and gather problem details for the final list.\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1262,
+   "output_tokens": 2206,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-a8636cff8848eda4f14847c9": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-74833a2e-f946-419d-ab46-9ac02a9b8914",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "battery_eol",
+       "ram_constrained",
+       "low_storage",
+       "compliance_drift",
+       "prohibited_software"
+      ],
+      "include_acknowledged": false
+     }
+    }
+   ],
+   "input_tokens": 5555,
+   "output_tokens": 157,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-35951820570d694748d933b8": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-56207c99-00fa-4607-b20f-336f895b95fb",
+     "name": "get_device",
+     "args": {
+      "device_id": "7VP16KHV88LM"
+     }
+    }
+   ],
+   "input_tokens": 10045,
+   "output_tokens": 319,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-e24565568e51a7653ab35065": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-dd785c1d-a26e-4226-9bfc-c4e897442753",
+     "name": "get_device",
+     "args": {
+      "device_id": "8NM23J95R5I6"
+     }
+    }
+   ],
+   "input_tokens": 10682,
+   "output_tokens": 81,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-9764196d273641808f442585": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-a6600b21-2aff-4cc7-b6e1-32c31c4e2938",
+     "name": "get_device",
+     "args": {
+      "device_id": "M4XVHUV1MEPZ"
+     }
+    }
+   ],
+   "input_tokens": 11343,
+   "output_tokens": 101,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-c2609fafd5398e8a871dee6c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-550dc63d-d152-45ae-9002-f5873af058b0",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 11994,
+   "output_tokens": 164,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-a964d93dc83cd4304fda56f7": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-dd24fe7c-3821-49fc-9577-e9bd8a46011b",
+     "name": "get_device",
+     "args": {
+      "device_id": "MT7PJB7N5LRE"
+     }
+    }
+   ],
+   "input_tokens": 12617,
+   "output_tokens": 469,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

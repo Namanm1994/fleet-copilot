@@ -1,0 +1,62 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-d464d4c2c725b010d06b2657": {
+   "content": "{\n  \"intent_class\": \"insight\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": []\n}",
+   "tool_calls": [],
+   "input_tokens": 1245,
+   "output_tokens": 720,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-fdfe4e5599b87972fa36743e": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-25239e88-d186-4165-b30b-08950de93578",
+     "name": "submit_answer",
+     "args": {
+      "summary": "The telemetry data only covers 2026-05-14 to 2026-06-12, so April 2026 is outside the available window.",
+      "claims": [
+       {
+        "text": "Telemetry data is available from 2026-05-14 to 2026-06-12 only.",
+        "evidence_ids": [],
+        "values": {
+         "data_start": "2026-05-14",
+         "data_end": "2026-06-12"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "No data exists for April 2026 or any period before 2026-05-14."
+      ],
+      "answer_type": "insufficient_data"
+     }
+    }
+   ],
+   "input_tokens": 5426,
+   "output_tokens": 332,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

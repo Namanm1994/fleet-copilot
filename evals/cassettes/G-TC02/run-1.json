@@ -1,0 +1,102 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-4e211d5c8ac6c4924fa3773b": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"W2656QDAE2ZJ\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device identifier W2656QDAE2ZJ to a device ID\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Get latest snapshot summary for the resolved device\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1251,
+   "output_tokens": 243,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-f32616ea81b8606fa2b3762c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-52a943d5-7272-44ba-b0df-c60722d170cc",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "W2656QDAE2ZJ"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5498,
+   "output_tokens": 91,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-acfddbb9d601a576ee6c27ce": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-7f986b48-c7ec-4ceb-b41e-d22a51749026",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "device_ids": [
+        "W2656QDAE2ZJ"
+       ]
+      }
+     }
+    }
+   ],
+   "input_tokens": 5665,
+   "output_tokens": 94,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-e11ccd323b01ecf40802d6dc": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-3c5e2402-e111-4655-a348-f4db560a61f8",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Device W2656QDAE2ZJ was not found in Acme's telemetry data as of 2026-06-12.",
+      "claims": [
+       {
+        "text": "No device with identifier W2656QDAE2ZJ exists in the fleet telemetry.",
+        "evidence_ids": [
+         "Q-1-1",
+         "Q-1-2"
+        ],
+        "values": {
+         "count": 0
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Telemetry covers 2026-05-14 to 2026-06-12; if the device was added after 2026-06-12 it would not appear."
+      ],
+      "answer_type": "no_matches"
+     }
+    }
+   ],
+   "input_tokens": 5839,
+   "output_tokens": 258,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

@@ -1,0 +1,98 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-363748d3cabad0f5d67c680c": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Find devices with low disk space using the low_disk filter\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1247,
+   "output_tokens": 347,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-44868a377714d5ca5260f938": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-fdab7298-f3ac-4e9f-8fd5-1e1f6f5b2f57",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "low_disk": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 5453,
+   "output_tokens": 71,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-bd719872280bb963eddccecd": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-077d31b8-baf9-42f0-be13-f00c7369c173",
+     "name": "submit_answer",
+     "args": {
+      "summary": "One device (FX-DISK-01) is currently below the low-disk threshold, with 7.6% free space (19.5 GB free of 256 GB) as of 2026-06-12.",
+      "claims": [
+       {
+        "text": "Device FX-DISK-01 (hostname fx-macbook-air-disk, employee emp-fx-1005) is flagged as low on disk space.",
+        "evidence_ids": [
+         "FX-DISK-01@2026-06-12",
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "FX-DISK-01",
+         "hostname": "fx-macbook-air-disk",
+         "employee_id": "emp-fx-1005",
+         "os": "macOS 15.1",
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "Its system volume has 7.6% free (19.5 GB free of 256 GB total).",
+        "evidence_ids": [
+         "FX-DISK-01@2026-06-12",
+         "Q-1-1"
+        ],
+        "values": {
+         "disk_free_pct": 7.6,
+         "disk_free_gb": 19.5,
+         "disk_total_gb": 256.0
+        }
+       }
+      ],
+      "definitions_used": [
+       "low_disk"
+      ],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 5744,
+   "output_tokens": 527,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

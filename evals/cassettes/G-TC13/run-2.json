@@ -1,0 +1,143 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-7e2141d5d03920b8b968adc0": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device name 'acme-macbook-2' to a device ID\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Get the device's latest snapshot including compliance checks to identify the screen lock check ID and its status\"\n    },\n    {\n      \"tool\": \"open_remediation_ticket\",\n      \"purpose\": \"Propose an IT ticket for the screen lock compliance check if it is failing on the latest snapshot\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1251,
+   "output_tokens": 612,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-93637d12c8ee5ad74d790f7e": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-4d18fb00-4d93-418a-88fb-0069da80f4b2",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "acme-macbook-2"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5539,
+   "output_tokens": 130,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-2853674069a4888c991620cc": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-4b7ce29d-963a-4f31-a3bc-65fa994ed2ff",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5759,
+   "output_tokens": 82,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-c74677f1470204657b3383e3": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-d6adee0f-6aa7-47a9-a081-30d8f29fb865",
+     "name": "open_remediation_ticket",
+     "args": {
+      "evidence_ids": [
+       "1LYSSFD074BB@2026-06-12#screen_lock",
+       "1LYSSFD074BB@2026-06-12"
+      ],
+      "device_id": "1LYSSFD074BB",
+      "check_id": "screen_lock",
+      "note": "Screen lock compliance check failing on latest snapshot"
+     }
+    }
+   ],
+   "input_tokens": 6382,
+   "output_tokens": 326,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-26bea43a07e6a59fd67593e6": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-4f4dffc0-9199-4916-83aa-b122737ac512",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Opened a remediation ticket proposal (PRP-1) for acme-macbook-2's failing screen lock compliance check on the latest snapshot (2026-06-12). The proposal awaits human approval.",
+      "claims": [
+       {
+        "text": "Device acme-macbook-2 (device_id: 1LYSSFD074BB) has a failing screen_lock compliance check (medium severity) on its latest snapshot from 2026-06-12.",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12#screen_lock",
+         "1LYSSFD074BB@2026-06-12"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB",
+         "check_id": "screen_lock",
+         "status": "fail",
+         "severity": "medium",
+         "snapshot_date": "2026-06-12"
+        }
+       },
+       {
+        "text": "A remediation ticket proposal (PRP-1) has been created for this screen lock failure.",
+        "evidence_ids": [
+         "PRP-1"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "status": "proposed",
+         "action": "open_remediation_ticket"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "The proposal is awaiting human approval; no ticket has been executed yet."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6703,
+   "output_tokens": 472,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-f785904a23adfff2f58b6450": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": false,\n  \"refusal_reason\": \"Approving proposals is not an available action; only human approvers can approve proposals. I can only create proposal tickets.\",\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": []\n}",
+   "tool_calls": [],
+   "input_tokens": 1335,
+   "output_tokens": 527,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

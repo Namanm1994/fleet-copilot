@@ -1,0 +1,115 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-167171371ba6dc67039c1738": {
+   "content": "{\n  \"intent_class\": \"insight\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Detect devices with low storage findings across the fleet to identify those likely to run out of disk space soon\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1249,
+   "output_tokens": 285,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-77d2a08c2cef6d54914f8fc3": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-2a5ecd1b-47c4-44ce-aaea-ad31e29d2dc2",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "low_storage"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5466,
+   "output_tokens": 94,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-de79faf3ccbb88e1ca24d111": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-092c7cb1-64ea-435a-bc43-70c2e7740569",
+     "name": "submit_answer",
+     "args": {
+      "summary": "One device (FX-DISK-01, hostname fx-macbook-air-disk) has persistently low disk space with a declining trend of -0.8% free space per day, indicating it will run out of disk space soon. One other device had insufficient history for trend assessment but its latest snapshot was checked.",
+      "claims": [
+       {
+        "text": "Device FX-DISK-01 (fx-macbook-air-disk) has 7.6% free space (19.5 GB of 256 GB) on the system volume, below the low_disk threshold, and has been low in 10 of 14 snapshots.",
+        "evidence_ids": [
+         "INS-low_storage-FX-DISK-01-4a98f1",
+         "FX-DISK-01@2026-06-08",
+         "FX-DISK-01@2026-06-09",
+         "FX-DISK-01@2026-06-10",
+         "FX-DISK-01@2026-06-11",
+         "FX-DISK-01@2026-06-12"
+        ],
+        "values": {
+         "device_id": "FX-DISK-01",
+         "hostname": "fx-macbook-air-disk",
+         "free_pct": 7.6,
+         "free_gb": 19.5,
+         "total_gb": 256,
+         "snapshots_low": 10,
+         "total_snapshots": 14
+        }
+       },
+       {
+        "text": "The low_storage detector estimates a trend of -0.80 percentage points of free space per day, indicating the device will run out of disk space soon.",
+        "evidence_ids": [
+         "INS-low_storage-FX-DISK-01-4a98f1"
+        ],
+        "values": {
+         "slope_pct_per_day": -0.8
+        }
+       },
+       {
+        "text": "One device had too few snapshots (less than 7) for trend assessment, but its latest snapshot was still checked for low disk status.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "count": 1
+        }
+       }
+      ],
+      "definitions_used": [
+       "low_disk",
+       "low_disk_persistent"
+      ],
+      "caveats": [
+       "Trend estimate is based on linear fit; actual depletion may vary.",
+       "One device could not be assessed for trend due to insufficient history (needs 7 snapshots).",
+       "Telemetry covers 2026-05-20 to 2026-06-12 only."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6071,
+   "output_tokens": 860,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

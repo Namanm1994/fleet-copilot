@@ -1,0 +1,81 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-3886c80bda1b4fbee3d8af9d": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"emp-fx-1002\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map employee ID emp-fx-1002 to associated device IDs\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1252,
+   "output_tokens": 573,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-c1947648a43d97c136fb83a5": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-79f8d840-2afb-4988-826d-9a9aeffc110b",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "emp-fx-1002"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5470,
+   "output_tokens": 78,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-b57edd3abba4fb08d180a8bf": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-02e56b06-0a87-4cf8-aab4-85a6afc6045e",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Employee emp-fx-1002 has one assigned device: FX-BATT-01 (fx-macbook-batt, MacBook Pro).",
+      "claims": [
+       {
+        "text": "Employee emp-fx-1002 is associated with device FX-BATT-01 (fx-macbook-batt, MacBook Pro).",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "FX-BATT-01",
+         "label": "fx-macbook-batt (MacBook Pro, FX-BATT-01)",
+         "employee_id": "emp-fx-1002"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 5695,
+   "output_tokens": 297,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

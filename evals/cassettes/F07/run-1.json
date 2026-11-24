@@ -1,0 +1,159 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-d5670265c3054b3be4c6eaa9": {
+   "content": "{\n  \"intent_class\": \"compliance\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"os_up_to_date\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"get_compliance_overview\",\n      \"purpose\": \"Get pass/fail counts for all compliance checks and list devices failing the os_up_to_date check\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1250,
+   "output_tokens": 255,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-f21f2f0003aa073d8aade1e8": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-296aa66d-f75a-4b49-ba4f-07e896b79388",
+     "name": "get_compliance_overview",
+     "args": {
+      "check_id": "os_up_to_date"
+     }
+    }
+   ],
+   "input_tokens": 5471,
+   "output_tokens": 86,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-8135dd0df8f6587682c68dbc": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-5ac43985-7863-4dfe-b37c-0431485b1ece",
+     "name": "submit_answer",
+     "args": {
+      "summary": "6 devices fail the os_up_to_date compliance check as of the latest snapshots (2026-06-12).",
+      "claims": [
+       {
+        "text": "Six devices are failing the os_up_to_date check (severity: medium).",
+        "evidence_ids": [
+         "DARFCP0BQM2G@2026-06-12#os_up_to_date",
+         "I3JLKILKQTAC@2026-06-12#os_up_to_date",
+         "RLD7WV7J82SH@2026-06-12#os_up_to_date",
+         "SPKRRDF0L786@2026-06-12#os_up_to_date",
+         "W2656QDAE2ZJ@2026-06-12#os_up_to_date",
+         "XZYK11QTPWEC@2026-06-12#os_up_to_date"
+        ],
+        "values": {
+         "failing_count": 6,
+         "devices": [
+          {
+           "device_id": "DARFCP0BQM2G",
+           "hostname": "initech-macbook-6"
+          },
+          {
+           "device_id": "I3JLKILKQTAC",
+           "hostname": "initech-mac-3"
+          },
+          {
+           "device_id": "RLD7WV7J82SH",
+           "hostname": "initech-mac-4"
+          },
+          {
+           "device_id": "SPKRRDF0L786",
+           "hostname": "initech-macbook-2"
+          },
+          {
+           "device_id": "W2656QDAE2ZJ",
+           "hostname": "initech-dell-1"
+          },
+          {
+           "device_id": "XZYK11QTPWEC",
+           "hostname": "initech-macbook-7"
+          }
+         ]
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6189,
+   "output_tokens": 635,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-d31b15a5f98b98294989ae4c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-2f9f0ec1-bddb-48af-a81a-e67242e96c1b",
+     "name": "submit_answer",
+     "args": {
+      "summary": "6 devices fail the os_up_to_date compliance check as of the latest snapshots (2026-06-12).",
+      "claims": [
+       {
+        "text": "Six devices are failing the os_up_to_date check (severity: medium).",
+        "evidence_ids": [
+         "DARFCP0BQM2G@2026-06-12#os_up_to_date",
+         "I3JLKILKQTAC@2026-06-12#os_up_to_date",
+         "RLD7WV7J82SH@2026-06-12#os_up_to_date",
+         "SPKRRDF0L786@2026-06-12#os_up_to_date",
+         "W2656QDAE2ZJ@2026-06-12#os_up_to_date",
+         "XZYK11QTPWEC@2026-06-12#os_up_to_date"
+        ],
+        "values": {
+         "failing_count": 6,
+         "device_ids": [
+          "DARFCP0BQM2G",
+          "I3JLKILKQTAC",
+          "RLD7WV7J82SH",
+          "SPKRRDF0L786",
+          "W2656QDAE2ZJ",
+          "XZYK11QTPWEC"
+         ],
+         "hostnames": [
+          "initech-macbook-6",
+          "initech-mac-3",
+          "initech-mac-4",
+          "initech-macbook-2",
+          "initech-dell-1",
+          "initech-macbook-7"
+         ]
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6776,
+   "output_tokens": 480,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

@@ -1,0 +1,141 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-f2afb6a0c17051bd41ca3cb0": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-DISK-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map FX-DISK-01 to a device ID\"\n    },\n    {\n      \"tool\": \"notify_employee\",\n      \"purpose\": \"Propose notifying the device's employee about low disk space using the fixed template for the current finding\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1256,
+   "output_tokens": 710,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-bbaab218872a340a306a4f9f": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-4653b6f5-747f-4525-8448-5273e98582a4",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-DISK-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5504,
+   "output_tokens": 100,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-8fa8e5f6adb667f99815ee15": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-8b679362-1d9e-4a67-8c9a-6b4e7c5d7fb3",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-DISK-01"
+     }
+    }
+   ],
+   "input_tokens": 5721,
+   "output_tokens": 113,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-713b023892a14c70b7a0d6ec": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-e09c745c-31c9-4173-b44d-e823da29e0a5",
+     "name": "notify_employee",
+     "args": {
+      "evidence_ids": [
+       "FX-DISK-01@2026-06-12"
+      ],
+      "employee_id": "emp-fx-1005",
+      "device_id": "FX-DISK-01",
+      "template": "low_disk"
+     }
+    }
+   ],
+   "input_tokens": 6331,
+   "output_tokens": 264,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-e2b9cf2840658b053a89bdc1": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-873d6570-c13c-4c67-b0aa-b25e29a52385",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Created a notification proposal (PRP-1) for the owner of FX-DISK-01 (employee emp-fx-1005) about low disk space. The device fx-macbook-air-disk has 7.6% free disk space (19.5 GB free of 256 GB) as of 2026-06-12, which is below the 15% threshold.",
+      "claims": [
+       {
+        "text": "Device FX-DISK-01 (fx-macbook-air-disk) is assigned to employee emp-fx-1005",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "FX-DISK-01",
+         "employee_id": "emp-fx-1005"
+        }
+       },
+       {
+        "text": "Latest snapshot shows 7.6% free disk space (19.5 GB free of 256 GB total)",
+        "evidence_ids": [
+         "FX-DISK-01@2026-06-12"
+        ],
+        "values": {
+         "disk_free_pct": 7.6,
+         "disk_free_gb": 19.5,
+         "disk_total_gb": 256
+        }
+       },
+       {
+        "text": "Notification proposal PRP-1 created with low_disk template for employee emp-fx-1005",
+        "evidence_ids": [
+         "PRP-1"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "status": "proposed",
+         "template": "low_disk"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Proposal awaits human approval; no notification has been sent yet."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6623,
+   "output_tokens": 489,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

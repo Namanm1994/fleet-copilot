@@ -1,0 +1,108 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-e6428047fc20caba3d23909c": {
+   "content": "{\n  \"intent_class\": \"compliance\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"get_compliance_overview\",\n      \"purpose\": \"Retrieve pass/fail counts for each compliance check on latest snapshots, including the list of devices failing each check, to identify high-severity failures.\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1251,
+   "output_tokens": 376,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-d4dbdac214a2c2e0f0db1925": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-80b55a00-6267-4935-ab39-7e42fcb19db6",
+     "name": "get_compliance_overview",
+     "args": {
+      "severity": "high"
+     }
+    }
+   ],
+   "input_tokens": 5479,
+   "output_tokens": 105,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-7006995909a77e3026e887c1": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f6fc1cbf-71b1-47d0-9730-ec856661f78b",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Nine devices are failing the high-severity compliance check \"disk_encryption\" as of the latest snapshots (2026-06-12).",
+      "claims": [
+       {
+        "text": "The high-severity compliance check 'disk_encryption' has 9 failing devices out of 24 total devices.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "check_id": "disk_encryption",
+         "severity": "high",
+         "fail_count": 9,
+         "total_devices": 24
+        }
+       },
+       {
+        "text": "Failing devices: FX-MARKUP-01, FX-MULTI-01, FX-MULTI-02, FX-MULTI-03, FX-MULTI-04, FX-MULTI-05, FX-MULTI-06, FX-MULTI-07, FX-MULTI-08.",
+        "evidence_ids": [
+         "FX-MARKUP-01@2026-06-12#disk_encryption",
+         "FX-MULTI-01@2026-06-12#disk_encryption",
+         "FX-MULTI-02@2026-06-12#disk_encryption",
+         "FX-MULTI-03@2026-06-12#disk_encryption",
+         "FX-MULTI-04@2026-06-12#disk_encryption",
+         "FX-MULTI-05@2026-06-12#disk_encryption",
+         "FX-MULTI-06@2026-06-12#disk_encryption",
+         "FX-MULTI-07@2026-06-12#disk_encryption",
+         "FX-MULTI-08@2026-06-12#disk_encryption"
+        ],
+        "values": {
+         "device_ids": [
+          "FX-MARKUP-01",
+          "FX-MULTI-01",
+          "FX-MULTI-02",
+          "FX-MULTI-03",
+          "FX-MULTI-04",
+          "FX-MULTI-05",
+          "FX-MULTI-06",
+          "FX-MULTI-07",
+          "FX-MULTI-08"
+         ],
+         "count": 9
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6398,
+   "output_tokens": 764,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

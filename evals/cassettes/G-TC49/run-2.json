@@ -1,0 +1,253 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-7c57f1023257854434502abc": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-MARKUP-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the hostname FX-MARKUP-01 to a device ID\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Retrieve the latest snapshot summary for the device\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1248,
+   "output_tokens": 329,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-ba2cade85b9e3723e8e8bdea": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f9939a25-9860-4e09-9b57-7b40f30354c9",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-MARKUP-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5486,
+   "output_tokens": 80,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-e9518542efd46828a17d216a": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-57674a30-7be5-49b8-8e14-1cb3f53855fb",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-MARKUP-01"
+     }
+    }
+   ],
+   "input_tokens": 5709,
+   "output_tokens": 55,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-29bf05685a368dbf0f10686e": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-d412ee5a-558e-4cb0-93bc-3580110f4fec",
+     "name": "submit_answer",
+     "args": {
+      "summary": "FX-MARKUP-01 is a MacBook Pro assigned to employee emp-fx-1008, running macOS 15.1 with 32 GB RAM (55% used) and 512 GB disk (45% free, 230.4 GB). Battery condition is Normal (300 cycles). Disk encryption check is failing (high severity); OS up-to-date and screen lock checks pass. Last seen 2026-06-12.",
+      "claims": [
+       {
+        "text": "Device FX-MARKUP-01 is a MacBook Pro (Apple) assigned to employee emp-fx-1008.",
+        "evidence_ids": [
+         "FX-MARKUP-01@2026-06-12"
+        ],
+        "values": {
+         "device_id": "FX-MARKUP-01",
+         "model": "MacBook Pro",
+         "manufacturer": "Apple",
+         "employee_id": "emp-fx-1008"
+        }
+       },
+       {
+        "text": "OS version is macOS 15.1.",
+        "evidence_ids": [
+         "FX-MARKUP-01@2026-06-12"
+        ],
+        "values": {
+         "os": "macOS 15.1"
+        }
+       },
+       {
+        "text": "RAM: 32 GB total, 55% used.",
+        "evidence_ids": [
+         "FX-MARKUP-01@2026-06-12"
+        ],
+        "values": {
+         "ram_total_gb": 32,
+         "ram_used_pct": 55
+        }
+       },
+       {
+        "text": "Disk: 512 GB total, 230.4 GB free (45% free).",
+        "evidence_ids": [
+         "FX-MARKUP-01@2026-06-12"
+        ],
+        "values": {
+         "disk_total_gb": 512,
+         "disk_free_gb": 230.4,
+         "disk_free_pct": 45
+        }
+       },
+       {
+        "text": "Battery condition: Normal, cycle count 300.",
+        "evidence_ids": [
+         "FX-MARKUP-01@2026-06-12"
+        ],
+        "values": {
+         "battery_condition": "Normal",
+         "battery_cycle_count": 300
+        }
+       },
+       {
+        "text": "Compliance: disk_encryption FAIL (high severity), os_up_to_date PASS, screen_lock PASS.",
+        "evidence_ids": [
+         "FX-MARKUP-01@2026-06-12#disk_encryption",
+         "FX-MARKUP-01@2026-06-12#os_up_to_date",
+         "FX-MARKUP-01@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "disk_encryption": "fail",
+         "os_up_to_date": "pass",
+         "screen_lock": "pass"
+        }
+       },
+       {
+        "text": "Device last seen 2026-06-12, not stale.",
+        "evidence_ids": [
+         "FX-MARKUP-01@2026-06-12"
+        ],
+        "values": {
+         "last_seen": "2026-06-12",
+         "stale": false
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Telemetry covers 2026-05-20 to 2026-06-12 only; no data outside this window."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6326,
+   "output_tokens": 848,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-7461089277113f75f2dd2da1": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-MARKUP-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Retrieve the device's compliance checks to confirm the exact check_id for the disk encryption failure\"\n    },\n    {\n      \"tool\": \"open_remediation_ticket\",\n      \"purpose\": \"Create a remediation proposal for the disk encryption compliance failure on FX-MARKUP-01\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1391,
+   "output_tokens": 742,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-a92bceaa06f7107d942f68fe": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-7caf9efb-b14d-4882-a40f-9166b7a048a5",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-MARKUP-01"
+     }
+    }
+   ],
+   "input_tokens": 5796,
+   "output_tokens": 186,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-fc4089db7ff50e01375c1d56": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-9bbdf4fe-5952-487b-8c69-8736a1e980d1",
+     "name": "open_remediation_ticket",
+     "args": {
+      "evidence_ids": [
+       "FX-MARKUP-01@2026-06-12#disk_encryption"
+      ],
+      "device_id": "FX-MARKUP-01",
+      "check_id": "disk_encryption",
+      "note": "Disk encryption compliance failure on MacBook Pro"
+     }
+    }
+   ],
+   "input_tokens": 6443,
+   "output_tokens": 180,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "007-7dd2e89054dbe1ef7c12be46": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-d24cf887-15a0-467e-90b4-b49602545791",
+     "name": "submit_answer",
+     "args": {
+      "summary": "A remediation ticket proposal for the disk encryption failure on FX-MARKUP-01 already exists (PRP-1, status: proposed). No new proposal was created because of the duplicate.",
+      "claims": [
+       {
+        "text": "Device FX-MARKUP-01 has a failing disk_encryption compliance check (high severity) on its latest snapshot 2026-06-12.",
+        "evidence_ids": [
+         "FX-MARKUP-01@2026-06-12#disk_encryption"
+        ],
+        "values": {
+         "check_id": "disk_encryption",
+         "status": "fail",
+         "severity": "high"
+        }
+       },
+       {
+        "text": "An open remediation ticket proposal PRP-1 for this check already exists with status 'proposed'.",
+        "evidence_ids": [
+         "FX-MARKUP-01@2026-06-12"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "action": "open_remediation_ticket",
+         "status": "proposed"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "The proposal PRP-1 is pending human approval; no ticket has been executed yet."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6668,
+   "output_tokens": 492,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

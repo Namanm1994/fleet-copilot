@@ -1,0 +1,141 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-40157927df701c8818f80693": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the hostname 'acme-macbook-2' to a device ID\"\n    },\n    {\n      \"tool\": \"request_software_removal\",\n      \"purpose\": \"Propose an IT task to remove uTorrent from the device\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1252,
+   "output_tokens": 1047,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-47014cce0399742f7c3eb500": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-bc2c661b-cb60-4f76-93a7-551beba30c03",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "acme-macbook-2"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5501,
+   "output_tokens": 101,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-4f96cfc33be9a7a65e26f3e6": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-3b5b8411-43c9-4d08-ae0c-46b8a4d8fa7b",
+     "name": "get_software",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5721,
+   "output_tokens": 87,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-06baba67d420beb8e1dc0666": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-85a2a6d8-7d5f-4643-8247-fc0e18544c61",
+     "name": "request_software_removal",
+     "args": {
+      "evidence_ids": [
+       "1LYSSFD074BB@2026-06-12$utorrent"
+      ],
+      "device_id": "1LYSSFD074BB",
+      "software_name": "uTorrent"
+     }
+    }
+   ],
+   "input_tokens": 6442,
+   "output_tokens": 187,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-c8b536e5e143b3acf179c0f6": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-0f46728b-b7a2-49e1-ac07-b6f8ef2cea47",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Proposed an IT task to remove uTorrent from acme-macbook-2 (device 1LYSSFD074BB). The software was detected on the latest snapshot (2026-06-12) and is marked as prohibited.",
+      "claims": [
+       {
+        "text": "Device acme-macbook-2 resolves to device ID 1LYSSFD074BB.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB"
+        }
+       },
+       {
+        "text": "uTorrent version 3.6 is installed on the device and flagged as prohibited, first seen 2026-05-31.",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12$utorrent"
+        ],
+        "values": {
+         "software_name": "uTorrent",
+         "version": "3.6",
+         "first_seen": "2026-05-31",
+         "prohibited": true
+        }
+       },
+       {
+        "text": "A removal proposal (PRP-1) has been created and is awaiting human approval.",
+        "evidence_ids": [
+         "PRP-1"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "status": "proposed"
+        }
+       }
+      ],
+      "definitions_used": [
+       "prohibited_software"
+      ],
+      "caveats": [
+       "The proposal is pending approval; no removal has been executed yet."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6713,
+   "output_tokens": 381,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

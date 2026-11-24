@@ -1,0 +1,153 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-ead2fa05d828b4bc286dd035": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"get_definitions\",\n      \"purpose\": \"Retrieve the documented threshold for what constitutes an outdated OS\"\n    },\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Find devices with an OS older than the defined outdated threshold, excluding low-disk filter\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1256,
+   "output_tokens": 1268,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-9fa999bfd8a82899f4384c36": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-39f7ef45-f262-4de8-8e47-79587ba47b0f",
+     "name": "get_definitions",
+     "args": {}
+    }
+   ],
+   "input_tokens": 5492,
+   "output_tokens": 77,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-27a72a5d0a4e81c93cc8d5fd": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-dff6fdf9-a536-41f6-9580-a9a322cac036",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "os_older_than": {
+        "platform": "darwin",
+        "version": "14"
+       },
+       "low_disk": false
+      },
+      "limit": 25
+     }
+    }
+   ],
+   "input_tokens": 5991,
+   "output_tokens": 1377,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-87761270fd7a6bf11a7cb9ba": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-1e5ec7c2-ac8c-462c-905b-6156eb533d8c",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "os_older_than": {
+        "platform": "win32",
+        "version": "11 23H2"
+       },
+       "low_disk": false
+      },
+      "limit": 25
+     }
+    }
+   ],
+   "input_tokens": 6509,
+   "output_tokens": 150,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-03761a56f064d077c9a5fa39": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-47d6546a-3734-4a79-9710-debae62fc5a7",
+     "name": "submit_answer",
+     "args": {
+      "summary": "3 devices have an OS older than the current major version (macOS 14 / Windows 11 23H2), excluding low-disk devices.",
+      "claims": [
+       {
+        "text": "2 macOS devices are on macOS 13.6, which is older than macOS 14.",
+        "evidence_ids": [
+         "SPKRRDF0L786@2026-06-12",
+         "XZYK11QTPWEC@2026-06-12"
+        ],
+        "values": {
+         "devices": [
+          "SPKRRDF0L786 (initech-macbook-2, emp-initech-1003)",
+          "XZYK11QTPWEC (initech-macbook-7, emp-initech-1000)"
+         ],
+         "os_version": "13.6",
+         "count": 2
+        }
+       },
+       {
+        "text": "1 Windows device is on Windows 11 22H2, which is older than Windows 11 23H2.",
+        "evidence_ids": [
+         "W2656QDAE2ZJ@2026-06-12"
+        ],
+        "values": {
+         "device": "W2656QDAE2ZJ (initech-dell-1, emp-initech-1004)",
+         "os_version": "11 22H2",
+         "count": 1
+        }
+       },
+       {
+        "text": "Low-disk devices were excluded from these results.",
+        "evidence_ids": [
+         "Q-1-2",
+         "Q-1-3"
+        ],
+        "values": {
+         "low_disk_excluded": true
+        }
+       }
+      ],
+      "definitions_used": [
+       "low_disk"
+      ],
+      "caveats": [
+       "2 device(s) on other platforms were excluded from the macOS comparison.",
+       "5 device(s) on other platforms were excluded from the Windows comparison."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6882,
+   "output_tokens": 583,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

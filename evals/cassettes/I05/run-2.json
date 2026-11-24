@@ -1,0 +1,109 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-06a5a87b6e773d5b7213f199": {
+   "content": "{\n  \"intent_class\": \"insight\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Detect laptops with battery end-of-life condition across the fleet\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1247,
+   "output_tokens": 277,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-0ca977fcf673dce6d138f088": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-e2cdb5a1-0bcd-45eb-b4f9-b35947297985",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "battery_eol"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5456,
+   "output_tokens": 87,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-27cabb7291c86830ddeda589": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-c670ba1d-23f6-4ae3-bc9e-dcb5f1f719e5",
+     "name": "submit_answer",
+     "args": {
+      "summary": "One laptop (FX-BATT-01, hostname fx-macbook-batt) needs a battery replacement: its battery condition is \"Service Recommended\" since 2026-06-07 with a cycle count of 993. One other device had too few snapshots for a trend assessment, so its battery status could not be fully evaluated.",
+      "claims": [
+       {
+        "text": "Device FX-BATT-01 (fx-macbook-batt) has a battery condition of \"Service Recommended\" since 2026-06-07, cycle count 993, indicating end-of-life.",
+        "evidence_ids": [
+         "INS-battery_eol-FX-BATT-01-eee5c0"
+        ],
+        "values": {
+         "device_id": "FX-BATT-01",
+         "hostname": "fx-macbook-batt",
+         "condition": "Service Recommended",
+         "since": "2026-06-07",
+         "cycle_count": 993
+        }
+       },
+       {
+        "text": "The same device shows a 7.6% decline in full-charge capacity over the telemetry window (5760 → 5320 mAh), an early sign of battery wear.",
+        "evidence_ids": [
+         "INS-battery_eol-FX-BATT-01-9b914a"
+        ],
+        "values": {
+         "decline_pct": 7.6,
+         "start_capacity": 5760,
+         "end_capacity": 5320
+        }
+       },
+       {
+        "text": "One device had insufficient snapshots (fewer than 7) for a battery trend assessment, though its latest snapshot was checked.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "trend_not_assessed_count": 1
+        }
+       }
+      ],
+      "definitions_used": [
+       "battery_eol",
+       "battery_degrading"
+      ],
+      "caveats": [
+       "Telemetry covers 2026-05-20 to 2026-06-12 only.",
+       "One device had too few snapshots for a trend assessment; its current battery state is unknown beyond the latest snapshot."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6234,
+   "output_tokens": 1028,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

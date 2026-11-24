@@ -1,0 +1,104 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-c3002b695516832bc58e4778": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"List all devices in the fleet with no filters applied\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1246,
+   "output_tokens": 254,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-39671790f0abf7fef50cf801": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-a9558b2f-08cc-44b8-85c0-f4ac48b483d7",
+     "name": "find_devices",
+     "args": {
+      "criteria": {},
+      "limit": 25,
+      "offset": 0
+     }
+    }
+   ],
+   "input_tokens": 5450,
+   "output_tokens": 83,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-f3a835e1e6aec79a11a9f218": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-4e1ef13c-cf15-4362-b659-9735c7e42e20",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Initech has 7 devices in the fleet as of 2026-06-12.",
+      "claims": [
+       {
+        "text": "Total device count is 7.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "count": 7
+        }
+       },
+       {
+        "text": "Devices: 2MAN6T4DJD95 (initech-dell-5, Dell XPS 15, Windows 11 23H2, emp-initech-1002), DARFCP0BQM2G (initech-macbook-6, MacBook Pro, macOS 14.5, emp-initech-1000), I3JLKILKQTAC (initech-mac-3, Mac mini, macOS 15.3, emp-initech-1001), RLD7WV7J82SH (initech-mac-4, Mac mini, macOS 14.5, emp-initech-1000), SPKRRDF0L786 (initech-macbook-2, MacBook Air, macOS 13.6, emp-initech-1003), W2656QDAE2ZJ (initech-dell-1, Dell XPS 15, Windows 11 22H2, emp-initech-1004), XZYK11QTPWEC (initech-macbook-7, MacBook Pro, macOS 13.6, emp-initech-1000).",
+        "evidence_ids": [
+         "2MAN6T4DJD95@2026-06-12",
+         "DARFCP0BQM2G@2026-06-12",
+         "I3JLKILKQTAC@2026-06-12",
+         "RLD7WV7J82SH@2026-06-12",
+         "SPKRRDF0L786@2026-06-12",
+         "W2656QDAE2ZJ@2026-06-12",
+         "XZYK11QTPWEC@2026-06-12"
+        ],
+        "values": {
+         "device_ids": [
+          "2MAN6T4DJD95",
+          "DARFCP0BQM2G",
+          "I3JLKILKQTAC",
+          "RLD7WV7J82SH",
+          "SPKRRDF0L786",
+          "W2656QDAE2ZJ",
+          "XZYK11QTPWEC"
+         ]
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Data covers 2026-05-14 to 2026-06-12 only."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6421,
+   "output_tokens": 750,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

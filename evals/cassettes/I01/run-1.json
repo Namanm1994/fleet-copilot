@@ -1,0 +1,159 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-b3ee91b27aa9ec8afb27e9d4": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the hostname 'acme-macbook-2' to a device ID\"\n    },\n    {\n      \"tool\": \"get_device_history\",\n      \"purpose\": \"Retrieve the compliance history for the screen lock check on that device to find when it started failing\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1251,
+   "output_tokens": 311,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-55426f46148ee7ed315143db": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6aeed88a-5dda-4b8d-90fa-1466df13920e",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "acme-macbook-2"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5503,
+   "output_tokens": 92,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-52b513075c7f67bf3b8ee4ea": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f3fb1575-ba7a-4f7e-b29d-56d557262d83",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5723,
+   "output_tokens": 149,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-55ae7561cefe0134ef48a171": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-3ea27e47-b526-4b0f-9bbf-ddb3a2885fea",
+     "name": "get_device_history",
+     "args": {
+      "device_id": "1LYSSFD074BB",
+      "metrics": [
+       "compliance:screen_lock"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6346,
+   "output_tokens": 92,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-729bd78418a7f133c54d9dd1": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-955cc7de-6db9-4914-b94b-24869f9d7bbd",
+     "name": "submit_answer",
+     "args": {
+      "summary": "acme-macbook-2 (device ID 1LYSSFD074BB) started failing the screen_lock compliance check on 2026-05-22 and has continued failing through the latest snapshot on 2026-06-12.",
+      "claims": [
+       {
+        "text": "The device passed screen_lock from 2026-05-14 through 2026-05-21, then began failing on 2026-05-22.",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-05-14#screen_lock",
+         "1LYSSFD074BB@2026-05-15#screen_lock",
+         "1LYSSFD074BB@2026-05-16#screen_lock",
+         "1LYSSFD074BB@2026-05-17#screen_lock",
+         "1LYSSFD074BB@2026-05-18#screen_lock",
+         "1LYSSFD074BB@2026-05-19#screen_lock",
+         "1LYSSFD074BB@2026-05-20#screen_lock",
+         "1LYSSFD074BB@2026-05-21#screen_lock",
+         "1LYSSFD074BB@2026-05-22#screen_lock"
+        ],
+        "values": {
+         "first_fail_date": "2026-05-22",
+         "pass_count_before_fail": 8
+        }
+       },
+       {
+        "text": "The screen_lock check has failed continuously from 2026-05-22 through 2026-06-12 (22 consecutive failing snapshots).",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-05-22#screen_lock",
+         "1LYSSFD074BB@2026-05-23#screen_lock",
+         "1LYSSFD074BB@2026-05-24#screen_lock",
+         "1LYSSFD074BB@2026-05-25#screen_lock",
+         "1LYSSFD074BB@2026-05-26#screen_lock",
+         "1LYSSFD074BB@2026-05-27#screen_lock",
+         "1LYSSFD074BB@2026-05-28#screen_lock",
+         "1LYSSFD074BB@2026-05-29#screen_lock",
+         "1LYSSFD074BB@2026-05-30#screen_lock",
+         "1LYSSFD074BB@2026-05-31#screen_lock",
+         "1LYSSFD074BB@2026-06-01#screen_lock",
+         "1LYSSFD074BB@2026-06-02#screen_lock",
+         "1LYSSFD074BB@2026-06-03#screen_lock",
+         "1LYSSFD074BB@2026-06-04#screen_lock",
+         "1LYSSFD074BB@2026-06-05#screen_lock",
+         "1LYSSFD074BB@2026-06-06#screen_lock",
+         "1LYSSFD074BB@2026-06-07#screen_lock",
+         "1LYSSFD074BB@2026-06-08#screen_lock",
+         "1LYSSFD074BB@2026-06-09#screen_lock",
+         "1LYSSFD074BB@2026-06-10#screen_lock",
+         "1LYSSFD074BB@2026-06-11#screen_lock",
+         "1LYSSFD074BB@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "fail_count": 22,
+         "current_since": "2026-05-22",
+         "last_fail": "2026-06-12"
+        }
+       }
+      ],
+      "definitions_used": [
+       "min_points_for_trend"
+      ],
+      "caveats": [
+       "Telemetry covers 2026-05-14 to 2026-06-12 only; no data exists before 2026-05-14."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 8861,
+   "output_tokens": 1303,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

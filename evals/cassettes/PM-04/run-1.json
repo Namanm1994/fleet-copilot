@@ -1,0 +1,99 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-bddeaecb98089eb0eb72b11a": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device name 'acme-macbook-2' to a device ID\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Retrieve the latest snapshot summary including battery condition for the resolved device\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1259,
+   "output_tokens": 315,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-5d28c202dcc56f0e5a2e0eca": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-e5fcce81-b149-4edd-9158-e68780970b9e",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "acme-macbook-2"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5505,
+   "output_tokens": 125,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-6f75da2d578aeb944b111017": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-15f44c07-7ff9-472d-bf56-738dcecc304f",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5725,
+   "output_tokens": 68,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-a2bb8f5731e1abc82e85c65a": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-4a221c5b-de12-492f-813b-ada80655c82d",
+     "name": "submit_answer",
+     "args": {
+      "summary": "The battery condition of acme-macbook-2 (device ID 1LYSSFD074BB) is Normal as of the latest snapshot on 2026-06-12.",
+      "claims": [
+       {
+        "text": "Device acme-macbook-2 (device ID 1LYSSFD074BB) has battery condition Normal.",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB",
+         "battery_condition": "Normal",
+         "last_seen": "2026-06-12"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Telemetry covers 2026-05-14 to 2026-06-12; this is the latest available snapshot."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6348,
+   "output_tokens": 380,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

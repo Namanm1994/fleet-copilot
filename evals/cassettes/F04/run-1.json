@@ -1,0 +1,103 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-1851caeaebe0f16bdbfbf27a": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"uTorrent\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"get_software\",\n      \"purpose\": \"Find all devices that have uTorrent installed\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1251,
+   "output_tokens": 218,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-e9ae0627a170a15bf30d19e0": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-2376611b-1187-4e92-85d0-785eb8b50fbd",
+     "name": "get_software",
+     "args": {
+      "name": "uTorrent"
+     }
+    }
+   ],
+   "input_tokens": 5458,
+   "output_tokens": 74,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-07a63d5ebe18d7b52b3fc35f": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-40aa301b-bd2e-474c-8b47-ed3a1f080aca",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Two Initech devices have uTorrent installed: I3JLKILKQTAC (first seen 2026-05-29) and W2656QDAE2ZJ (first seen 2026-06-02). Both are running version 3.6 and the software is flagged as prohibited.",
+      "claims": [
+       {
+        "text": "Device I3JLKILKQTAC has uTorrent version 3.6 installed, first seen on 2026-05-29, and it is marked as prohibited software.",
+        "evidence_ids": [
+         "I3JLKILKQTAC@2026-06-12$utorrent"
+        ],
+        "values": {
+         "device_id": "I3JLKILKQTAC",
+         "version": "3.6",
+         "first_seen": "2026-05-29",
+         "prohibited": true
+        }
+       },
+       {
+        "text": "Device W2656QDAE2ZJ has uTorrent version 3.6 installed, first seen on 2026-06-02, and it is marked as prohibited software.",
+        "evidence_ids": [
+         "W2656QDAE2ZJ@2026-06-12$utorrent"
+        ],
+        "values": {
+         "device_id": "W2656QDAE2ZJ",
+         "version": "3.6",
+         "first_seen": "2026-06-02",
+         "prohibited": true
+        }
+       },
+       {
+        "text": "Total of 2 devices have uTorrent installed.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "count": 2
+        }
+       }
+      ],
+      "definitions_used": [
+       "prohibited_software"
+      ],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 5837,
+   "output_tokens": 492,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

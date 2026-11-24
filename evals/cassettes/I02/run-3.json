@@ -1,0 +1,124 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-bae537390e5e89580420ff2e": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"initech-dell-1\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the hostname 'initech-dell-1' to a device ID\"\n    },\n    {\n      \"tool\": \"get_software\",\n      \"purpose\": \"Check if uTorrent is currently installed on the device\"\n    },\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run prohibited_software detector on the device to see if uTorrent is flagged and when it first appeared in the telemetry window\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1257,
+   "output_tokens": 1474,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-1e005efde7a2ca3fc135d78a": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-9744f375-7a67-4ac1-b5c1-aafb4a4c2ba6",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "initech-dell-1"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5540,
+   "output_tokens": 110,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-4579805305cb68de4b1e582c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-655a5bc5-2c1e-4372-9909-024c6635423a",
+     "name": "get_software",
+     "args": {
+      "device_id": "W2656QDAE2ZJ"
+     }
+    }
+   ],
+   "input_tokens": 5767,
+   "output_tokens": 120,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-28ea59dac5528dc4c9fe7dc3": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-0fa62864-7af3-4152-b706-a7c23237ea8b",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "prohibited_software"
+      ],
+      "device_ids": [
+       "W2656QDAE2ZJ"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6530,
+   "output_tokens": 293,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-1aaf2a07acadedec9914b62e": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-e36d19d7-de86-4aa2-8ac5-f5935f947e91",
+     "name": "submit_answer",
+     "args": {
+      "summary": "uTorrent first appeared on initech-dell-1 on 2026-06-02.",
+      "claims": [
+       {
+        "text": "uTorrent version 3.6 was first detected on initech-dell-1 (device W2656QDAE2ZJ) on 2026-06-02.",
+        "evidence_ids": [
+         "W2656QDAE2ZJ@2026-06-12$utorrent",
+         "INS-prohibited_software-W2656QDAE2ZJ-9bfc42"
+        ],
+        "values": {
+         "first_seen": "2026-06-02",
+         "device_id": "W2656QDAE2ZJ",
+         "software": "uTorrent",
+         "version": "3.6"
+        }
+       }
+      ],
+      "definitions_used": [
+       "prohibited_software"
+      ],
+      "caveats": [
+       "Telemetry window is 2026-05-14 to 2026-06-12; first_seen is within this window."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 7023,
+   "output_tokens": 364,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

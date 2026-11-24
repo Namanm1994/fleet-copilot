@@ -1,0 +1,194 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-4b5f559f8c189c5531745492": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"emp-acme-1001\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map employee ID emp-acme-1001 to device ID(s)\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1251,
+   "output_tokens": 577,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-e86845d201138f46ce6aafe6": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-23ba7871-2dc5-4068-8291-def000fd6f3c",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "emp-acme-1001"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5470,
+   "output_tokens": 118,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-e8a9f5300fa526e2306e5556": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-32f78102-c87e-440b-9fd0-b8e2b2cc9ec5",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5701,
+   "output_tokens": 97,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-60f5948b8bc592ffdbe17e14": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-0769e362-42d8-4f46-b435-a596a94e5fdb",
+     "name": "notify_employee",
+     "args": {
+      "evidence_ids": [
+       "1LYSSFD074BB@2026-06-12#os_up_to_date"
+      ],
+      "employee_id": "emp-acme-1001",
+      "device_id": "1LYSSFD074BB",
+      "template": "os_update_required"
+     }
+    }
+   ],
+   "input_tokens": 6324,
+   "output_tokens": 638,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-63602c3d6874b50ff7054677": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-027ad9c3-da62-486f-8fbc-8a7f5ab3c022",
+     "name": "notify_employee",
+     "args": {
+      "evidence_ids": [
+       "1LYSSFD074BB@2026-06-12#screen_lock"
+      ],
+      "employee_id": "emp-acme-1001",
+      "device_id": "1LYSSFD074BB",
+      "template": "screen_lock_required"
+     }
+    }
+   ],
+   "input_tokens": 6616,
+   "output_tokens": 231,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-fcf75f49c70d320902a598bf": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-276d91b4-c2b6-466e-9d4f-24f34ac18ad3",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Employee emp-acme-1001's laptop (acme-macbook-2, device 1LYSSFD074BB) has two compliance issues: the OS is not up to date and screen lock is not enabled. I've proposed notifications to the employee for both issues.",
+      "claims": [
+       {
+        "text": "Device 1LYSSFD074BB (acme-macbook-2) is assigned to emp-acme-1001",
+        "evidence_ids": [
+         "Q-1-1",
+         "1LYSSFD074BB@2026-06-12"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB",
+         "employee_id": "emp-acme-1001"
+        }
+       },
+       {
+        "text": "OS compliance check 'os_up_to_date' is failing (medium severity) as of 2026-06-12",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12#os_up_to_date"
+        ],
+        "values": {
+         "check_id": "os_up_to_date",
+         "status": "fail",
+         "severity": "medium"
+        }
+       },
+       {
+        "text": "Screen lock compliance check 'screen_lock' is failing (medium severity) as of 2026-06-12",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "check_id": "screen_lock",
+         "status": "fail",
+         "severity": "medium"
+        }
+       },
+       {
+        "text": "Disk encryption passes, disk free space is 51% (522 GB free of 1 TB), battery condition is Normal",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12#disk_encryption",
+         "1LYSSFD074BB@2026-06-12"
+        ],
+        "values": {
+         "disk_free_pct": 51.0,
+         "battery_condition": "Normal"
+        }
+       },
+       {
+        "text": "Proposed notification to employee for OS update (proposal PRP-1)",
+        "evidence_ids": [
+         "PRP-1"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "template": "os_update_required"
+        }
+       },
+       {
+        "text": "Proposed notification to employee for screen lock (proposal PRP-2)",
+        "evidence_ids": [
+         "PRP-2"
+        ],
+        "values": {
+         "proposal_id": "PRP-2",
+         "template": "screen_lock_required"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Notifications are proposals awaiting human approval; nothing has been sent yet."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6905,
+   "output_tokens": 778,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

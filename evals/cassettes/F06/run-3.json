@@ -1,0 +1,83 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-b79f307f4fc4a3bfe9c93a49": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Find devices that are stale (haven't reported in over 10 days) using the stale filter\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1255,
+   "output_tokens": 650,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-be36483298ff0c7b626f0f38": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-75fe4713-c788-4298-abd4-d7e70b24e8da",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "stale": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 5469,
+   "output_tokens": 99,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-cbd6a108742349f37c26ae02": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-7718bf20-579a-476e-aaa3-f6e497bed51c",
+     "name": "submit_answer",
+     "args": {
+      "summary": "No Initech devices are currently stale (haven't reported in over 10 days) as of the latest telemetry snapshot on 2026-06-12.",
+      "claims": [
+       {
+        "text": "Zero devices match the stale filter (no reporting for over 10 days).",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "count": 0
+        }
+       }
+      ],
+      "definitions_used": [
+       "stale_device"
+      ],
+      "caveats": [
+       "Telemetry covers 2026-05-14 to 2026-06-12; devices that never reported or reported only before 2026-05-14 are not in scope."
+      ],
+      "answer_type": "no_matches"
+     }
+    }
+   ],
+   "input_tokens": 5635,
+   "output_tokens": 272,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}
