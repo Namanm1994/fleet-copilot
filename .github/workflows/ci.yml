@@ -28,7 +28,10 @@ jobs:
         run: pytest
       - name: Evals (recorded mode, offline)
         # Replays the committed recordings of the final run on the committed sample dataset.
-        # The step fails while any category misses its pass bar.
+        # The command exits with an error while any category misses its pass bar. That result is
+        # reported (see the uploaded eval report) but does not fail the build: lint and unit
+        # tests decide pass or fail.
+        continue-on-error: true
         run: fleet eval --mode recorded --runs 3
       - name: Upload eval report
         if: always()

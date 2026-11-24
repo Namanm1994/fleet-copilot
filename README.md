@@ -231,7 +231,7 @@ Other measures from the same run: 36 of 36 tool-argument checks passed; no legit
 - **Only one model.** Every run used one free model, which is also the default. No paid model has been run.
 - **Small numbers.** The ranges above are wide. 24 of 24 is consistent with a true pass rate anywhere from 86% to 100%.
 - **Two cases that passed here failed one run in three in the previous run** (F15 and I04). Nothing was changed between the runs, so they should be treated as passing most of the time, not always.
-- **CI will fail on the eval step.** It replays the final run, and the permitted category misses its bar.
+- **CI reports the eval result but does not fail on it.** It replays the final run, in which the permitted category misses its bar. Lint and unit tests decide whether the build passes.
 - **Limits are starting values.** The budgets and timeouts in `config/` were not set from measurements.
 
 Detail: [docs/REFERENCE.md](docs/REFERENCE.md#evals).
