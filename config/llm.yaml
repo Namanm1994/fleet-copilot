@@ -1,9 +1,9 @@
 # LLM settings. Environment variables FLEET_LLM_PROVIDER and FLEET_LLM_MODEL override these.
-provider: anthropic
+provider: openrouter
 models:
   anthropic: claude-sonnet-5-5
   openai: ""          # set the pinned model ID you want to use
-  openrouter: ""      # e.g. "<vendor>/<model>" as listed by OpenRouter
+  openrouter: "nvidia/nemotron-3-ultra-550b-a55b:free"   # the model every recorded eval result was run on
 base_urls:
   openrouter: https://openrouter.ai/api/v1
 api_key_env:
