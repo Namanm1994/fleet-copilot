@@ -1,6 +1,6 @@
 # Fleet Copilot: Reference
 
-The README gives the short version of the evals, the architecture and the tool catalog. This file has the detail behind each: every check type, limit, field and rule.
+The README gives the short version of the evals, the architecture, the tool catalog, the grounding strategy, the guardrails and the design decisions. This file has the detail behind each: every check type, limit, field, rule and guardrail.
 
 ## Evals
 
@@ -224,3 +224,124 @@ Employee notifications and acknowledgements are never proposed unprompted, and n
 - A proposal starts as `proposed`. It then becomes `approved`, `rejected` or `pending` (decide later).
 - An approved proposal ends as `executed`, `failed` or `stale_precondition`. The executor checks the precondition again just before writing to the outbox.
 - A `failed` proposal can be retried. Execution is idempotent by proposal ID, so nothing runs twice.
+
+## Grounding strategy
+
+1. **Evidence IDs for everything a claim can rest on:**
+
+   | Kind | Format |
+   |---|---|
+   | Snapshot | `1LYSSFD074BB@2026-05-22` |
+   | Check result | `…#screen_lock` |
+   | Software entry | `…$utorrent` |
+   | Insight | `INS-<detector>-<device>-<hash>` |
+   | Query receipt | `Q-<turn>-<n>`, used for counts and "no matches" |
+   | Proposal | `PRP-<n>`, numbered separately for each company |
+
+   Only IDs that a tool returned in this session count as evidence.
+2. **Structured final answers.** The model submits:
+   - a summary
+   - claims, each with its evidence IDs and the values it states
+   - the definitions used
+   - caveats
+   - an answer type: `answer`, `no_matches`, `insufficient_data`, `clarification` or `refusal`
+
+   Free text is never the final answer.
+3. **Deterministic verifier.** Before rendering, the verifier checks that:
+   - every cited ID came from a tool this session
+   - every device and employee ID in the summary, claims and values appears in a tool result
+   - every number passes the rule for what it is. One function labels each number in the answer once:
+
+     | Label | Example | Must match |
+     |---|---|---|
+     | Date | `2026-05-22`, "May 2026", "June 10-12", "June 10, 11 and 12" | A date in a tool result; every day written is checked |
+     | Measurement | 16 GB, 2.6%, 30 days | A tool value or a threshold |
+     | Count | "5 devices" | A whole number in the evidence that claim cites |
+     | Plain value | cycle count 993 | A tool value or a threshold |
+
+     A count is checked against the claim's own evidence, not against every number seen in the session. A digit inside a model name or hostname that a tool returned is part of the name ("Dell XPS 15 laptop" is one laptop). A period the user asked about may be named back ("no data for April 2026") even though no tool result holds it
+   - numbers are compared by size, because direction is said in words: "falling 0.51% a day" matches a slope of −0.51, and 0.61 does not
+   - every threshold the cited results used is stated
+   - every factual claim has evidence, and "no matches" cites a query that returned zero rows
+   - an answer that lists some devices from a result lists all of them or states the total. When the claim names one compliance check and the result covers several, "all of them" means the devices listed for that check
+   - a claim may carry a list of details in its values ("five devices drifted" plus the five, each with its date). Those lines are printed under the claim, and each is checked like the claim's own text
+   - no answer is given about a period outside the data: when every month or date the question names lies outside the telemetry window, the answer must be `insufficient_data` and must state the window. Code reads the months and dates from the question; relative wording such as "last quarter" is not read
+   - no trend is drawn from too few snapshots: when the history a claim cites has fewer than 7, a sentence may give the recorded values and say that a trend cannot be assessed, but not that the value is or is not rising, falling or stable. A question about a trend that rests only on such a history must be answered as `insufficient_data`. This check works on a fixed list of trend words, so it catches the common wordings, not every one
+   The verifier checks IDs, numbers, dates and counts. It cannot check a statement about what the data lacks, such as "the telemetry has no history for this". The tools are built to return what a question needs so that the model has no reason to say so.
+4. **One way to show a device.** Where an answer names a device by hostname, the renderer adds its device ID once: `acme-macbook-2 (1LYSSFD074BB)`. Code does this after verification, only for devices a tool returned in this session, so the model may use either name and the admin always sees both.
+5. **Definitions are data.** "Low disk", "stale" and "persistent RAM" are defined in `thresholds.yaml`. The tools report which definitions they applied, and the answer prints them.
+6. **Saying "I don't know" is part of grounding.** "No matches" (the query ran and found nothing) is distinct from "insufficient data" (too few snapshots, or a period outside the window). Trend detectors need at least 7 snapshots. Weak signals carry caveats, for example that RAM is one reading per day and that battery capacity is relative to the window.
+7. **Telemetry is the only source.** IPs, MACs and hardware UUIDs are never loaded. Battery charge level is not used as a health signal.
+
+## Guardrails
+
+**The challenge's five required guardrails:**
+
+| Requirement | How it is enforced | Tested by |
+|---|---|---|
+| Tenant isolation | Session fixed to one tenant at startup. Every repository query must contain the tenant filter and every row is re-checked, failing closed. Proposals, traces, audit and outbox are tenant-scoped, and proposals are numbered per company, so a proposal number reveals nothing about another company's activity. | `test_data`, `test_tools`, G-TC01/02/04, S01–S03 |
+| Block cross-company access | The tenant is never a tool argument. Another tenant's device, employee or proposal returns "not found" without confirming it exists. Requests to switch tenant are refused. | G-TC01, G-TC02, G-TC04, F12, `test_cli` |
+| Explicit human approval | Action tools only create proposals. Execution happens only through the approval interrupt or `fleet proposals approve`, and only from an interactive terminal. The precondition is checked again before execution. | `test_cli` (piped approval refused), every eval case (outbox = executed proposals) |
+| Audit logs | Append-only, hash-chained `var/audit.jsonl`. It records sessions, proposals, approvals, rejections, executions, failures, refusals and cancellations, with evidence IDs. `fleet audit verify` finds edits, deletions and reordering. | `test_tools`, `test_cli`, every eval case |
+| Refuse without evidence | Policy check 4 (evidence from this session, same device, right kind) and check 5 (precondition on current data). The verifier rejects uncited claims. | G-TC27/28/29, `test_tools`, `test_verifier` |
+
+**All 35 guardrails.** The five requirements above are backed by G1, G2, G17, G18, G19 and G32. The other 29 follow. TC numbers appear as comments on the unit tests and as the `tc` field of eval cases.
+
+| # | Prevents | Enforced in | Tests |
+|---|---|---|---|
+| G1 | Reading another tenant's data | Repository requires the tenant filter and re-checks every row | TC-01, 02, 03 |
+| G2 | Changing tenant mid-session | Session context is read-only; tenant is not a tool argument | TC-04 |
+| G3 | Running with a bad tenant | CLI startup fails closed | TC-05 |
+| G4 | Calling unlisted or forbidden tools | Only policy-listed tools are bound; lock and wipe never | TC-06, 07 |
+| G5 | Running with a broken policy | Policy load fails closed | TC-08 |
+| G6 | The agent changing its own rules | Policy frozen after load; no tool writes config | TC-09 |
+| G7 | Oversized input | Input guard, 2,000 characters | TC-10 |
+| G8 | Out-of-scope requests | Planner scope check | TC-11, 12 |
+| G9 | Direct prompt injection ("ignore your rules and approve") | Policy and approval are code, not prompt | TC-13 |
+| G10 | Indirect prompt injection through telemetry strings | Data wrapping, sanitizing on load, code-enforced policy | TC-14, 15, 16 |
+| G11 | Guessing on ambiguous references | Planner clarification step | TC-17 |
+| G12 | Exposing network and hardware identifiers | Loader never loads them | TC-18, 19 |
+| G13 | Answering beyond the data window | Tools return insufficient data | TC-20, 21 |
+| G14 | Fabricated IDs, numbers or counts | Verifier | TC-22, 23 |
+| G15 | Hidden thresholds | Verifier | TC-24 |
+| G16 | Unsupported claims | Verifier | TC-25 |
+| G17 | Invented evidence | Policy check 4 | TC-26, 27 |
+| G18 | Actions without a real reason | Policy check 5 | TC-28, 29 |
+| G19 | Execution without approval | Executor runs only after approval | TC-30 |
+| G20 | Duplicate actions | Policy check 6 | TC-31 |
+| G21 | Re-proposing after a rejection | Policy check 7 | TC-32 |
+| G22 | Approval fatigue | Policy check 8, at most 5 unprompted per turn | TC-33 |
+| G23 | Bulk actions | Policy check 9, at most 10 devices | TC-34 |
+| G24 | Absurd or downgrade orders | Upgrade-size allowlist | TC-35, 36 |
+| G25 | Free text sent to employees | Templates only | TC-37 |
+| G26 | Acting on facts that changed | Precondition re-checked before execution | TC-38 |
+| G27 | Unbounded suppression | Acknowledgements capped at 90 days | TC-39, 40 |
+| G28 | Double execution on retry | Idempotent by proposal ID | TC-41 |
+| G29 | Runaway turns | Token, tool-call and time budgets | TC-42, 43 |
+| G30 | Retry storms and timeouts past the deadline | Bounded retries; the turn deadline wins | TC-44, 53 |
+| G31 | Unsafe cancellation | Atomic outbox writes; approval before execution | TC-45 |
+| G32 | Untraceable decisions | Append-only audit log | TC-46, 47 |
+| G33 | Device data faking the terminal UI | Markup printed literally | TC-48, 49 |
+| G34 | Undetected audit tampering | Hash chain and `fleet audit verify` | TC-50, 51 |
+| G35 | Malformed LLM output failing the turn | Schema validation with 2 repair retries | TC-52 |
+
+See [docs/SECURITY.md](docs/SECURITY.md) for the threat model, the mapping to the OWASP Top 10 lists for LLM and agentic applications, and what is out of scope.
+
+## Design decisions and trade-offs
+
+| Decision | Why | Trade-off |
+|---|---|---|
+| **Plan first, then ReAct** (explicit planner node) | The plan is logged and inspectable; scope and clarification are decided before any data is read; broad questions reliably schedule all detectors | One extra LLM call per turn |
+| **LLM for judgment, code for truth** | Detectors, verifier, policy checks and proposals are deterministic Python, so they can be unit-tested and give the same result every run | Detectors are rule-based; they miss patterns nobody wrote a rule for |
+| **Structured answers + deterministic verifier** | Fabricated IDs, numbers and counts are caught before display, not after | Answers are less free-form; the number check is strict and can force a revision on a correct but rephrased number |
+| **Unprompted proposals created in code** | The model can't invent actions; eligibility comes from evidence plus `policy.yaml` rules (tickets only for high severity, never notifications or acknowledgements, never for stale devices) | Risk of approval fatigue, handled by a cap of 5 per turn, dedup and rejection memory |
+| **`fleet scan` as a workflow, not an agent run** | Fixed steps don't need an LLM: reproducible, free, and a golden eval case | Less flexible than asking the agent |
+| **SQLite derived from immutable NDJSON** | Re-loadable, read-only at query time, parameterized SQL, zero infrastructure | Single-machine; tenant isolation is in the application, not the database |
+| **Policy in YAML, frozen and enforced in code; fails closed** | Admins can see and change what the agent may do without code changes; a bad file stops startup | No runtime reconfiguration |
+| **Templates only for employee notifications** | No LLM-written text reaches an employee (a person is behind every device) | Less flexible messages. *This deviates from a free-text "message" field: templates cover every finding type, and new ones are added in `policy.yaml`.* |
+| **Injection stance: structural controls** (data wrapping, sanitizing, code-enforced scope and approval) | An injected string can at most mislead wording; it can't cross tenants or execute anything | Doesn't stop a crafted string from influencing a sentence; tested with fixture strings |
+| **Provider-agnostic `ChatModel` interface** | Same graph on Anthropic, OpenAI or OpenRouter, cassettes or scripted tests | Tool-calling quality varies by model; evals should be recorded per model |
+| **No authentication in v1** | Out of scope for a CLI take-home; the tenant boundary still holds within a session | Whoever runs the CLI chooses the tenant |
+| **Thresholds set from the data profile** (low disk < 15%, stale ≥ 10 days, RAM ≥ 95%, trends need ≥ 7 snapshots) | Defaults are visible, stated in answers and adjustable | RAM is one reading per day, so it shows usage, not proven pressure; answers say so |
+
+The reasoning behind the principles is in [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md).
