@@ -24,8 +24,9 @@ htmlcov/
 .env.*
 !.env.example
 
-# Provided dataset (not redistributed; place it at data/raw/telemetry.ndjson)
-data/raw/
+# The sample dataset is committed. Any other file placed in data/raw/ stays out of git.
+data/raw/*
+!data/raw/telemetry.ndjson
 
 # Derived data (rebuilt by `fleet load`)
 *.db
