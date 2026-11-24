@@ -24,47 +24,97 @@ Python 3.10+, LangGraph, SQLite. Works with Anthropic, OpenAI or OpenRouter mode
 
 ## Install
 
-```bash
-python -m venv .venv && source .venv/bin/activate
-make setup                     # pip install -e ".[all,dev]"
-cp .env.example .env           # set FLEET_LLM_PROVIDER and the matching API key
-```
+Runs on Linux, macOS and Windows with Python 3.10 or later. The commands are the same on every system apart from creating the virtual environment and copying the settings file. `make` is a convenience only: every `make` target is one command, listed in the table below, so Windows needs no extra tools.
 
-For pinned versions (as CI uses): `pip install -r requirements.lock && pip install -e . --no-deps`.
-
-**Data.** Put the telemetry NDJSON at `data/raw/telemetry.ndjson`. It is gitignored and never committed. Then:
+**Linux and macOS**
 
 ```bash
-make load       # loads data/raw/*.ndjson into var/telemetry.db; writes var/data_quality.json
-make profile    # value distributions used to set the thresholds in config/thresholds.yaml
+python3 -m venv .venv && source .venv/bin/activate
+python -m pip install -e ".[all,dev]"      # or: make setup
+cp .env.example .env                        # then set FLEET_LLM_PROVIDER and the matching API key
 ```
+
+**Windows (PowerShell)**
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -e ".[all,dev]"
+Copy-Item .env.example .env                 # then set FLEET_LLM_PROVIDER and the matching API key
+```
+
+If PowerShell refuses to run the activation script, allow scripts for the current window first: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned`. In the classic Command Prompt, activate with `.venv\Scripts\activate.bat` and copy with `copy .env.example .env`.
+
+After activation the `fleet` command is available in that terminal. `.env` is read from the project folder on every run; a variable already set in the environment takes precedence over the file. Never commit `.env`.
+
+For the exact dependency versions CI uses: `pip install -r requirements.lock`, then `pip install -e . --no-deps`. The lock file was resolved on Linux with Python 3.12; on another system or Python version, use the install command above.
+
+| `make` target | Command it runs |
+|---|---|
+| `make setup` | `python -m pip install -e ".[all,dev]"` |
+| `make load` | `fleet load` |
+| `make profile` | `fleet profile` |
+| `make chat TENANT=acme` | `fleet chat --tenant acme` |
+| `make scan TENANT=acme` | `fleet scan --tenant acme` |
+| `make test` | `python -m pytest` |
+| `make eval` | `fleet eval --mode recorded` |
+| `make eval-live RUNS=3` | `fleet eval --mode live --record --runs 3` |
+| `make lint` | `ruff check fleet_copilot evals tests` |
+| `make fixture` | `python -m evals.fixtures.generate` |
+
+**Data.** Put the telemetry NDJSON at `data/raw/telemetry.ndjson` (on Windows, `data\raw\telemetry.ndjson`). It is gitignored and never committed. Then:
+
+```bash
+fleet load       # loads data/raw/*.ndjson into var/telemetry.db; writes var/data_quality.json
+fleet profile    # value distributions used to set the thresholds in config/thresholds.yaml
+```
+
+`fleet load` also takes file paths, for telemetry kept elsewhere: `fleet load path/to/file.ndjson`.
 
 `fleet load` appends: snapshots already in the database are skipped and only new ones are added, in one transaction. Run it again whenever new telemetry arrives; `fleet load --rebuild` discards the database and builds it again. A session that is already open keeps its view, because it reads only up to the as-of time it started with.
 
 `fleet load` also lists any company present in the data but missing from `config/policy.yaml`. Those companies stay inaccessible until they are registered.
 
-**Model.** `config/llm.yaml` pins the model for each provider. `FLEET_LLM_PROVIDER` and `FLEET_LLM_MODEL` override it. For OpenAI and OpenRouter, set `FLEET_LLM_MODEL` because no default is pinned. Without a key, the commands that need an LLM stop with a configuration error before doing anything.
+**Model.** `config/llm.yaml` pins the model for each provider. `FLEET_LLM_PROVIDER` and `FLEET_LLM_MODEL` override it. For OpenAI and OpenRouter, set `FLEET_LLM_MODEL` because no default is pinned. Without a key, the commands that need an LLM stop with a configuration error before doing anything. `fleet load`, `fleet scan` (without `--summary`), `fleet proposals`, `fleet audit verify`, the unit tests and `fleet eval --mode recorded` need no key.
 
 **Reasoning models.** Some models reason before they answer, and those hidden tokens count as output. `reasoning_effort` in `config/llm.yaml` asks for low effort on the planning step, which only classifies the question and lists the tools to use. The tool-calling steps keep the model's default. The setting is sent to OpenRouter and OpenAI; set it to `""` for a model that rejects it.
 
-## Run
+**Where files go.** Everything the program writes (database, proposals, audit log, outbox, traces, eval reports) is under `var/` in the project folder, which is gitignored. Set `FLEET_HOME` to use a different folder as the project root. On Linux and macOS these files are created readable by their owner only. Windows does not apply those permissions, so restrict access to the folder with its own access controls.
 
-Every command that touches company data needs `--tenant`. There is no default, and an unknown tenant fails before the database is opened.
+**Check the install.** These need no API key and no telemetry:
 
 ```bash
-fleet chat --tenant acme                    # interactive session (make chat TENANT=acme)
+fleet --help
+python -m pytest          # 322 unit tests, no model, no network
+```
+
+## Run
+
+Every command that touches company data needs `--tenant`. There is no default, and an unknown tenant fails before the database is opened. The commands below are the same in bash, PowerShell and the Command Prompt.
+
+```bash
+fleet chat --tenant acme                    # interactive session
 fleet ask  --tenant acme "Which devices are failing screen lock?"   # one question; --json for structured output
-fleet scan --tenant acme                    # one-shot briefing (make scan TENANT=acme); --summary adds an LLM paragraph
-fleet proposals list    --tenant acme [--status proposed]
+fleet scan --tenant acme                    # one-shot briefing; --summary adds an LLM paragraph
+fleet proposals list    --tenant acme       # add --status proposed to filter
 fleet proposals approve PRP-3 --tenant acme # interactive terminal only
 fleet proposals reject  PRP-3 --tenant acme --reason "known issue"
 fleet proposals retry   PRP-3 --tenant acme # after a failed delivery; idempotent
 fleet audit verify                          # check the audit hash chain
 fleet trace show <session_id> --tenant acme # plan, tool calls, verifier results, tokens and cost per turn
-fleet stats --tenant acme [--days 7]        # across sessions: tokens, cost, latency, verifier rejections, errors
+fleet stats --tenant acme                   # across sessions: tokens, cost, latency, verifier rejections, errors; --days 7, --json
 ```
 
-**In chat:** type `exit`, type `quit` or press Ctrl+D to leave. Ctrl+C cancels the current turn, and pressing it twice exits. Proposals appear under the answer with `[y] approve  [n] reject  [l] later`. Similar proposals (same action and check) are decided together. Each turn ends with a usage line showing LLM calls, tool calls, tokens, latency and cost. Cost is shown only when the model has a price in `config/pricing.yaml`.
+Further options:
+
+| Option | Effect |
+|---|---|
+| `--operator NAME` | The name recorded in the audit log, for `chat`, `ask`, `scan` and `proposals approve`, `reject` and `retry`. Defaults to the operating-system user |
+| `--as-of YYYY-MM-DD` | Treat this date as "now", for `chat`, `ask` and `scan`. By default "now" is the newest snapshot in the data, never the system clock |
+
+Every command and option is described by `--help`, for example `fleet proposals --help`.
+
+**In chat:** type `exit` or `quit` to leave, or send end-of-input: Ctrl+D on Linux and macOS, Ctrl+Z then Enter on Windows. Ctrl+C cancels the current turn, and pressing it twice exits. Proposals appear under the answer with `[y] approve  [n] reject  [l] later`. Similar proposals (same action and check) are decided together. Each turn ends with a usage line showing LLM calls, tool calls, tokens, latency and cost. Cost is shown only when the model has a price in `config/pricing.yaml`.
 
 **Approvals come only from an interactive terminal.** Piped or scripted input can ask questions but cannot approve anything. Approved actions are written to `var/outbox.jsonl`, which stands in for the ticketing, procurement and email systems.
 
