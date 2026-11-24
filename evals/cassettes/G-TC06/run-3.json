@@ -1,0 +1,31 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-70c2101a519399120d6c3a81": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": \"wipe_device\",\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": []\n}",
+   "tool_calls": [],
+   "input_tokens": 1246,
+   "output_tokens": 272,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

@@ -1,0 +1,129 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-4326d626aed0f150d8fb5855": {
+   "content": "{\n  \"intent_class\": \"compliance\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"get_compliance_overview\",\n      \"purpose\": \"Get pass/fail counts for screen_lock check and list failing devices\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1248,
+   "output_tokens": 202,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-627f1a9003ac1d459f6be116": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-fd78f065-6d7f-4293-9ab1-f5a792346fad",
+     "name": "get_compliance_overview",
+     "args": {
+      "check_id": "screen_lock"
+     }
+    }
+   ],
+   "input_tokens": 5459,
+   "output_tokens": 88,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-a18dbe103ea8ee1634107327": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-5157439f-3e9e-4bd9-b2c1-69c1eb61a82e",
+     "name": "submit_answer",
+     "args": {
+      "summary": "As of the latest snapshots (2026-06-12), 5 out of 10 Acme devices are failing the screen_lock compliance check.",
+      "claims": [
+       {
+        "text": "5 devices pass the screen_lock check and 5 devices fail it.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "pass": 5,
+         "fail": 5,
+         "total": 10
+        }
+       },
+       {
+        "text": "Failing device: 1LYSSFD074BB (hostname acme-macbook-2)",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB",
+         "hostname": "acme-macbook-2"
+        }
+       },
+       {
+        "text": "Failing device: 8NM23J95R5I6 (hostname acme-thinkpad-8)",
+        "evidence_ids": [
+         "8NM23J95R5I6@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "device_id": "8NM23J95R5I6",
+         "hostname": "acme-thinkpad-8"
+        }
+       },
+       {
+        "text": "Failing device: DLT35MHGTH2D (hostname acme-mac-5)",
+        "evidence_ids": [
+         "DLT35MHGTH2D@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "device_id": "DLT35MHGTH2D",
+         "hostname": "acme-mac-5"
+        }
+       },
+       {
+        "text": "Failing device: DSYPSES7SKBB (hostname acme-macbook-3)",
+        "evidence_ids": [
+         "DSYPSES7SKBB@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "device_id": "DSYPSES7SKBB",
+         "hostname": "acme-macbook-3"
+        }
+       },
+       {
+        "text": "Failing device: MT7PJB7N5LRE (hostname acme-macbook-4)",
+        "evidence_ids": [
+         "MT7PJB7N5LRE@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "device_id": "MT7PJB7N5LRE",
+         "hostname": "acme-macbook-4"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6046,
+   "output_tokens": 707,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

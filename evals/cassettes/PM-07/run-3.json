@@ -1,0 +1,98 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-1bcc27dc52480416c90c0435": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device name 'acme-macbook-2' to a device ID\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Get the latest snapshot of the device to see employee assignment\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1249,
+   "output_tokens": 234,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-cfe0251de17e2343fac36087": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-ebdab24a-0df7-479c-bf4b-56e407891359",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "acme-macbook-2"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5493,
+   "output_tokens": 86,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-8a81a993879ce0b98d0f027d": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f4e509da-b6be-4bda-90db-32ec3971d514",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5713,
+   "output_tokens": 103,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-d06388f0e3c2c0c49f30bb28": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-4943070f-1dce-4390-8b41-fc444de5d7fe",
+     "name": "submit_answer",
+     "args": {
+      "summary": "acme-macbook-2 (device ID 1LYSSFD074BB) is assigned to employee emp-acme-1001.",
+      "claims": [
+       {
+        "text": "acme-macbook-2 (device ID 1LYSSFD074BB) is assigned to employee emp-acme-1001.",
+        "evidence_ids": [
+         "Q-1-1",
+         "1LYSSFD074BB@2026-06-12"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB",
+         "employee_id": "emp-acme-1001",
+         "hostname": "acme-macbook-2"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6336,
+   "output_tokens": 313,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

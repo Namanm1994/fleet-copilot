@@ -1,0 +1,177 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-c3002b695516832bc58e4778": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Retrieve all devices in the fleet with no filters applied\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1246,
+   "output_tokens": 234,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-a65161367b4441b20e0bf1ed": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-0e08b710-3627-4e97-a097-c294dcfd9faa",
+     "name": "find_devices",
+     "args": {
+      "criteria": {},
+      "limit": 25,
+      "offset": 0
+     }
+    }
+   ],
+   "input_tokens": 5451,
+   "output_tokens": 86,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-2a6d4c3f081e537232a0ca0d": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-3c2117b9-02c4-424c-9de2-ccf62d6272d4",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Initech has 7 devices in the fleet as of 2026-06-12, all reporting on that date with none stale.",
+      "claims": [
+       {
+        "text": "Total device count is 7.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "count": 7
+        }
+       },
+       {
+        "text": "Device 2MAN6T4DJD95 (initech-dell-5) is a Dell XPS 15 running Windows 11 23H2, assigned to emp-initech-1002, last seen 2026-06-12.",
+        "evidence_ids": [
+         "2MAN6T4DJD95@2026-06-12"
+        ],
+        "values": {
+         "device_id": "2MAN6T4DJD95",
+         "hostname": "initech-dell-5",
+         "model": "Dell XPS 15",
+         "employee_id": "emp-initech-1002",
+         "os": "Windows 11 23H2",
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "Device DARFCP0BQM2G (initech-macbook-6) is a MacBook Pro running macOS 14.5, assigned to emp-initech-1000, last seen 2026-06-12.",
+        "evidence_ids": [
+         "DARFCP0BQM2G@2026-06-12"
+        ],
+        "values": {
+         "device_id": "DARFCP0BQM2G",
+         "hostname": "initech-macbook-6",
+         "model": "MacBook Pro",
+         "employee_id": "emp-initech-1000",
+         "os": "macOS 14.5",
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "Device I3JLKILKQTAC (initech-mac-3) is a Mac mini running macOS 15.3, assigned to emp-initech-1001, last seen 2026-06-12.",
+        "evidence_ids": [
+         "I3JLKILKQTAC@2026-06-12"
+        ],
+        "values": {
+         "device_id": "I3JLKILKQTAC",
+         "hostname": "initech-mac-3",
+         "model": "Mac mini",
+         "employee_id": "emp-initech-1001",
+         "os": "macOS 15.3",
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "Device RLD7WV7J82SH (initech-mac-4) is a Mac mini running macOS 14.5, assigned to emp-initech-1000, last seen 2026-06-12.",
+        "evidence_ids": [
+         "RLD7WV7J82SH@2026-06-12"
+        ],
+        "values": {
+         "device_id": "RLD7WV7J82SH",
+         "hostname": "initech-mac-4",
+         "model": "Mac mini",
+         "employee_id": "emp-initech-1000",
+         "os": "macOS 14.5",
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "Device SPKRRDF0L786 (initech-macbook-2) is a MacBook Air running macOS 13.6, assigned to emp-initech-1003, last seen 2026-06-12.",
+        "evidence_ids": [
+         "SPKRRDF0L786@2026-06-12"
+        ],
+        "values": {
+         "device_id": "SPKRRDF0L786",
+         "hostname": "initech-macbook-2",
+         "model": "MacBook Air",
+         "employee_id": "emp-initech-1003",
+         "os": "macOS 13.6",
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "Device W2656QDAE2ZJ (initech-dell-1) is a Dell XPS 15 running Windows 11 22H2, assigned to emp-initech-1004, last seen 2026-06-12.",
+        "evidence_ids": [
+         "W2656QDAE2ZJ@2026-06-12"
+        ],
+        "values": {
+         "device_id": "W2656QDAE2ZJ",
+         "hostname": "initech-dell-1",
+         "model": "Dell XPS 15",
+         "employee_id": "emp-initech-1004",
+         "os": "Windows 11 22H2",
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "Device XZYK11QTPWEC (initech-macbook-7) is a MacBook Pro running macOS 13.6, assigned to emp-initech-1000, last seen 2026-06-12.",
+        "evidence_ids": [
+         "XZYK11QTPWEC@2026-06-12"
+        ],
+        "values": {
+         "device_id": "XZYK11QTPWEC",
+         "hostname": "initech-macbook-7",
+         "model": "MacBook Pro",
+         "employee_id": "emp-initech-1000",
+         "os": "macOS 13.6",
+         "last_seen": "2026-06-12"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6422,
+   "output_tokens": 1522,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

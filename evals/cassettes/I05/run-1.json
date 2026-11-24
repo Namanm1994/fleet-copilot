@@ -1,0 +1,86 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-06a5a87b6e773d5b7213f199": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Find devices with battery condition not Normal on latest snapshot (indicating need for replacement)\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1247,
+   "output_tokens": 3153,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-0926b15b7080556d0bddcec3": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-2b8a97b9-955f-4900-98b4-8d53e5cff564",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "battery_not_normal": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 5457,
+   "output_tokens": 100,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-dabcb8fa3381ba61b35c423f": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-62ed0b9b-f5bd-4455-9cd0-86cb6d436118",
+     "name": "submit_answer",
+     "args": {
+      "summary": "One laptop needs a battery replacement: FX-BATT-01 (MacBook Pro) with battery condition \"Service Recommended\" as of 2026-06-12.",
+      "claims": [
+       {
+        "text": "Device FX-BATT-01 (hostname fx-macbook-batt, model MacBook Pro) has battery condition 'Service Recommended', indicating it needs replacement.",
+        "evidence_ids": [
+         "FX-BATT-01@2026-06-12"
+        ],
+        "values": {
+         "device_id": "FX-BATT-01",
+         "hostname": "fx-macbook-batt",
+         "model": "MacBook Pro",
+         "battery_condition": "Service Recommended",
+         "last_seen": "2026-06-12",
+         "employee_id": "emp-fx-1002"
+        }
+       }
+      ],
+      "definitions_used": [
+       "battery_eol"
+      ],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 5721,
+   "output_tokens": 395,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

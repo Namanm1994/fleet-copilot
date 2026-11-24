@@ -1,0 +1,228 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-8cf7e2df08796228757e35c0": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run prohibited_software detector across the fleet to see if any torrent clients are flagged as prohibited software.\"\n    },\n    {\n      \"tool\": \"get_software\",\n      \"purpose\": \"Search for devices with qBittorrent installed.\"\n    },\n    {\n      \"tool\": \"get_software\",\n      \"purpose\": \"Search for devices with uTorrent installed.\"\n    },\n    {\n      \"tool\": \"get_software\",\n      \"purpose\": \"Search for devices with BitTorrent installed.\"\n    },\n    {\n      \"tool\": \"get_software\",\n      \"purpose\": \"Search for devices with Transmission installed.\"\n    },\n    {\n      \"tool\": \"get_software\",\n      \"purpose\": \"Search for devices with Deluge installed.\"\n    },\n    {\n      \"tool\": \"get_software\",\n      \"purpose\": \"Search for devices with Vuze installed.\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1246,
+   "output_tokens": 2350,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-2e3848a26656fe23243fc686": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-9ba4aeda-0281-4533-8ac8-0c5315c00ec8",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "prohibited_software"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5597,
+   "output_tokens": 118,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-6c0de0d99a1911660ff19d26": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-556beebf-7a59-4eb5-9a55-5ba1796651fc",
+     "name": "get_software",
+     "args": {
+      "name": "qBittorrent"
+     }
+    }
+   ],
+   "input_tokens": 6054,
+   "output_tokens": 86,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-d69809ffa9d0b8a89bb40614": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-577f60b7-f4e6-4368-b482-7e01d3737442",
+     "name": "get_software",
+     "args": {
+      "name": "uTorrent"
+     }
+    }
+   ],
+   "input_tokens": 6208,
+   "output_tokens": 49,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-8f386c6704b41cdcf0b4b93b": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-57c8ff8e-2930-4487-944a-ecb43b613102",
+     "name": "get_software",
+     "args": {
+      "name": "BitTorrent"
+     }
+    }
+   ],
+   "input_tokens": 6462,
+   "output_tokens": 74,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-afdeab98ea4b2d9f4194c3ca": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-9c1e95ad-4175-4b4d-b8ce-94c5f6980463",
+     "name": "get_software",
+     "args": {
+      "name": "Transmission"
+     }
+    }
+   ],
+   "input_tokens": 6612,
+   "output_tokens": 79,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-dc57073082a4694153e7e9cc": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-cdbb0188-b082-49da-98b4-e78f2d705ca4",
+     "name": "get_software",
+     "args": {
+      "name": "Deluge"
+     }
+    }
+   ],
+   "input_tokens": 6760,
+   "output_tokens": 133,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "007-05144af1d21f23681dbbf976": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-8d24a48c-bccd-4480-99ba-5f033c4594c0",
+     "name": "get_software",
+     "args": {
+      "name": "Vuze"
+     }
+    }
+   ],
+   "input_tokens": 6908,
+   "output_tokens": 159,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "008-c794a09cd3f45f99fe62d161": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-410eb0e4-3a8e-40ca-a9ed-3788ec557c32",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Yes, one device (FX-UTOR-01, hostname fx-dell-utorrent) is running µTorrent version 3.6, which is flagged as prohibited software. No other torrent clients (qBittorrent, BitTorrent, Transmission, Deluge, Vuze) were found on any devices.",
+      "claims": [
+       {
+        "text": "Device FX-UTOR-01 has µTorrent 3.6 installed, first seen 2026-06-09, and it is flagged as prohibited software.",
+        "evidence_ids": [
+         "INS-prohibited_software-FX-UTOR-01-59e964",
+         "FX-UTOR-01@2026-06-12$utorrent"
+        ],
+        "values": {
+         "device_id": "FX-UTOR-01",
+         "hostname": "fx-dell-utorrent",
+         "software": "µTorrent",
+         "version": "3.6",
+         "first_seen": "2026-06-09",
+         "prohibited": true
+        }
+       },
+       {
+        "text": "No devices have qBittorrent installed.",
+        "evidence_ids": [
+         "Q-1-2"
+        ],
+        "values": {
+         "count": 0
+        }
+       },
+       {
+        "text": "No devices have BitTorrent installed.",
+        "evidence_ids": [
+         "Q-1-4"
+        ],
+        "values": {
+         "count": 0
+        }
+       },
+       {
+        "text": "No devices have Transmission installed.",
+        "evidence_ids": [
+         "Q-1-5"
+        ],
+        "values": {
+         "count": 0
+        }
+       },
+       {
+        "text": "No devices have Deluge installed.",
+        "evidence_ids": [
+         "Q-1-6"
+        ],
+        "values": {
+         "count": 0
+        }
+       },
+       {
+        "text": "No devices have Vuze installed.",
+        "evidence_ids": [
+         "Q-1-7"
+        ],
+        "values": {
+         "count": 0
+        }
+       }
+      ],
+      "definitions_used": [
+       "prohibited_software"
+      ],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 7056,
+   "output_tokens": 791,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

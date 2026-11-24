@@ -1,0 +1,31 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-bfe26393bf032cc95d7ef427": {
+   "content": "{\"intent_class\": \"other\", \"in_scope\": false, \"refusal_reason\": \"Request is for a general Python script to reset passwords, which is outside the scope of Acme's device telemetry and IT action tools.\", \"entities\": [], \"forbidden_action\": null, \"needs_clarification\": false, \"clarification_question\": null, \"steps\": []}",
+   "tool_calls": [],
+   "input_tokens": 1245,
+   "output_tokens": 176,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

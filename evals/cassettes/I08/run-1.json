@@ -1,0 +1,156 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-167171371ba6dc67039c1738": {
+   "content": "{\n  \"intent_class\": \"insight\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run low_storage detector across the fleet to identify devices trending toward running out of disk space\"\n    },\n    {\n      \"tool\": \"get_definitions\",\n      \"purpose\": \"Retrieve threshold definitions for low storage to explain what 'soon' means\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1249,
+   "output_tokens": 410,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-8b1a156ac6b54ebcfb298af5": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-a78085ce-7f4a-4632-9e4d-fe19dbc02d2d",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "low_storage"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5491,
+   "output_tokens": 103,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-d22ef80e8901befd795fda73": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6a8fd351-9043-45ba-b5b3-c333bd4858ed",
+     "name": "get_definitions",
+     "args": {
+      "names": [
+       "low_disk",
+       "low_disk_persistent"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6096,
+   "output_tokens": 151,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-b781e14f9caf2fbc7ae026eb": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-56e9afd5-b95e-4dba-9a0f-d2ae8b5d7494",
+     "name": "submit_answer",
+     "args": {
+      "summary": "One device (FX-DISK-01, hostname fx-macbook-air-disk) is trending toward running out of disk space, with 7.6% free (20 GB of 256 GB) and a persistent low-disk pattern across 10 of the last 14 daily snapshots. The trend shows free space decreasing by about 0.8 percentage points per day.",
+      "claims": [
+       {
+        "text": "Device FX-DISK-01 (fx-macbook-air-disk) has 7.6% free disk space (20 GB free of 256 GB total) on its system volume as of 2026-06-12.",
+        "evidence_ids": [
+         "INS-low_storage-FX-DISK-01-4a98f1"
+        ],
+        "values": {
+         "device_id": "FX-DISK-01",
+         "hostname": "fx-macbook-air-disk",
+         "free_pct": 7.6,
+         "free_gb": 19.5,
+         "total_gb": 256.0,
+         "as_of": "2026-06-12"
+        }
+       },
+       {
+        "text": "Low disk has been observed in 10 of the last 14 daily snapshots, meeting the persistent low-disk definition (low disk in ≥70% of snapshots with at least 7 snapshots).",
+        "evidence_ids": [
+         "INS-low_storage-FX-DISK-01-4a98f1"
+        ],
+        "values": {
+         "low_snapshots": 10,
+         "total_snapshots": 14,
+         "persistent": true
+        }
+       },
+       {
+        "text": "The linear trend estimates free space is decreasing by 0.80 percentage points per day.",
+        "evidence_ids": [
+         "INS-low_storage-FX-DISK-01-4a98f1"
+        ],
+        "values": {
+         "slope_pct_per_day": -0.8
+        }
+       },
+       {
+        "text": "The low_disk threshold is defined as system volume having less than 15% free space on the latest snapshot.",
+        "evidence_ids": [
+         "Q-1-2"
+        ],
+        "values": {
+         "threshold": "15% free"
+        }
+       },
+       {
+        "text": "The low_disk_persistent threshold is defined as low disk in at least 70% of snapshots (minimum 7 snapshots).",
+        "evidence_ids": [
+         "Q-1-2"
+        ],
+        "values": {
+         "threshold": "70% of snapshots, min 7 snapshots"
+        }
+       },
+       {
+        "text": "One other device had too few snapshots (less than 7) for a trend assessment; its latest snapshot was checked but no trend could be computed.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "trend_not_assessed_count": 1
+        }
+       }
+      ],
+      "definitions_used": [
+       "low_disk",
+       "low_disk_persistent"
+      ],
+      "caveats": [
+       "Telemetry covers 2026-05-20 to 2026-06-12 only; no data outside this window.",
+       "One device had insufficient history for trend analysis; its current state was checked but not included in the low_storage insight."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6288,
+   "output_tokens": 1028,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

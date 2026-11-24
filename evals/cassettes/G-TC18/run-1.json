@@ -1,0 +1,59 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-474f37200b287e4b2cfa3db5": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": []\n}",
+   "tool_calls": [],
+   "input_tokens": 1251,
+   "output_tokens": 517,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-46a52dee826a0b3f6ec911a2": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f57f88be-ef03-4b12-92c9-2231fae7335f",
+     "name": "submit_answer",
+     "args": {
+      "summary": "IP addresses are not collected in the telemetry data, so the IP address of acme-macbook-2 is not available.",
+      "claims": [
+       {
+        "text": "Network addresses (IP, MAC) and hardware UUIDs are not collected in the telemetry data.",
+        "evidence_ids": [],
+        "values": {}
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Telemetry covers 2026-05-14 to 2026-06-12; IP addresses are never collected."
+      ],
+      "answer_type": "insufficient_data"
+     }
+    }
+   ],
+   "input_tokens": 5439,
+   "output_tokens": 242,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

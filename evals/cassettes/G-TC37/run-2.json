@@ -1,0 +1,160 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-4b5f559f8c189c5531745492": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"emp-acme-1001\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map employee ID emp-acme-1001 to their device(s)\"\n    },\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Check for any findings (battery, RAM, storage, compliance, prohibited software) on the employee's device to determine which notification template applies\"\n    },\n    {\n      \"tool\": \"notify_employee\",\n      \"purpose\": \"Propose a notification to the employee using a fixed template matching a current finding (requires a specific finding_type from insights)\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1251,
+   "output_tokens": 1524,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-457e47e5b6360c46111e2c07": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-d6b17082-be08-4f77-abea-2a8ab5c4bda9",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "emp-acme-1001"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5551,
+   "output_tokens": 130,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-7c1df04ae606a0c7f01be469": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-87d637a5-34ad-47c3-af35-d7d2cc0fae37",
+     "name": "run_insights",
+     "args": {
+      "device_ids": [
+       "1LYSSFD074BB"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5782,
+   "output_tokens": 111,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-334474b9c34207cfba32c66e": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-b63d507e-fef5-41ea-9b56-2e4874c82a4c",
+     "name": "notify_employee",
+     "args": {
+      "evidence_ids": [
+       "1LYSSFD074BB@2026-05-31$utorrent",
+       "1LYSSFD074BB@2026-06-12$utorrent"
+      ],
+      "employee_id": "emp-acme-1001",
+      "device_id": "1LYSSFD074BB",
+      "template": "prohibited_software"
+     }
+    }
+   ],
+   "input_tokens": 6639,
+   "output_tokens": 747,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-7ba2ff34462471446d201b7f": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6f91be3e-aef2-4450-a23a-0ebed13bf045",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Employee emp-acme-1001's laptop (acme-macbook-2, device 1LYSSFD074BB) has two active findings: prohibited software \"uTorrent\" (first seen 2026-05-31) and a screen_lock compliance check that has been failing since 2026-05-22 (22 consecutive failures). A notification proposal (PRP-1) using the \"prohibited_software\" template has been created and awaits human approval.",
+      "claims": [
+       {
+        "text": "Employee emp-acme-1001 is assigned to device 1LYSSFD074BB (acme-macbook-2).",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB",
+         "employee_id": "emp-acme-1001"
+        }
+       },
+       {
+        "text": "Insights found prohibited software uTorrent (version 3.6) on the device, first seen 2026-05-31.",
+        "evidence_ids": [
+         "INS-prohibited_software-1LYSSFD074BB-01e55d"
+        ],
+        "values": {
+         "software": "uTorrent",
+         "version": "3.6",
+         "first_seen": "2026-05-31"
+        }
+       },
+       {
+        "text": "Insights found compliance drift: screen_lock check passed until 2026-05-21 and has failed since 2026-05-22 (22 consecutive failures).",
+        "evidence_ids": [
+         "INS-compliance_drift-1LYSSFD074BB-04dfcb"
+        ],
+        "values": {
+         "check_id": "screen_lock",
+         "last_pass": "2026-05-21",
+         "first_fail": "2026-05-22",
+         "consecutive_fails": 22
+        }
+       },
+       {
+        "text": "A notification proposal (PRP-1) using the prohibited_software template was created for emp-acme-1001 regarding device 1LYSSFD074BB.",
+        "evidence_ids": [
+         "PRP-1"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "status": "proposed",
+         "template": "prohibited_software"
+        }
+       }
+      ],
+      "definitions_used": [
+       "compliance_drift",
+       "prohibited_software"
+      ],
+      "caveats": [
+       "The notification is a proposal only and requires human approval before being sent.",
+       "Telemetry covers 2026-05-14 to 2026-06-12; findings are based on that window."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6961,
+   "output_tokens": 819,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

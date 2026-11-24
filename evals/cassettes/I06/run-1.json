@@ -1,0 +1,203 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-dafa374e057b24b6c4cfe590": {
+   "content": "{\n  \"intent_class\": \"insight\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Detect devices with persistent RAM constraints (ram_constrained) across the telemetry window to identify those consistently running out of memory\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1248,
+   "output_tokens": 252,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-95e09963e5a3c5a3edc9dac1": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-3a2a9a41-f9bb-42ac-8535-639f6bb4d591",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "ram_constrained"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5469,
+   "output_tokens": 95,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-b39008bafd8162b70a4970ef": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-c8d6131b-0541-40bd-9c34-b0350f8176a0",
+     "name": "submit_answer",
+     "args": {
+      "summary": "One device (FX-RAM-01, hostname fx-latitude-ram) shows persistent high memory usage, with RAM at or above 95% in 10 of 14 daily snapshots over the telemetry window. A second device (FX-RAM-02) had a brief spike but does not meet the persistent threshold.",
+      "claims": [
+       {
+        "text": "Device FX-RAM-01 (fx-latitude-ram) has persistent RAM constraint: RAM at or above 95% in 10 of 14 snapshots (71% share), max 3 consecutive days, on a 16 GB device.",
+        "evidence_ids": [
+         "INS-ram_constrained-FX-RAM-01-1dd3af",
+         "FX-RAM-01@2026-05-31",
+         "FX-RAM-01@2026-06-01",
+         "FX-RAM-01@2026-06-03",
+         "FX-RAM-01@2026-06-04",
+         "FX-RAM-01@2026-06-05",
+         "FX-RAM-01@2026-06-07",
+         "FX-RAM-01@2026-06-08",
+         "FX-RAM-01@2026-06-10",
+         "FX-RAM-01@2026-06-11",
+         "FX-RAM-01@2026-06-12"
+        ],
+        "values": {
+         "device_id": "FX-RAM-01",
+         "hostname": "fx-latitude-ram",
+         "ram_total_gb": 16,
+         "share": 0.71,
+         "max_consecutive": 3,
+         "level": "persistent"
+        }
+       },
+       {
+        "text": "Device FX-RAM-02 (fx-macbook-spike) had RAM at or above 95% on only 2 consecutive snapshots (14% share), not meeting the persistent threshold.",
+        "evidence_ids": [
+         "INS-ram_constrained-FX-RAM-02-ad5b3c",
+         "FX-RAM-02@2026-06-04",
+         "FX-RAM-02@2026-06-05"
+        ],
+        "values": {
+         "device_id": "FX-RAM-02",
+         "hostname": "fx-macbook-spike",
+         "ram_total_gb": 32,
+         "share": 0.14,
+         "max_consecutive": 2,
+         "level": "flagged"
+        }
+       },
+       {
+        "text": "The ram_constrained detector checked 24 devices; 1 device had too few snapshots for a trend assessment.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "devices_checked": 24,
+         "trend_not_assessed_count": 1
+        }
+       }
+      ],
+      "definitions_used": [
+       "ram_persistent",
+       "ram_flagged"
+      ],
+      "caveats": [
+       "One RAM reading per day: high usage at that moment, not proof of sustained memory pressure.",
+       "Too few snapshots for a trend on 1 device(s) (a trend needs 7). Their latest snapshot was still checked, so this says nothing about their current state."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6373,
+   "output_tokens": 1165,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-51aa31a38dbd6f7451021722": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-5c049f2c-e83a-435a-937f-abd73ddb6776",
+     "name": "submit_answer",
+     "args": {
+      "summary": "One device (FX-RAM-01, hostname fx-latitude-ram) shows persistent high memory usage, with RAM at or above 95% in 10 of 14 daily snapshots over the telemetry window. A second device (FX-RAM-02) had a brief spike but does not meet the persistent threshold.",
+      "claims": [
+       {
+        "text": "Device FX-RAM-01 (fx-latitude-ram) has persistent RAM constraint: RAM at or above 95% in 10 of 14 snapshots (share 0.71), max 3 consecutive days, on a 16 GB device.",
+        "evidence_ids": [
+         "INS-ram_constrained-FX-RAM-01-1dd3af",
+         "FX-RAM-01@2026-05-31",
+         "FX-RAM-01@2026-06-01",
+         "FX-RAM-01@2026-06-03",
+         "FX-RAM-01@2026-06-04",
+         "FX-RAM-01@2026-06-05",
+         "FX-RAM-01@2026-06-07",
+         "FX-RAM-01@2026-06-08",
+         "FX-RAM-01@2026-06-10",
+         "FX-RAM-01@2026-06-11",
+         "FX-RAM-01@2026-06-12"
+        ],
+        "values": {
+         "device_id": "FX-RAM-01",
+         "hostname": "fx-latitude-ram",
+         "ram_total_gb": 16,
+         "share": 0.71,
+         "max_consecutive": 3,
+         "level": "persistent"
+        }
+       },
+       {
+        "text": "Device FX-RAM-02 (fx-macbook-spike) had RAM at or above 95% on only 2 consecutive snapshots (share 0.14), not meeting the persistent threshold.",
+        "evidence_ids": [
+         "INS-ram_constrained-FX-RAM-02-ad5b3c",
+         "FX-RAM-02@2026-06-04",
+         "FX-RAM-02@2026-06-05"
+        ],
+        "values": {
+         "device_id": "FX-RAM-02",
+         "hostname": "fx-macbook-spike",
+         "ram_total_gb": 32,
+         "share": 0.14,
+         "max_consecutive": 2,
+         "level": "flagged"
+        }
+       },
+       {
+        "text": "The ram_constrained detector checked 24 devices; 1 device had too few snapshots for a trend assessment.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "devices_checked": 24,
+         "trend_not_assessed_count": 1
+        }
+       }
+      ],
+      "definitions_used": [
+       "ram_persistent",
+       "ram_flagged"
+      ],
+      "caveats": [
+       "One RAM reading per day: high usage at that moment, not proof of sustained memory pressure.",
+       "Too few snapshots for a trend on 1 device(s) (a trend needs 7). Their latest snapshot was still checked, so this says nothing about their current state."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 7204,
+   "output_tokens": 913,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

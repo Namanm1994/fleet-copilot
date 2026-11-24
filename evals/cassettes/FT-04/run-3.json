@@ -1,0 +1,289 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-e49ee1b46d53477d12cefc59": {
+   "content": "{\n  \"intent_class\": \"broad\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run all pattern detectors across the fleet to identify any problems (battery EOL, RAM constrained, low storage, compliance drift, prohibited software)\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1247,
+   "output_tokens": 350,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-6273e10aecfff8f1b045e054": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-df92c678-60de-4ba6-98ed-77c30ed22fa6",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "battery_eol",
+       "ram_constrained",
+       "low_storage",
+       "compliance_drift",
+       "prohibited_software"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5472,
+   "output_tokens": 110,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-ef919ce5ca823a13f9d97d23": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-7340cda0-25ae-4377-98de-1d5c8aff783a",
+     "name": "get_compliance_overview",
+     "args": {}
+    }
+   ],
+   "input_tokens": 5660,
+   "output_tokens": 91,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-2922e4ce900a277f89730711": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-04d704f2-83d2-4171-9d45-f04386b79615",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "low_disk": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 7088,
+   "output_tokens": 48,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-e32f2acaa3368990a6602682": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-665f96a3-77ea-4fbf-8037-3d856842e325",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "battery_not_normal": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 7539,
+   "output_tokens": 45,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-60326814c1b5f9cefba15757": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6a523840-792b-410c-89da-ba4076a2352b",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "ram_used_pct_gte": 90
+      }
+     }
+    }
+   ],
+   "input_tokens": 8067,
+   "output_tokens": 50,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-113e0fa96b88ab37746a9d31": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-607df17c-26a0-4a61-a37b-c4e214759746",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "has_prohibited_software": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 8358,
+   "output_tokens": 57,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "007-c886a0ca401b8fb5faeadc0a": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6c500748-d2e1-4369-8e34-430839229cc3",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "stale": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 8657,
+   "output_tokens": 56,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "008-e641930c847e088095dda047": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-b66b5f0d-18a4-40d4-b8bc-7e5b60026258",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Acme has several issues across the fleet as of 2026-06-12: 9 devices are not OS-up-to-date, 5 lack screen lock, 2 have critically low disk space, 3 have batteries needing service, 1 has very high RAM usage (99%), and 1 has prohibited software (uTorrent). No devices are stale.",
+      "claims": [
+       {
+        "text": "9 devices fail the os_up_to_date compliance check (medium severity)",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12#os_up_to_date",
+         "7VP16KHV88LM@2026-06-12#os_up_to_date",
+         "8NM23J95R5I6@2026-06-12#os_up_to_date",
+         "9MXJVZ1I0DKA@2026-06-12#os_up_to_date",
+         "DSYPSES7SKBB@2026-06-12#os_up_to_date",
+         "M4XVHUV1MEPZ@2026-06-12#os_up_to_date",
+         "MT7PJB7N5LRE@2026-06-12#os_up_to_date",
+         "Q3VUITEGQ400@2026-06-12#os_up_to_date",
+         "XSU9UUDGU6AC@2026-06-12#os_up_to_date"
+        ],
+        "values": {
+         "count": 9
+        }
+       },
+       {
+        "text": "5 devices fail the screen_lock compliance check (medium severity)",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12#screen_lock",
+         "8NM23J95R5I6@2026-06-12#screen_lock",
+         "DLT35MHGTH2D@2026-06-12#screen_lock",
+         "DSYPSES7SKBB@2026-06-12#screen_lock",
+         "MT7PJB7N5LRE@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "count": 5
+        }
+       },
+       {
+        "text": "2 devices have critically low disk space (below the low_disk threshold)",
+        "evidence_ids": [
+         "8NM23J95R5I6@2026-06-12",
+         "MT7PJB7N5LRE@2026-06-12"
+        ],
+        "values": {
+         "count": 2,
+         "devices": [
+          {
+           "device_id": "8NM23J95R5I6",
+           "hostname": "acme-thinkpad-8",
+           "disk_free_pct": 2.59,
+           "disk_free_gb": 26.5
+          },
+          {
+           "device_id": "MT7PJB7N5LRE",
+           "hostname": "acme-macbook-4",
+           "disk_free_pct": 2.0,
+           "disk_free_gb": 10.2
+          }
+         ]
+        }
+       },
+       {
+        "text": "3 devices have battery condition 'Service Recommended' (battery_eol threshold)",
+        "evidence_ids": [
+         "7VP16KHV88LM@2026-06-12",
+         "8NM23J95R5I6@2026-06-12",
+         "M4XVHUV1MEPZ@2026-06-12"
+        ],
+        "values": {
+         "count": 3,
+         "devices": [
+          "acme-macbook-1",
+          "acme-thinkpad-8",
+          "acme-dell-9"
+         ]
+        }
+       },
+       {
+        "text": "1 device has very high RAM usage (99% of 16 GB)",
+        "evidence_ids": [
+         "M4XVHUV1MEPZ@2026-06-12"
+        ],
+        "values": {
+         "device_id": "M4XVHUV1MEPZ",
+         "hostname": "acme-dell-9",
+         "ram_used_pct": 99.0,
+         "ram_total_gb": 16.0
+        }
+       },
+       {
+        "text": "1 device has prohibited software (uTorrent)",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12",
+         "1LYSSFD074BB@2026-06-12$utorrent"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB",
+         "hostname": "acme-macbook-2",
+         "software": "uTorrent"
+        }
+       },
+       {
+        "text": "No devices are stale (no device has missed its check-in window)",
+        "evidence_ids": [
+         "Q-1-6"
+        ],
+        "values": {
+         "count": 0
+        }
+       }
+      ],
+      "definitions_used": [
+       "low_disk",
+       "battery_eol",
+       "prohibited_software",
+       "stale_device"
+      ],
+      "caveats": [
+       "Telemetry covers 2026-05-14 to 2026-06-12 only; nothing outside this window is available.",
+       "Network addresses (IP, MAC) and hardware UUIDs are not collected."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 8823,
+   "output_tokens": 1562,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

@@ -1,0 +1,215 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-4ea9bfa147226af7b33f9ee9": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-RAM-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device identifier FX-RAM-01 to a device ID\"\n    },\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Check for persistent RAM constraint finding on the device to justify upgrade order\"\n    },\n    {\n      \"tool\": \"create_upgrade_order\",\n      \"purpose\": \"Propose a RAM upgrade order for 128 GB if a persistent RAM finding exists\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1253,
+   "output_tokens": 583,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-429af11bc0725c187c48a6cf": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6fc99acd-ec04-47f0-9161-0220d6b33abd",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-RAM-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5529,
+   "output_tokens": 120,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-32573da6fd019bbfb4def278": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-1c56aa4f-b942-41cd-9c8c-9ce5bfd1216f",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "ram_constrained"
+      ],
+      "device_ids": [
+       "FX-RAM-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5747,
+   "output_tokens": 149,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-6c009bdbf9218ff9eb9444a4": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-981ca16c-f0d7-432c-9339-1b4d541d96a2",
+     "name": "create_upgrade_order",
+     "args": {
+      "evidence_ids": [
+       "INS-ram_constrained-FX-RAM-01-1dd3af"
+      ],
+      "device_id": "FX-RAM-01",
+      "component": "ram",
+      "spec_gb": 128
+     }
+    }
+   ],
+   "input_tokens": 6354,
+   "output_tokens": 280,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-e3b4bf630305c0b51d409a99": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-686b2a0f-e399-40e8-8bc0-ca1ff6b6bb89",
+     "name": "submit_answer",
+     "args": {
+      "summary": "FX-RAM-01 (fx-latitude-ram, Dell Latitude 7440) has a persistent RAM constraint finding (RAM at or above 95% in 10 of 14 snapshots on a 16 GB device). However, 128 GB is not an allowed RAM upgrade spec; the allowed options are 16, 32, or 64 GB.",
+      "claims": [
+       {
+        "text": "Device FX-RAM-01 resolves to device ID FX-RAM-01 (fx-latitude-ram, Dell Latitude 7440, employee emp-fx-1003).",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "FX-RAM-01",
+         "hostname": "fx-latitude-ram",
+         "employee_id": "emp-fx-1003"
+        }
+       },
+       {
+        "text": "A persistent RAM constraint insight exists for FX-RAM-01: RAM at or above 95% in 10 of 14 snapshots on a 16 GB device (level: persistent).",
+        "evidence_ids": [
+         "INS-ram_constrained-FX-RAM-01-1dd3af"
+        ],
+        "values": {
+         "insight_id": "INS-ram_constrained-FX-RAM-01-1dd3af",
+         "share": 0.71,
+         "max_consecutive": 3,
+         "ram_total_gb": 16,
+         "level": "persistent"
+        }
+       },
+       {
+        "text": "Creating a 128 GB RAM upgrade order failed because 128 GB is not an allowed spec; allowed specs are 16, 32, 64 GB.",
+        "evidence_ids": [],
+        "values": {
+         "requested_gb": 128,
+         "allowed_gb": [
+          16,
+          32,
+          64
+         ]
+        }
+       }
+      ],
+      "definitions_used": [
+       "ram_persistent"
+      ],
+      "caveats": [
+       "One RAM reading per day: high usage at that moment, not proof of sustained memory pressure."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6580,
+   "output_tokens": 598,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-e810352234d48ac4e512233e": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-bc87dee4-19e3-4774-b394-356bb04acfaf",
+     "name": "submit_answer",
+     "args": {
+      "summary": "FX-RAM-01 (fx-latitude-ram, Dell Latitude 7440) has a persistent RAM constraint finding (RAM at or above 95% in 10 of 14 snapshots on a 16 GB device). However, 128 GB is not an allowed RAM upgrade spec; the allowed options are 16, 32, or 64 GB.",
+      "claims": [
+       {
+        "text": "Device FX-RAM-01 resolves to device ID FX-RAM-01 (fx-latitude-ram, Dell Latitude 7440, employee emp-fx-1003).",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "FX-RAM-01",
+         "hostname": "fx-latitude-ram",
+         "employee_id": "emp-fx-1003"
+        }
+       },
+       {
+        "text": "A persistent RAM constraint insight exists for FX-RAM-01: RAM at or above 95% in 10 of 14 snapshots on a 16 GB device (level: persistent).",
+        "evidence_ids": [
+         "INS-ram_constrained-FX-RAM-01-1dd3af"
+        ],
+        "values": {
+         "insight_id": "INS-ram_constrained-FX-RAM-01-1dd3af",
+         "share": 0.71,
+         "max_consecutive": 3,
+         "ram_total_gb": 16,
+         "level": "persistent"
+        }
+       },
+       {
+        "text": "Creating a 128 GB RAM upgrade order failed because 128 GB is not an allowed spec; allowed specs are 16, 32, 64 GB.",
+        "evidence_ids": [
+         "INS-ram_constrained-FX-RAM-01-1dd3af"
+        ],
+        "values": {
+         "requested_gb": 128,
+         "allowed_gb": [
+          16,
+          32,
+          64
+         ]
+        }
+       }
+      ],
+      "definitions_used": [
+       "ram_persistent"
+      ],
+      "caveats": [
+       "One RAM reading per day: high usage at that moment, not proof of sustained memory pressure."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 7120,
+   "output_tokens": 2625,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

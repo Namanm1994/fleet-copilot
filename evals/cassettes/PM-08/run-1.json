@@ -1,0 +1,145 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-23e2775ab893f53538242139": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-UTOR-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device identifier FX-UTOR-01 to a device ID\"\n    },\n    {\n      \"tool\": \"get_software\",\n      \"purpose\": \"Check if uTorrent is installed on the device\"\n    },\n    {\n      \"tool\": \"request_software_removal\",\n      \"purpose\": \"Propose an IT task to remove uTorrent from the device\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1255,
+   "output_tokens": 677,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-57455971eab93d6581f08ec8": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-81fdac18-28f7-45fd-8a8f-cd0f35e8ee68",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-UTOR-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5526,
+   "output_tokens": 111,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-111f816b9f71802600407fea": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-436e4c7f-d1ab-4ac9-a6eb-4bfe230b2f9e",
+     "name": "get_software",
+     "args": {
+      "device_id": "FX-UTOR-01"
+     }
+    }
+   ],
+   "input_tokens": 5746,
+   "output_tokens": 125,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-e54580dc1ec9b78bdb72e77b": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-b18957ff-d120-41eb-b934-b94e54cb156e",
+     "name": "request_software_removal",
+     "args": {
+      "evidence_ids": [
+       "FX-UTOR-01@2026-06-12$utorrent"
+      ],
+      "device_id": "FX-UTOR-01",
+      "software_name": "µTorrent"
+     }
+    }
+   ],
+   "input_tokens": 6266,
+   "output_tokens": 187,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-86916f03b9a5cccafe5f7a10": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-c6a41211-f651-4d45-b43e-2f4d30f585ea",
+     "name": "submit_answer",
+     "args": {
+      "summary": "uTorrent (µTorrent 3.6) is installed on device FX-UTOR-01 (fx-dell-utorrent, Dell XPS 15) and is flagged as prohibited software. A proposal (PRP-1) has been created requesting IT to remove it; the proposal is awaiting human approval.",
+      "claims": [
+       {
+        "text": "Device FX-UTOR-01 resolves to device ID FX-UTOR-01 (fx-dell-utorrent, Dell XPS 15, employee emp-fx-1013).",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "FX-UTOR-01",
+         "label": "fx-dell-utorrent (Dell XPS 15, FX-UTOR-01)",
+         "employee_id": "emp-fx-1013"
+        }
+       },
+       {
+        "text": "µTorrent version 3.6 is installed on FX-UTOR-01 as of 2026-06-12 and is marked as prohibited software.",
+        "evidence_ids": [
+         "FX-UTOR-01@2026-06-12$utorrent",
+         "Q-1-2"
+        ],
+        "values": {
+         "software_name": "µTorrent",
+         "version": "3.6",
+         "first_seen": "2026-06-09",
+         "prohibited": true
+        }
+       },
+       {
+        "text": "A software removal proposal (PRP-1) has been created to request IT to remove µTorrent from FX-UTOR-01; status is 'proposed' awaiting approval.",
+        "evidence_ids": [
+         "PRP-1"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "status": "proposed",
+         "action": "request_software_removal"
+        }
+       }
+      ],
+      "definitions_used": [
+       "prohibited_software"
+      ],
+      "caveats": [
+       "The proposal is a request only; no removal has been executed. A human must approve it."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6534,
+   "output_tokens": 648,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

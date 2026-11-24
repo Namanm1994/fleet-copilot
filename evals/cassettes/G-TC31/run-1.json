@@ -1,0 +1,246 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-7e2141d5d03920b8b968adc0": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device name 'acme-macbook-2' to a device ID\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Retrieve the device's latest snapshot including compliance checks to identify the screen lock check ID and its status\"\n    },\n    {\n      \"tool\": \"open_remediation_ticket\",\n      \"purpose\": \"Create a remediation ticket for the screen lock compliance check if it is failing on the latest snapshot\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1251,
+   "output_tokens": 787,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-1d5fd1bda25bbd94ca894699": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-5f1b3a7d-a25f-4ba2-ab23-42d6a50a31fd",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "acme-macbook-2"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5540,
+   "output_tokens": 109,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-b352f627a38585c89a4cf77c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6c63c0f6-dec1-4a08-9977-a8ab9cc03205",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5760,
+   "output_tokens": 80,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-f81d3321d1d1559644b0da07": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-836de676-68fc-4475-84f6-417b961c1109",
+     "name": "open_remediation_ticket",
+     "args": {
+      "device_id": "1LYSSFD074BB",
+      "check_id": "screen_lock",
+      "evidence_ids": [
+       "1LYSSFD074BB@2026-06-12#screen_lock"
+      ],
+      "note": "Screen lock compliance check failing on latest snapshot"
+     }
+    }
+   ],
+   "input_tokens": 6383,
+   "output_tokens": 229,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-74f7e4d448457c59db2f9f54": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-9429dab5-c2ea-41de-8dc0-d90c86f987e3",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Created a remediation ticket proposal (PRP-1) for the screen lock compliance check failing on acme-macbook-2 (device ID 1LYSSFD074BB). The proposal awaits human approval.",
+      "claims": [
+       {
+        "text": "Device acme-macbook-2 resolves to device ID 1LYSSFD074BB",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB"
+        }
+       },
+       {
+        "text": "Latest snapshot (2026-06-12) shows screen_lock compliance check failing with medium severity",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "check_id": "screen_lock",
+         "status": "fail",
+         "severity": "medium",
+         "date": "2026-06-12"
+        }
+       },
+       {
+        "text": "Remediation ticket proposal PRP-1 created for screen_lock check on device 1LYSSFD074BB",
+        "evidence_ids": [
+         "PRP-1"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "status": "proposed"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Proposal only; requires human approval before any action is taken"
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6683,
+   "output_tokens": 361,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-7655ae68df195f724dafcc12": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the device name 'acme-macbook-2' to its device ID\"\n    },\n    {\n      \"tool\": \"list_proposals\",\n      \"purpose\": \"Check existing proposals for this device to avoid duplicates\"\n    },\n    {\n      \"tool\": \"open_remediation_ticket\",\n      \"purpose\": \"Create a remediation ticket proposal for the screen lock compliance check failing on this device\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1339,
+   "output_tokens": 2065,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-4b3a230d3f76089eb29b27b7": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-7ae00aaf-9e17-430a-ad96-fa6b0ac9c33e",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "acme-macbook-2"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5713,
+   "output_tokens": 113,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "007-2f2af15d994e7afe05ccc292": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-18ef6289-335c-450d-b1e4-c8b26a2d8432",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5933,
+   "output_tokens": 97,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "008-50b18e60508c793a470a2c84": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6d35427c-ce8b-4a18-98c7-80635c1a6006",
+     "name": "list_proposals",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 6586,
+   "output_tokens": 138,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "009-0afefdaa666c612380c46445": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6ba132ec-1c9f-4e27-b924-722959a2d2bb",
+     "name": "submit_answer",
+     "args": {
+      "summary": "A remediation ticket proposal (PRP-1) for the screen lock compliance check failing on acme-macbook-2 already exists and is awaiting human approval.",
+      "claims": [
+       {
+        "text": "Device acme-macbook-2 (device ID 1LYSSFD074BB) has a failing screen_lock compliance check on its latest snapshot (2026-06-12).",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB",
+         "check_id": "screen_lock",
+         "status": "fail",
+         "severity": "medium",
+         "date": "2026-06-12"
+        }
+       },
+       {
+        "text": "An open remediation ticket proposal (PRP-1) for this exact issue already exists with status 'proposed'.",
+        "evidence_ids": [
+         "PRP-1"
+        ],
+        "values": {
+         "proposal_id": "PRP-1",
+         "action": "open_remediation_ticket",
+         "status": "proposed",
+         "reason": "screen_lock (medium) failing on 2026-06-12"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "The existing proposal PRP-1 was created earlier in this session and awaits human approval. No duplicate proposal was created."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6814,
+   "output_tokens": 642,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

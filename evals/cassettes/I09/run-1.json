@@ -1,0 +1,173 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-1dddf013dc1f8b82b5eb4b89": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"FX-DELL-01\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the hostname FX-DELL-01 to a device ID\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Get the latest snapshot summary for FX-DELL-01 including OS, RAM, disk, battery, compliance, and open proposals\"\n    },\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run pattern detectors (battery_eol, ram_constrained, low_storage, compliance_drift, prohibited_software) for FX-DELL-01 over the telemetry window\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1250,
+   "output_tokens": 517,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-ff929993aa09fbb624a26b8b": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-c9a6f1d9-9e48-4e64-a716-f133ad92dbb9",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "FX-DELL-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5558,
+   "output_tokens": 89,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-3c6fdd8405b2015c8dc4994b": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-f8b6e060-9935-4036-a12d-1839076a778d",
+     "name": "get_device",
+     "args": {
+      "device_id": "FX-DELL-01"
+     }
+    }
+   ],
+   "input_tokens": 5777,
+   "output_tokens": 109,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-ca7fa21908c2c79ca65980f7": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-447ce95d-cf1f-4ff6-9a88-c304b8a17484",
+     "name": "run_insights",
+     "args": {
+      "device_ids": [
+       "FX-DELL-01"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6394,
+   "output_tokens": 67,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-faf626cd0f6d0a0e6b9424cd": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-5c82f737-540c-47bf-ae2f-573c067c8610",
+     "name": "submit_answer",
+     "args": {
+      "summary": "FX-DELL-01 (Dell XPS 15, assigned to emp-fx-1000) shows no problems as of 2026-06-12. All compliance checks pass, battery condition is Normal, disk has 45% free (230.4 GB), RAM usage is 55%, and no pattern detectors flagged any issues.",
+      "claims": [
+       {
+        "text": "Device FX-DELL-01 is a Dell XPS 15 laptop running Windows 11 23H2 with 16 GB RAM and 512 GB disk.",
+        "evidence_ids": [
+         "FX-DELL-01@2026-06-12"
+        ],
+        "values": {
+         "device_id": "FX-DELL-01",
+         "model": "Dell XPS 15",
+         "os": "Windows 11 23H2",
+         "ram_total_gb": 16,
+         "disk_total_gb": 512
+        }
+       },
+       {
+        "text": "Latest snapshot (2026-06-12) shows disk free 45% (230.4 GB), RAM used 55%, battery condition Normal with 300 cycles.",
+        "evidence_ids": [
+         "FX-DELL-01@2026-06-12"
+        ],
+        "values": {
+         "disk_free_pct": 45,
+         "disk_free_gb": 230.4,
+         "ram_used_pct": 55,
+         "battery_condition": "Normal",
+         "battery_cycle_count": 300
+        }
+       },
+       {
+        "text": "All three compliance checks pass: disk_encryption (high), os_up_to_date (medium), screen_lock (medium).",
+        "evidence_ids": [
+         "FX-DELL-01@2026-06-12#disk_encryption",
+         "FX-DELL-01@2026-06-12#os_up_to_date",
+         "FX-DELL-01@2026-06-12#screen_lock"
+        ],
+        "values": {
+         "checks": [
+          "disk_encryption",
+          "os_up_to_date",
+          "screen_lock"
+         ]
+        }
+       },
+       {
+        "text": "No insights found from battery_eol, ram_constrained, low_storage, compliance_drift, or prohibited_software detectors.",
+        "evidence_ids": [
+         "Q-1-3"
+        ],
+        "values": {
+         "detectors_run": [
+          "battery_eol",
+          "ram_constrained",
+          "low_storage",
+          "compliance_drift",
+          "prohibited_software"
+         ],
+         "insights_count": 0
+        }
+       },
+       {
+        "text": "Device is not stale (last seen 2026-06-12) and has no open proposals.",
+        "evidence_ids": [
+         "FX-DELL-01@2026-06-12"
+        ],
+        "values": {
+         "stale": false,
+         "open_proposals_count": 0
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "No findings from the detectors that ran; a valid 'no issues found' result."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6644,
+   "output_tokens": 930,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

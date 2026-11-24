@@ -1,0 +1,86 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-7f0c314c998de0e01b7d8532": {
+   "content": "{\n  \"intent_class\": \"aggregate\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Count Windows devices in the fleet\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1246,
+   "output_tokens": 249,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-fb5b2678f3740880317a4b26": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-80662794-e92c-498e-b7ce-8fc0fc4a39d0",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "platform": "win32"
+      }
+     }
+    }
+   ],
+   "input_tokens": 5446,
+   "output_tokens": 207,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-45c746b47a81023675158cf0": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-503a4712-8cb6-493a-9297-7e2f465c9220",
+     "name": "submit_answer",
+     "args": {
+      "summary": "There are 5 Windows devices in the fleet as of 2026-06-12.",
+      "claims": [
+       {
+        "text": "The fleet contains 5 Windows devices.",
+        "evidence_ids": [
+         "FX-DELL-01@2026-06-12",
+         "FX-DELL-02@2026-06-12",
+         "FX-INJ-02@2026-06-12",
+         "FX-RAM-01@2026-06-12",
+         "FX-UTOR-01@2026-06-12",
+         "Q-1-1"
+        ],
+        "values": {
+         "count": 5
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "Telemetry covers 2026-05-20 to 2026-06-12; counts reflect latest snapshots as of 2026-06-12."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6154,
+   "output_tokens": 347,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

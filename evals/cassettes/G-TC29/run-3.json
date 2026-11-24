@@ -1,0 +1,107 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-a10ac075d15cc2a410d47244": {
+   "content": "{\n  \"intent_class\": \"action\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the hostname 'acme-macbook-2' to a device ID\"\n    },\n    {\n      \"tool\": \"flag_device_for_replacement\",\n      \"purpose\": \"Propose flagging the device for replacement due to non-Normal battery condition\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1247,
+   "output_tokens": 503,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-a6280a1063ffe8a1266fb6d9": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-26ec6118-30b9-4e05-864f-18d95644b18d",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "acme-macbook-2"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5497,
+   "output_tokens": 90,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-e1eb7dcfcfcd33ac266288d6": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-99e88e4f-6acd-4df8-aff9-63b9fe782b3a",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5717,
+   "output_tokens": 86,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-06759a830c428b71c6abdfac": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-e8cffb1b-5c59-4f76-a463-7e9f771a2bf4",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Device acme-macbook-2 (1LYSSFD074BB) has a battery condition of \"Normal\" on its latest snapshot (2026-06-12), so it does not meet the criteria for a battery end-of-life replacement proposal.",
+      "claims": [
+       {
+        "text": "Device acme-macbook-2 resolves to device ID 1LYSSFD074BB.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB"
+        }
+       },
+       {
+        "text": "Latest snapshot shows battery_condition: Normal.",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12"
+        ],
+        "values": {
+         "battery_condition": "Normal",
+         "snapshot_date": "2026-06-12"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "The flag_device_for_replacement tool only accepts reason 'battery_eol' and requires battery condition not Normal."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6340,
+   "output_tokens": 409,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

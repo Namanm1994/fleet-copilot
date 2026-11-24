@@ -1,0 +1,49 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-1538d536d19712b96eac1efd": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"the Dell\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map 'the Dell' to specific device IDs\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Get latest snapshot summary of the resolved Dell device\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1242,
+   "output_tokens": 249,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-4c40b5d7dc81419f71b3f1f5": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-ab56439b-d102-45ac-992c-746d13e529c8",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "the Dell"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5470,
+   "output_tokens": 82,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

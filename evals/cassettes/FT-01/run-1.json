@@ -1,0 +1,180 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-fba48f6cd8d3d0c564a5e36e": {
+   "content": "{\n  \"intent_class\": \"lookup\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Find all devices with low disk space using the low_disk filter\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1246,
+   "output_tokens": 192,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-5082afd75c909e9520257e18": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-2ecd62a7-cfba-47e2-9b81-33fa59bc5453",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "low_disk": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 5454,
+   "output_tokens": 81,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-b9bbd04e1fb1863199829001": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-3b9bd25d-2d57-4fd8-80ef-6fee8396a9ff",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "low_disk": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 5619,
+   "output_tokens": 61,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-09e3cfb01b5e82e6d416b0cc": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-380aea8d-cb8c-4352-bc45-06e62fead477",
+     "name": "get_definitions",
+     "args": {
+      "names": [
+       "low_disk"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5710,
+   "output_tokens": 152,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "004-b6ead36c0a449df326b09d66": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-af8df949-8b15-4131-a56d-d0defc777b1b",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "disk_free_pct_lt": 10
+      }
+     }
+    }
+   ],
+   "input_tokens": 5871,
+   "output_tokens": 126,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "005-50f3cfba1c02549d1379e18d": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-25ccb1b8-9357-4cd0-a86e-21fe9b81b166",
+     "name": "find_devices",
+     "args": {
+      "criteria": {},
+      "limit": 5
+     }
+    }
+   ],
+   "input_tokens": 6041,
+   "output_tokens": 60,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "006-907ef93a8d90e13a693e11f3": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-e196ba64-0038-46f5-a454-580187784cab",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "low_storage"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 6210,
+   "output_tokens": 72,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "007-071fd46caa976ca6d701f849": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-6e228f1a-28bc-4839-b283-b8313389fe63",
+     "name": "get_compliance_overview",
+     "args": {}
+    }
+   ],
+   "input_tokens": 6374,
+   "output_tokens": 55,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "008-ae151e616017602d337ade41": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-33680cdf-46ca-4f41-8a68-7cb9319df0a6",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Unable to retrieve device data due to internal tool errors. All query tools (find_devices, get_definitions, run_insights, get_compliance_overview) are returning INTERNAL_ERROR and no data can be accessed.",
+      "claims": [
+       {
+        "text": "All telemetry query tools are failing with INTERNAL_ERROR, preventing retrieval of low-disk devices.",
+        "evidence_ids": [],
+        "values": {}
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [
+       "All tools returned INTERNAL_ERROR; no device data could be queried."
+      ],
+      "answer_type": "insufficient_data"
+     }
+    }
+   ],
+   "input_tokens": 6526,
+   "output_tokens": 200,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

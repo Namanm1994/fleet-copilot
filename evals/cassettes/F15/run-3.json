@@ -1,0 +1,100 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-8cf7e2df08796228757e35c0": {
+   "content": "{\n  \"intent_class\": \"insight\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run prohibited_software detector across the fleet to see if any torrent clients (if prohibited) are installed\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1246,
+   "output_tokens": 989,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-6526e3efa38aa97176dc7b06": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-abbaf902-21f8-4cb9-90e2-39cee1c99272",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "prohibited_software"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5462,
+   "output_tokens": 95,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-2378b1ef204a5048c280b36c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-1e76f7d4-89d3-4719-a602-03c338d5f9d3",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Yes, one device is running a torrent client: µTorrent 3.6 is installed on device FX-UTOR-01 (hostname fx-dell-utorrent), first detected on 2026-06-09 and still present as of 2026-06-12.",
+      "claims": [
+       {
+        "text": "Device FX-UTOR-01 (fx-dell-utorrent) has µTorrent 3.6 installed, which is on the prohibited software blocklist.",
+        "evidence_ids": [
+         "INS-prohibited_software-FX-UTOR-01-59e964",
+         "FX-UTOR-01@2026-06-09$utorrent",
+         "FX-UTOR-01@2026-06-12$utorrent"
+        ],
+        "values": {
+         "device_id": "FX-UTOR-01",
+         "hostname": "fx-dell-utorrent",
+         "software": "µTorrent",
+         "version": "3.6",
+         "first_seen": "2026-06-09",
+         "last_seen": "2026-06-12"
+        }
+       },
+       {
+        "text": "The prohibited_software detector checked 24 devices across the fleet and found only this one instance.",
+        "evidence_ids": [
+         "Q-1-1"
+        ],
+        "values": {
+         "devices_checked": 24,
+         "total_findings": 1
+        }
+       }
+      ],
+      "definitions_used": [
+       "prohibited_software"
+      ],
+      "caveats": [
+       "Only software on the prohibited blocklist is detected by this insight; other torrent clients not on the blocklist would not be reported."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 5919,
+   "output_tokens": 652,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

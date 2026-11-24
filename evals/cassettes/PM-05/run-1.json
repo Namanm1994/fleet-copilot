@@ -1,0 +1,137 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-fe065560e952509065ac5dbd": {
+   "content": "{\n  \"intent_class\": \"broad\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run all insight detectors across the fleet to get a comprehensive health summary\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1245,
+   "output_tokens": 487,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-a184ba4b1625f19fabfe1dd2": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-d35ff1b2-6a07-47a0-ad36-b2f2910b9650",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "battery_eol",
+       "ram_constrained",
+       "low_storage",
+       "compliance_drift",
+       "prohibited_software"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5455,
+   "output_tokens": 127,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-8072c413f420c49bb03b36d4": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-fccd8841-cfb6-4726-9f29-6810f18fba80",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Fleet health shows 12 issues across 10 devices: 3 with failing batteries, 2 critically low on storage, 1 with prohibited software (uTorrent), 5 with screen lock compliance drift, and 1 RAM-constrained.",
+      "claims": [
+       {
+        "text": "3 devices have batteries in 'Service Recommended' condition (high severity)",
+        "evidence_ids": [
+         "INS-battery_eol-7VP16KHV88LM-31702b",
+         "INS-battery_eol-8NM23J95R5I6-dc9f70",
+         "INS-battery_eol-M4XVHUV1MEPZ-1cee44"
+        ],
+        "values": {
+         "count": 3
+        }
+       },
+       {
+        "text": "2 devices have critically low system volume free space (2.6% and 2.0% free)",
+        "evidence_ids": [
+         "INS-low_storage-8NM23J95R5I6-0b5037",
+         "INS-low_storage-MT7PJB7N5LRE-1cdb77"
+        ],
+        "values": {
+         "count": 2
+        }
+       },
+       {
+        "text": "1 device has prohibited software uTorrent installed",
+        "evidence_ids": [
+         "INS-prohibited_software-1LYSSFD074BB-01e55d"
+        ],
+        "values": {
+         "count": 1
+        }
+       },
+       {
+        "text": "5 devices show screen_lock compliance drift (previously passing, now failing consistently)",
+        "evidence_ids": [
+         "INS-compliance_drift-1LYSSFD074BB-04dfcb",
+         "INS-compliance_drift-8NM23J95R5I6-04703d",
+         "INS-compliance_drift-DLT35MHGTH2D-5e6a20",
+         "INS-compliance_drift-DSYPSES7SKBB-e42f99",
+         "INS-compliance_drift-MT7PJB7N5LRE-c14b0c"
+        ],
+        "values": {
+         "count": 5
+        }
+       },
+       {
+        "text": "1 device is RAM-constrained (at or above 95% usage in 15 of 30 snapshots)",
+        "evidence_ids": [
+         "INS-ram_constrained-M4XVHUV1MEPZ-d92a20"
+        ],
+        "values": {
+         "count": 1
+        }
+       }
+      ],
+      "definitions_used": [
+       "battery_eol",
+       "compliance_drift",
+       "low_disk",
+       "low_disk_persistent",
+       "prohibited_software",
+       "ram_persistent"
+      ],
+      "caveats": [
+       "Telemetry covers 2026-05-14 to 2026-06-12 only",
+       "One RAM reading per day: high usage at that moment, not proof of sustained memory pressure",
+       "Trend estimates for low storage show declining free space"
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 9931,
+   "output_tokens": 890,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

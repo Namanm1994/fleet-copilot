@@ -1,0 +1,219 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-53038e215cbc268842a7c45a": {
+   "content": "{\n  \"intent_class\": \"broad\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"run_insights\",\n      \"purpose\": \"Run all pattern detectors (battery_eol, ram_constrained, low_storage, compliance_drift, prohibited_software) across the fleet to identify devices with any findings.\"\n    },\n    {\n      \"tool\": \"find_devices\",\n      \"purpose\": \"Filter the devices that have insights findings to only those with platform 'laptop' (using device_ids from the insights results).\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1262,
+   "output_tokens": 1467,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-25dbc1f9d8fef8a08d234643": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-c1aee8f2-0e10-4bef-a79e-ccac4e2a0bf9",
+     "name": "run_insights",
+     "args": {
+      "detectors": [
+       "battery_eol",
+       "ram_constrained",
+       "low_storage",
+       "compliance_drift",
+       "prohibited_software"
+      ],
+      "include_acknowledged": false
+     }
+    }
+   ],
+   "input_tokens": 5533,
+   "output_tokens": 145,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-c9731d8f988d81487f0866d1": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-b6349574-fd01-4fad-a869-f6d75b277ff6",
+     "name": "find_devices",
+     "args": {
+      "criteria": {
+       "device_ids": [
+        "7VP16KHV88LM",
+        "8NM23J95R5I6",
+        "M4XVHUV1MEPZ",
+        "MT7PJB7N5LRE",
+        "1LYSSFD074BB",
+        "DLT35MHGTH2D",
+        "DSYPSES7SKBB"
+       ],
+       "is_laptop": true
+      }
+     }
+    }
+   ],
+   "input_tokens": 10023,
+   "output_tokens": 358,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-10f0aaed32b0ab9ec212632c": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-d6fe1ae7-c251-4bfe-8b27-1c26a0f3c9ed",
+     "name": "submit_answer",
+     "args": {
+      "summary": "Six laptops have telemetry findings that could make them candidates for wipe and reimage (or replacement for hardware issues): acme-macbook-1, acme-thinkpad-8, acme-dell-9, acme-macbook-4, acme-macbook-2, and acme-macbook-3. Issues include battery end-of-life, persistent low storage, RAM pressure, prohibited software, and screen-lock compliance drift.",
+      "claims": [
+       {
+        "text": "acme-macbook-1 (7VP16KHV88LM) has a battery reported as \"Service Recommended\" since 2026-05-30 with cycle count 1049.",
+        "evidence_ids": [
+         "INS-battery_eol-7VP16KHV88LM-31702b",
+         "7VP16KHV88LM@2026-06-12"
+        ],
+        "values": {
+         "device_id": "7VP16KHV88LM",
+         "hostname": "acme-macbook-1",
+         "condition": "Service Recommended",
+         "since": "2026-05-30",
+         "cycle_count": 1049
+        }
+       },
+       {
+        "text": "acme-thinkpad-8 (8NM23J95R5I6) has three concurrent issues: battery \"Service Recommended\" since 2026-05-23 (cycle count 1157), persistent low storage at 2.6% free (26 GB of 1024 GB) across 25 of 30 snapshots, and screen_lock compliance drift failing since 2026-05-30 (14 consecutive failures).",
+        "evidence_ids": [
+         "INS-battery_eol-8NM23J95R5I6-dc9f70",
+         "INS-low_storage-8NM23J95R5I6-0b5037",
+         "INS-compliance_drift-8NM23J95R5I6-04703d",
+         "8NM23J95R5I6@2026-06-12"
+        ],
+        "values": {
+         "device_id": "8NM23J95R5I6",
+         "hostname": "acme-thinkpad-8",
+         "battery_condition": "Service Recommended",
+         "battery_since": "2026-05-23",
+         "cycle_count": 1157,
+         "storage_free_pct": 2.6,
+         "storage_free_gb": 26,
+         "storage_total_gb": 1024,
+         "compliance_check": "screen_lock",
+         "first_fail": "2026-05-30",
+         "consecutive_fails": 14
+        }
+       },
+       {
+        "text": "acme-dell-9 (M4XVHUV1MEPZ) has battery \"Service Recommended\" since 2026-05-24 (cycle count 948) and persistent RAM constraint at or above 95% usage in 15 of 30 snapshots on a 16 GB device.",
+        "evidence_ids": [
+         "INS-battery_eol-M4XVHUV1MEPZ-1cee44",
+         "INS-ram_constrained-M4XVHUV1MEPZ-d92a20",
+         "M4XVHUV1MEPZ@2026-06-12"
+        ],
+        "values": {
+         "device_id": "M4XVHUV1MEPZ",
+         "hostname": "acme-dell-9",
+         "battery_condition": "Service Recommended",
+         "battery_since": "2026-05-24",
+         "cycle_count": 948,
+         "ram_total_gb": 16,
+         "ram_high_usage_snapshots": 15,
+         "ram_high_usage_total_snapshots": 30
+        }
+       },
+       {
+        "text": "acme-macbook-4 (MT7PJB7N5LRE) has persistent low storage at 2.0% free (10 GB of 512 GB) across all 30 snapshots and screen_lock compliance drift failing since 2026-05-28 (16 consecutive failures).",
+        "evidence_ids": [
+         "INS-low_storage-MT7PJB7N5LRE-1cdb77",
+         "INS-compliance_drift-MT7PJB7N5LRE-c14b0c",
+         "MT7PJB7N5LRE@2026-06-12"
+        ],
+        "values": {
+         "device_id": "MT7PJB7N5LRE",
+         "hostname": "acme-macbook-4",
+         "storage_free_pct": 2.0,
+         "storage_free_gb": 10,
+         "storage_total_gb": 512,
+         "compliance_check": "screen_lock",
+         "first_fail": "2026-05-28",
+         "consecutive_fails": 16
+        }
+       },
+       {
+        "text": "acme-macbook-2 (1LYSSFD074BB) has prohibited software uTorrent (version 3.6) installed since 2026-05-31 and screen_lock compliance drift failing since 2026-05-22 (22 consecutive failures).",
+        "evidence_ids": [
+         "INS-prohibited_software-1LYSSFD074BB-01e55d",
+         "INS-compliance_drift-1LYSSFD074BB-04dfcb",
+         "1LYSSFD074BB@2026-06-12"
+        ],
+        "values": {
+         "device_id": "1LYSSFD074BB",
+         "hostname": "acme-macbook-2",
+         "prohibited_software": "uTorrent",
+         "version": "3.6",
+         "first_seen": "2026-05-31",
+         "compliance_check": "screen_lock",
+         "first_fail": "2026-05-22",
+         "consecutive_fails": 22
+        }
+       },
+       {
+        "text": "acme-macbook-3 (DSYPSES7SKBB) has screen_lock compliance drift failing since 2026-06-01 (12 consecutive failures).",
+        "evidence_ids": [
+         "INS-compliance_drift-DSYPSES7SKBB-e42f99",
+         "DSYPSES7SKBB@2026-06-12"
+        ],
+        "values": {
+         "device_id": "DSYPSES7SKBB",
+         "hostname": "acme-macbook-3",
+         "compliance_check": "screen_lock",
+         "first_fail": "2026-06-01",
+         "consecutive_fails": 12
+        }
+       }
+      ],
+      "definitions_used": [
+       "battery_eol",
+       "low_disk",
+       "low_disk_persistent",
+       "ram_persistent",
+       "prohibited_software",
+       "compliance_drift"
+      ],
+      "caveats": [
+       "Telemetry covers 2026-05-14 to 2026-06-12 only; no data outside this window.",
+       "Battery EOL findings are based on device-reported condition \"Service Recommended\"; hardware replacement may be needed rather than reimage.",
+       "RAM constrained finding is based on one daily reading; high usage at that moment, not proof of sustained memory pressure.",
+       "Low storage trends show decreasing free space; upgrade or cleanup may be needed.",
+       "Compliance drift for screen_lock indicates a medium-severity check that previously passed now fails consistently."
+      ],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 10927,
+   "output_tokens": 2336,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}

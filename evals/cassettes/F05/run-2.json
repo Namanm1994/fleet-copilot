@@ -1,0 +1,97 @@
+{
+ "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "settings": {
+  "provider": "openrouter",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "temperature": 0.0,
+  "max_output_tokens": 4000,
+  "call_timeout_s": 60.0,
+  "network_retries": 3,
+  "repair_retries": 2,
+  "reasoning_effort": {
+   "planner": "low"
+  },
+  "max_input_tokens_per_turn": 60000,
+  "max_output_tokens_per_turn": 8000,
+  "turn_deadline_s": 180.0,
+  "prompt_version": "98964be4",
+  "fingerprint": "c1b2da28bcc5",
+  "source": "live"
+ },
+ "entries": {
+  "000-661c6b800af43335f24894b4": {
+   "content": "{\n  \"intent_class\": \"device\",\n  \"in_scope\": true,\n  \"refusal_reason\": null,\n  \"entities\": [\"acme-macbook-2\"],\n  \"forbidden_action\": null,\n  \"needs_clarification\": false,\n  \"clarification_question\": null,\n  \"steps\": [\n    {\n      \"tool\": \"resolve_entities\",\n      \"purpose\": \"Map the hostname 'acme-macbook-2' to a device ID\"\n    },\n    {\n      \"tool\": \"get_device\",\n      \"purpose\": \"Retrieve the latest snapshot summary including OS version for the resolved device\"\n    }\n  ]\n}",
+   "tool_calls": [],
+   "input_tokens": 1250,
+   "output_tokens": 278,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "001-34942f6d80b5afcd7c971879": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-9f8a7f14-2075-494b-aacf-3683843cc401",
+     "name": "resolve_entities",
+     "args": {
+      "refs": [
+       "acme-macbook-2"
+      ]
+     }
+    }
+   ],
+   "input_tokens": 5495,
+   "output_tokens": 90,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "002-4811c16e687fbd6756d14cce": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-3ac56c29-327b-4c96-8d9e-693cbc00d8ae",
+     "name": "get_device",
+     "args": {
+      "device_id": "1LYSSFD074BB"
+     }
+    }
+   ],
+   "input_tokens": 5715,
+   "output_tokens": 74,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  },
+  "003-755c4b0823e15e75c240cb7e": {
+   "content": "",
+   "tool_calls": [
+    {
+     "id": "call-cf808d18-788e-4058-a768-b2d4e27f0cc0",
+     "name": "submit_answer",
+     "args": {
+      "summary": "acme-macbook-2 (device ID 1LYSSFD074BB) is running macOS 14.5 as of the latest snapshot on 2026-06-12.",
+      "claims": [
+       {
+        "text": "acme-macbook-2 is running macOS 14.5",
+        "evidence_ids": [
+         "1LYSSFD074BB@2026-06-12"
+        ],
+        "values": {
+         "os_version": "macOS 14.5",
+         "device_id": "1LYSSFD074BB",
+         "snapshot_date": "2026-06-12"
+        }
+       }
+      ],
+      "definitions_used": [],
+      "caveats": [],
+      "answer_type": "answer"
+     }
+    }
+   ],
+   "input_tokens": 6338,
+   "output_tokens": 349,
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "truncated": false
+  }
+ }
+}
