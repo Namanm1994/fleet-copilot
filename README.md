@@ -453,7 +453,7 @@ The full table of all 35, with where each is enforced and its tests, is in [docs
 | No sign-in in this version | The work went into the agent; the company boundary still holds inside a session | Whoever runs the program chooses the company |
 | Thresholds taken from the data and stated in answers | Defaults are visible and can be changed | Memory is one reading a day, so it shows usage, not proven pressure; answers say so |
 
-The thinking behind these choices is in [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md).
+The thinking behind these choices is in [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md). How the system is built is in [docs/architecture.md](docs/architecture.md), the engineering rules it follows in [docs/design-principles.md](docs/design-principles.md), and the plan, eval results and risks in [docs/planning.md](docs/planning.md).
 
 ## How I used AI
 
@@ -463,23 +463,11 @@ I built this project with Claude (Anthropic) working as a coding agent. Every co
 
 **What I decided.**
 
+- defined what each means system design, tool contract, reliability, security, evaluation and observability for the agent.
 - The definitions the answers rest on: low disk as one percentage of the system volume, and battery end-of-life as the device's own reported condition.
 - To design for a production data source, not for the static 30-day file. This is why `fleet load` appends and why context limits are configurable.
 - How conversation context is carried: verified summaries and a focus state, with tools called again when older data is needed.
-- To fix live-run failures at their source. Claude's first plan for one failed case was to relax the eval so it accepted a hostname in place of a device ID. I had one function add the device ID in the output instead, and asked for the same approach on the other failures, which replaced three special cases in the verifier with a single rule for labelling numbers.
-- An audit of the finished build against six areas (system design, tool contract, retrieval, reliability, security, evaluation and observability), and which of its findings to fix.
-
-**What I turned down or deferred.**
-
-- A cache or persistent memory for tool results. It depends on the production data source, so it is listed under Future work.
-- Auditing reads and a retention period for traces. I chose to document these as limits.
-- Loosening eval assertions before seeing a live run, and making the plan parser more tolerant after a single failure. Both wait for evidence.
-
-**What I checked myself.**
-
-- I ran the test suite on Windows, which exposed file-handle errors that never appeared on Linux.
-- I ran scans and approvals by hand for each company. That exposed an approval prompt that looped and proposal numbers that were shared across companies.
-- I ran the first live evals. They showed that a model's hidden reasoning tokens could use up a turn's output budget before it answered.
+- Re-iterated evals, test cases, reliability and security with 5 test runs and one 3 run live Eval
 
 ## Future work
 
@@ -521,7 +509,6 @@ I built this project with Claude (Anthropic) working as a coding agent. Every co
 
 ### Documents and open decisions
 
-- `docs/architecture.md` and `agent-playbook.md` still say 55 eval cases in places; there are 67.
 - The eval inventory document still lists the original 55 cases.
 - "How I used AI" above is still written for a reviewer of a take-home.
 - Two rows in the Risks table of `docs/planning.md` have no phase to point to.

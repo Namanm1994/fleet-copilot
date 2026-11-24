@@ -143,7 +143,7 @@ fleet_copilot/
 config/       policy.yaml, policy.eval.yaml, thresholds.yaml, blocklist.yaml, llm.yaml, pricing.yaml
 prompts/      planner.md, agent.md, scan_summary.md (hashed into a prompt version in every trace)
 evals/        oracle.py, runner.py, cases/, fixtures/, cassettes/
-docs/         PHILOSOPHY.md, SECURITY.md
+docs/         PHILOSOPHY.md, SECURITY.md, REFERENCE.md, architecture.md, design-principles.md, planning.md
 ```
 
 ## Tool catalog
