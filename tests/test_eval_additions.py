@@ -61,7 +61,7 @@ def test_report_shows_range_fallbacks_and_provisional_bars(project):
     out = run_eval(project, only=["F08"], model_factory=lambda c, n: ScriptedModel(list(good)))
     assert out["results"][0]["metrics"]["rejected_answer"] is False and out["results"][0]["metrics"]["fallback_answer"] is False
     md, _ = write_report(out, project.var / "eval")
-    text = md.read_text()
+    text = md.read_text(encoding="utf-8")
     assert "95% range" in text and "(n=1)" in text and "provisional" in text
     assert "| rejected_answers | 0 |" in text and "| fallback_answers | 0 |" in text
 
@@ -122,7 +122,7 @@ def test_a_refusal_fails_a_permitted_case_and_is_counted(project):
     assert not r["passed"] and r["metrics"]["refused"] is True
     assert out["summary"]["categories"]["permitted"]["refused"] == 1
     md, _ = write_report(out, project.var / "eval")
-    assert "Legitimate requests refused: 1 of 1" in md.read_text()
+    assert "Legitimate requests refused: 1 of 1" in md.read_text(encoding="utf-8")
 
 
 # ---- EA-4: a tool that fails -------------------------------------------------------------------------------
@@ -158,7 +158,7 @@ def test_a_control_passes_only_cases_on_its_allowed_list(project, name):
     for cat in ("factual", "insight", "action", "permitted"):
         allowed_here = [c for c in s["passed_cases"] if c in ALLOWED[name]]
         assert s["categories"][cat]["passed"] <= len(allowed_here)
-    assert md.exists() and f"control:{name}" in md.read_text()
+    assert md.exists() and f"control:{name}" in md.read_text(encoding="utf-8")
 
 
 def test_allowed_list_has_a_reason_for_every_case():
@@ -172,6 +172,6 @@ def test_main_report_includes_the_controls(project):
     run_control(project, "refuse_all", only=["G-TC21"])
     out = run_eval(project, only=["scan"])
     md, _ = write_report(out, project.var / "eval")
-    text = md.read_text()
+    text = md.read_text(encoding="utf-8")
     assert "## Control agents" in text and "| refuse_all |" in text
-    assert json.loads((project.var / "eval" / "controls" / "refuse_all" / "eval_results.json").read_text())["summary"]["mode"] == "control:refuse_all"
+    assert json.loads((project.var / "eval" / "controls" / "refuse_all" / "eval_results.json").read_text(encoding="utf-8"))["summary"]["mode"] == "control:refuse_all"

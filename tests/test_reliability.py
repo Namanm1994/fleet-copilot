@@ -95,7 +95,7 @@ def test_one_enormous_item_still_gives_valid_json():
 def test_stale_lock_is_removed(tmp_path):
     target = tmp_path / "audit.jsonl"
     lock = tmp_path / "audit.jsonl.lock"
-    lock.write_text("")
+    lock.write_text("", encoding="utf-8")
     old = time.time() - STALE_LOCK_S - 5
     os.utime(lock, (old, old))  # left behind by a process that died
     with file_lock(target, timeout_s=0.5):
@@ -105,7 +105,7 @@ def test_stale_lock_is_removed(tmp_path):
 
 def test_live_lock_is_respected(tmp_path):
     target = tmp_path / "audit.jsonl"
-    (tmp_path / "audit.jsonl.lock").write_text("")
+    (tmp_path / "audit.jsonl.lock").write_text("", encoding="utf-8")
     with pytest.raises(TimeoutError), file_lock(target, timeout_s=0.2):
         pass
 

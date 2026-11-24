@@ -149,7 +149,7 @@ def test_auto_proposals_capped_and_approval_interrupt(home):  # TC-33 at graph l
     first, second = res.proposals[0]["proposal_id"], res.proposals[1]["proposal_id"]
     results = sess.decide({first: "approve", second: ("reject", "not now")})
     assert {r["proposal_id"]: r["status"] for r in results} == {first: "executed", second: "rejected"}
-    assert len(sess.tk.paths.outbox.read_text().splitlines()) == 1
+    assert len(sess.tk.paths.outbox.read_text(encoding="utf-8").splitlines()) == 1
 
 
 def test_requested_action_flow(home):  # TC-27: reads first, then proposes with retrieved evidence

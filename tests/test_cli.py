@@ -49,7 +49,7 @@ def test_load_writes_db_and_quality_report(run, home, fixture_file):
     r = run("load", str(fixture_file))
     assert r.exit_code == 0, r.output
     assert home.telemetry_db.exists()
-    report = json.loads(home.data_quality.read_text())
+    report = json.loads(home.data_quality.read_text(encoding="utf-8"))
     assert report["devices"] > 20 and report["unregistered_tenants"] == []
 
 
@@ -91,7 +91,7 @@ def test_approve_with_hook_executes_once(run, home):  # G19, G28
     assert r.exit_code == 0 and "PRP-1: executed" in r.output
     r = run("proposals", "approve", "PRP-1", "--tenant", "fixture-999")
     assert "can't be approved" in r.output or "executed" in r.output
-    assert len(home.outbox.read_text().splitlines()) == 1
+    assert len(home.outbox.read_text(encoding="utf-8").splitlines()) == 1
     assert verify(home.audit_log)[0]
 
 
@@ -119,17 +119,17 @@ def test_failed_delivery_then_retry(run, home, monkeypatch):  # failed execution
     monkeypatch.delenv("FLEET_OUTBOX_FAIL_NEXT")
     r = run("proposals", "retry", "PRP-1", "--tenant", "fixture-999")
     assert "PRP-1: executed" in r.output
-    assert len(home.outbox.read_text().splitlines()) == 1
+    assert len(home.outbox.read_text(encoding="utf-8").splitlines()) == 1
 
 
 def test_audit_verify_detects_tampering(run, home):
     run("scan", "--tenant", "fixture-999")
     assert "chain intact" in run("audit", "verify").output
-    lines = home.audit_log.read_text().splitlines()
+    lines = home.audit_log.read_text(encoding="utf-8").splitlines()
     entry = json.loads(lines[1])
     entry["tenant"] = "fixture-998"
     lines[1] = json.dumps(entry)
-    home.audit_log.write_text("\n".join(lines) + "\n")
+    home.audit_log.write_text("\n".join(lines) + "\n", encoding="utf-8")
     r = run("audit", "verify")
     assert r.exit_code == 1 and "line 2" in r.output
 
@@ -204,7 +204,7 @@ def test_eval_command_keeps_history_and_compares_runs(run, home):
     second = run("eval", "--case", "scan")
     assert "Since the previous run: 0 case(s) now fail, 0 now pass." in second.output
     assert len(list((home.var / "eval" / "history").glob("eval_results-*.json"))) == 2
-    assert "## Changes since the previous run" in (home.var / "eval" / "eval_report.md").read_text()
+    assert "## Changes since the previous run" in (home.var / "eval" / "eval_report.md").read_text(encoding="utf-8")
 
 
 # ---- the approval prompt itself (found on the first real run: the key hints were invisible) -------
