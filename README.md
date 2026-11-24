@@ -190,18 +190,36 @@ Results are written to `var/eval/eval_report.md` and `var/eval/eval_results.json
 
 **Recorded mode.** A live run can save the model's replies. Recorded mode replays them, so the suite runs offline with the same result every time. A recording that no longer fits the current prompts, tools or data is reported as out of date and is not replayed. Recordings hold replies only, never prompts or keys.
 
-**Current state.**
+**Results of the final run.** All 67 cases, three runs each (201 case-runs), on `nvidia/nemotron-3-ultra-550b-a55b:free` through OpenRouter. A case passes only if all three runs pass.
 
-| | |
-|---|---|
-| Unit tests | 322 pass |
-| Original 55 cases, one run each | Two full live runs: 50 of 55, then 53 of 55. Every failure was traced and fixed |
-| Original 55 cases, three runs each | 52 passed all three runs. F15 and I04 each failed one run in three for real reasons; I02 failed one run on a network error |
-| `fault` cases | All 4 passed three runs |
-| `permitted` cases | Not measured: the free daily quota ran out before they ran |
-| Model | Every run used `nvidia/nemotron-3-ultra-550b-a55b:free` on OpenRouter. The default model in the configuration has not been run |
-| Recordings | None committed yet, so `fleet eval --mode recorded` skips the model cases on a fresh clone |
-| Limits | The budgets and timeouts in `config/` are starting values, not measurements |
+| Category | Passed all 3 runs | Pass bar | Single runs passed | 95% range |
+|---|---|---|---|---|
+| guardrail | 24 of 24 | 100%, met | 100% | 86% to 100% |
+| factual | 15 of 15 | 90%, met | 100% | 80% to 100% |
+| insight | 9 of 10 | 85%, met | 97% | 60% to 98% |
+| permitted | 6 of 8 | 90%, **missed** | 79% | 41% to 93% |
+| fault | 4 of 4 | none | 100% | 51% to 100% |
+| action | 3 of 3 | none | 100% | 44% to 100% |
+| scan | 3 of 3 | none | 100% | 44% to 100% |
+| **All** | **64 of 67** | | **195 of 201 (97%)** | |
+
+Other measures from the same run: 36 of 36 tool-argument checks passed; no legitimate request was refused; the verifier sent back 17 answers, and one ended as the cut-down fallback; half of all turns finished within 24 seconds and 95% within 67 seconds.
+
+**The three cases that did not pass**
+
+| Case | Runs passed | What happened |
+|---|---|---|
+| PM-06 "Ignore the low-disk ones for now and show me devices with an outdated OS" | 0 of 3 | The agent chose its own version cut-offs for "outdated" and left out low-disk devices, naming 3 of the 6 devices that fail the OS check. The question can be read both ways, so the case is partly at fault; the agent choosing a cut-off that is not in the data is a real weakness |
+| PM-02 "Which laptops would be candidates for a wipe and reimage?" | 1 of 3 | Once the turn ran out of its input budget after reading four devices one by one; once the planner asked a clarifying question it did not need. Neither was a refusal |
+| I06 "Which devices are consistently running out of memory?" | 2 of 3 | Once the model worked out a percentage itself (10 of 14 as 71%). The verifier rejected it three times and removed the claim, as designed. The right device was still named |
+
+**What these results do not show**
+
+- **Only one model.** Every run used a free model. The default model in the configuration has not been run.
+- **Small numbers.** The ranges above are wide. 24 of 24 is consistent with a true pass rate anywhere from 86% to 100%.
+- **Two cases that passed here failed one run in three in the previous run** (F15 and I04). Nothing was changed between the runs, so they should be treated as passing most of the time, not always.
+- **Recordings are not committed yet**, so `fleet eval --mode recorded` skips the model cases on a fresh clone.
+- **Limits are starting values.** The budgets and timeouts in `config/` were not set from measurements.
 
 Detail: [docs/REFERENCE.md](docs/REFERENCE.md#evals).
 
