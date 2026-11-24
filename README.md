@@ -461,7 +461,7 @@ I built this project with Claude (Anthropic) working as a coding agent. Every co
 
 **What Claude did.** It wrote most of the code, tests and documentation, one feature branch at a time, from specifications we drafted together. It also proposed many of the design options and the reasons for and against each.
 
-**What I decided.**
+**My Work.**
 
 - What system design, tool contract, reliability, security, evaluation and observability each mean for this agent.
 - The definitions the answers rest on: low disk as one percentage of the system volume, and battery end-of-life as the device's own reported condition.
